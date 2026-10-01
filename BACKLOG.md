@@ -12,15 +12,12 @@ Newest decisions at the top of each section.
 
 ## 🟡 Design-system gaps found by building (push back into Figma)
 
-- **(Oct 1 redesign) "Pinned tags" → "Top tags".** The Figma sidebar says
-  *Pinned*; there's no pinning in the demo, so the code lists the four most-used
-  tags and says so. Either build pinning or rename it in Figma.
-- **(Oct 1 redesign) Tasks keeps a Status column.** The Figma frame dropped it as
-  a duplicate of the group heading — but it's the only control that moves a
-  task between groups. Kept, styled as a pill. Figma should show it.
-- **(Oct 1 redesign) The record meter is your real mic level** (AnalyserNode);
-  the Figma frame's bars are illustrative. Flat until you speak.
-
+- ✅ **(Oct 1) Synced back into Figma page 07:** "Pinned tags" → "Top tags"
+  (no pinning exists); the Tasks Status column restored (it's the control that
+  moves a task); "This week" → "All recordings"; the Figma-only "Group: Status"
+  select and collapse chevrons removed. Figma and code match again.
+- **(Oct 1) The record meter is your real mic level** (AnalyserNode); the
+  Figma frame's bars are illustrative.
 - **`border/control` is new** — added in code as `--border-control`
   (neutral-500). The file's only border token is invisible on form controls.
 - **`--text-secondary` (#80808C) fails AA** for small text on white (3.9:1).
