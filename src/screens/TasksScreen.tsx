@@ -143,6 +143,15 @@ export function TasksScreen() {
     </>
   );
 
+  /* "New task" opens its form right where it was pressed — the end of the table. */
+  const newTask = adding ? (
+    <NewTask captures={captures} onCancel={() => setAdding(false)} onAdd={(captureId, task) => { dispatch({ type: 'addTask', captureId, task }); setAdding(false); follow.current = task.id; }} />
+  ) : (
+    <button type="button" className="mb-task-new" onClick={() => setAdding(true)} aria-expanded={false}>
+      <Icon name="plus" size={16} /> New task
+    </button>
+  );
+
   return (
     <Page title="Tasks" subtitle={`${everything.length} tasks found in ${recordings} recordings`} headingRef={heading} headingId="tasks-page-h" panel={panel} panelLabel="Task overview">
       <div className="mb-viewbar">
@@ -154,8 +163,6 @@ export function TasksScreen() {
           ))}
         </div>
       </div>
-
-      {adding && <NewTask captures={captures} onCancel={() => setAdding(false)} onAdd={(captureId, task) => { dispatch({ type: 'addTask', captureId, task }); setAdding(false); follow.current = task.id; }} />}
 
       {all.length === 0 && <div className="mb-empty"><p>{everything.length ? 'No tasks match these filters.' : 'No tasks yet. They appear here as recordings mention them.'}</p></div>}
 
@@ -196,11 +203,10 @@ export function TasksScreen() {
               </section>
             );
           })}
-          <button type="button" className="mb-task-new" onClick={() => setAdding(true)} aria-expanded={adding}>
-            <Icon name="plus" size={16} /> New task
-          </button>
+          {newTask}
         </div>
       )}
+      {all.length === 0 && <div className="mb-task-table mb-task-table-solo">{newTask}</div>}
     </Page>
   );
 }

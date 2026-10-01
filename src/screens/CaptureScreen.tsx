@@ -274,7 +274,12 @@ function CaptureView({ c, startLine }: { c: Capture; startLine?: number }) {
             ))}
             {unsure.length > 0 && (
               <button type="button" className="mb-chip is-meta is-low-confidence mb-note-unsure"
-                onClick={() => document.querySelector<HTMLElement>(`[data-speaker-trigger="${unsure[0].id}"]`)?.focus()}>
+                onClick={() => {
+                  /* Straight to the fix: the first unsure voice's question, opened. */
+                  const who = document.querySelector<HTMLElement>(`[data-speaker-trigger="${unsure[0].id}"]`)?.closest('.mb-speaker')?.querySelector<HTMLButtonElement>('.mb-speaker-who');
+                  who?.scrollIntoView?.({ block: 'center', behavior: scrollBehavior() });
+                  who?.click();
+                }}>
                 {unsure.length} {unsure.length === 1 ? 'voice' : 'voices'} to confirm
               </button>
             )}

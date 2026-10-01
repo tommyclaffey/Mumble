@@ -1,5 +1,5 @@
 /* Tasks — one white table card, grouped by status (Figma page 07, frame 05). */
-.mb-task-table { background: var(--surface-card); border-radius: var(--radius-card); box-shadow: var(--elevation-card); overflow: hidden; }
+.mb-task-table { container-type: inline-size; background: var(--surface-card); border-radius: var(--radius-card); box-shadow: var(--elevation-card); overflow: hidden; }
 .mb-task-th {
   display: flex; align-items: center; gap: var(--space-12); padding: 10px 20px 10px 50px;
   background: var(--surface-subtle); color: var(--text-muted); font: 500 0.75rem/1rem var(--font-sans);
@@ -25,7 +25,9 @@
 .mb-task-new:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: -2px; }
 
 /* + New task form */
-.mb-new-task-form { display: flex; gap: var(--space-8); flex-wrap: wrap; align-items: center; margin-bottom: var(--space-16); padding: var(--space-12); background: var(--surface-card); border-radius: var(--radius-card); box-shadow: var(--elevation-card); }
+.mb-new-task-form { display: flex; gap: var(--space-8); flex-wrap: wrap; align-items: center; padding: 12px 20px; border-top: var(--border-width-sm) solid var(--surface-sunken); background: var(--neutral-25); }
+.mb-task-table-solo { margin-top: var(--space-16); }
+.mb-task-table-solo .mb-task-new, .mb-task-table-solo .mb-new-task-form { border-top: none; }
 .mb-input {
   min-height: 34px; padding: 0 var(--space-12); flex: 1; min-width: 200px;
   border: var(--border-width-sm) solid var(--border-control); border-radius: var(--radius-lg);
@@ -46,4 +48,6 @@
 .mb-tag-toggle[aria-pressed='true'] { background: var(--accent-tint); border-color: var(--accent-base); color: var(--accent-strong); }
 .mb-pcard .mb-track { height: 8px; flex: none; }
 
-@media (max-width: 1023px) { .mb-task-th { display: none; } }
+/* Narrow TABLE (not narrow window): columns fold under the task. The table
+   is narrow on a 1280 laptop with the sidebar and panel open, too. */
+@container (max-width: 820px) { .mb-task-th { display: none; } }

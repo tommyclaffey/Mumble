@@ -46,6 +46,12 @@ h1.mb-pagehead-title:focus { outline: none; }
 .mb-pstats strong { display: block; font: 600 1.25rem/1.75rem var(--font-sans); color: var(--text-strong); }
 .mb-pstats span { font: 500 0.75rem/1rem var(--font-sans); color: var(--text-muted); }
 
+/* Mid-size laptops: a slimmer panel leaves the main column room to breathe. */
+@media (max-width: 1439px) {
+  .mb-layout.has-panel { grid-template-columns: minmax(0, 1fr) 340px; }
+  .mb-layout-main { padding-left: var(--space-40); padding-right: var(--space-40); }
+  .mb-panel { padding: var(--space-16); }
+}
 @media (max-width: 1199px) {
   .mb-layout.has-panel { grid-template-columns: minmax(0, 1fr); }
   .mb-panel { position: static; height: auto; overflow: visible; border-left: none; border-top: var(--border-width-sm) solid var(--neutral-100); }

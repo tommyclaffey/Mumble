@@ -719,3 +719,22 @@ describe('Navigation', () => {
     expect(screen.getByRole('link', { name: 'Read-aloud speed idea' })).toBeTruthy();
   });
 });
+
+describe('Redesign QA (Oct 1)', () => {
+  it('"1 voice to confirm" opens the fix for that voice', () => {
+    mount('#/capture/c2');
+    fireEvent.click(screen.getByRole('button', { name: '1 voice to confirm' }));
+    expect(screen.getByLabelText('Who is this?')).toBeTruthy();
+    expect(screen.getByText(/Applies to all 4 lines in this voice/)).toBeTruthy();
+  });
+
+  it('New task opens where it was pressed, and is there even when a filter shows nothing', () => {
+    mount('#/tasks');
+    /* Client tag × Maya Chen: nothing matches. */
+    fireEvent.click(within(screen.getByRole('group', { name: 'Filter by tag' })).getByRole('button', { name: 'Client' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Maya Chen/ }));
+    expect(screen.getByText('No tasks match these filters.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'New task' }));
+    expect(screen.getByLabelText('New task')).toBeTruthy();
+  });
+});

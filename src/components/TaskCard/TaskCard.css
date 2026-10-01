@@ -46,11 +46,12 @@
 .mb-taskcard-col.is-from { width: 200px; color: var(--text-muted); }
 .mb-taskcard-col.is-at { width: 48px; color: var(--accent-base); justify-content: flex-end; }
 
-@media (max-width: 1023px) {
-  .mb-taskcard.is-table { flex-wrap: wrap; }
+@container (max-width: 820px) {
+  .mb-taskcard.is-table { flex-wrap: wrap; row-gap: 6px; }
   .mb-taskcard.is-table .mb-taskcard-text { flex-basis: calc(100% - 40px); }
   .mb-taskcard-col.is-owner, .mb-taskcard-col.is-status, .mb-taskcard-col.is-from { width: auto; }
   .mb-taskcard-col.is-owner { margin-left: 30px; }
+  .mb-taskcard-col.is-from { flex: 1; min-width: 0; }
 }
 /* The due date is optional — empty, it's a quiet word, not a dashed box. */
 .mb-taskcard .mb-chip.is-action { min-height: 22px; padding: 0 8px; font: 500 0.75rem/1rem var(--font-sans); }
