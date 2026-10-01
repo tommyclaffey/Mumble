@@ -4,8 +4,6 @@ Newest decisions at the top of each section.
 
 ## 🔴 Open decisions (Tommy's call)
 
-- **Merge `app-v1` → `main`.** Nothing is live on GitHub Pages until then.
-  Pages must also be switched on: repo Settings → Pages → Source: GitHub Actions.
 - **Real Meeting mode.** Needs a server-side model with diarization (e.g. a
   hosted speech API). That is a cost and a privacy decision, not a code one.
 - **AI summaries for recorded notes.** Same shape as Growth's assistant (a dev
@@ -50,6 +48,9 @@ Newest decisions at the top of each section.
   (Phase 3: "the 7 images on the site go stale").
 
 ## ✅ Done
+
+- **Oct 1 — live.** `app-v1` fast-forwarded into `main`; Pages switched on
+  (source: GitHub Actions). https://tommyclaffey.github.io/Mumble/
 
 - **Sept 30 — captures are recordings.** Tommy: "these are recordings and then
   dictation" — so play plays the RECORDING, not a synthetic voice reading the

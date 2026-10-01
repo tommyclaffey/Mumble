@@ -2,7 +2,8 @@
 
 React + TypeScript voice-first notes app. Capture by speaking; read it back by
 listening. Public repo, deployed to GitHub Pages at
-https://tommyclaffey.github.io/Mumble/ (once `main` has the app).
+https://tommyclaffey.github.io/Mumble/ — live since Oct 1, 2026.
+Every push to `main` deploys (tests must pass first).
 
 ## ⭐ Read BACKLOG.md first
 
