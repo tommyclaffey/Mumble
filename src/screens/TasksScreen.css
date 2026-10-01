@@ -1,46 +1,49 @@
-/* Task View — the frame: list from x 260 to 1328, rule at 1368, a 280 panel. */
-/* Desktop only — unguarded, this (loaded after screens.css) beat the
-   stacking rule below 1200px and crushed the phone layout. */
-@media (min-width: 1200px) { .mb-split.mb-tasks-split { grid-template-columns: minmax(0, 1fr) 1px 280px; } }
-.mb-tasks-split .mb-page-head { margin-bottom: 6px; }   /* title 88 · filters 120 · first group 158 */
-.mb-tasks-split .mb-toolbar { margin-bottom: 12px; }
-.mb-new-task { min-height: 30px; padding: 0 var(--space-24); }
-.mb-task-section { margin-bottom: var(--space-24); }
-/* Group header: the sunken bar, "To Do 3". */
-.mb-task-group {
-  display: flex; align-items: center; gap: var(--space-8); min-height: 28px; margin: 0 0 var(--space-8); padding: 0 var(--space-12);
-  border-radius: var(--radius-sm); background: var(--surface-sunken); color: var(--text-strong);
+/* Tasks — one white table card, grouped by status (Figma page 07, frame 05). */
+.mb-task-table { background: var(--surface-card); border-radius: var(--radius-card); box-shadow: var(--elevation-card); overflow: hidden; }
+.mb-task-th {
+  display: flex; align-items: center; gap: var(--space-12); padding: 10px 20px 10px 50px;
+  background: var(--surface-subtle); color: var(--text-muted); font: 500 0.75rem/1rem var(--font-sans);
 }
-.mb-task-group.is-done { color: var(--text-muted); }
-.mb-task-none { margin: 0 0 var(--space-8) var(--space-12); }
-.mb-new-task-form { display: flex; gap: var(--space-8); flex-wrap: wrap; align-items: center; margin-bottom: var(--space-16); padding: var(--space-12); border: var(--border-width-sm) solid var(--border-default); border-radius: var(--radius-md); background: var(--surface-card); }
-.mb-new-task-form .mb-input { min-width: 0; flex: 1 1 220px; }
-.mb-new-task-from { flex: 0 1 220px !important; }
+.mb-task-th .is-task { flex: 1; }
+.mb-task-th .is-owner { width: 150px; } .mb-task-th .is-status { width: 120px; }
+.mb-task-th .is-from { width: 200px; } .mb-task-th .is-at { width: 48px; text-align: right; }
+.mb-task-section { border-top: var(--border-width-sm) solid var(--surface-sunken); }
+.mb-task-group { display: flex; align-items: center; gap: var(--space-8); margin: 0; padding: 12px 20px 8px; font: 500 0.75rem/1rem var(--font-sans); }
+.mb-task-group-pill { padding: 2px 10px; border-radius: var(--radius-pill); background: var(--surface-subtle); color: var(--text-body); }
+.mb-task-group.is-in-progress .mb-task-group-pill { background: var(--accent-tint); color: var(--accent-strong); }
+.mb-task-group.is-done .mb-task-group-pill { background: var(--tag-green-bg); color: var(--tag-green-text); }
+.mb-task-rows { list-style: none; margin: 0; padding: 0; }
+.mb-task-rows > li { border-top: var(--border-width-sm) solid var(--surface-sunken); }
+.mb-task-rows > li:hover { background: var(--neutral-25); }
+.mb-task-none { margin: 0; padding: 4px 20px 14px; }
+.mb-task-new {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 14px 20px;
+  border: none; border-top: var(--border-width-sm) solid var(--surface-sunken); background: transparent;
+  color: var(--text-muted); cursor: pointer; font: 400 0.875rem/1.25rem var(--font-sans); text-align: left;
+}
+.mb-task-new:hover { background: var(--neutral-25); color: var(--text-body); }
+.mb-task-new:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: -2px; }
 
-/* Panel */
-.mb-task-panel { display: flex; flex-direction: column; gap: var(--space-8); }
-.mb-task-panel p { margin: 0; }
-.mb-task-panel .mb-list { gap: var(--space-12); }
-.mb-task-panel .mb-review-rule { margin: 20px 0 6px; }   /* tags · rule 198 · Task Summary 212 */
-.mb-panel-h { display: flex; align-items: center; gap: var(--space-8); margin: 0 0 var(--space-4); color: var(--text-strong); }
-.mb-task-tags { display: flex; flex-wrap: wrap; gap: 6px; }
-.mb-tag-toggle { cursor: pointer; font-family: var(--font-sans); }
-.mb-tag-toggle[aria-pressed='true'] { background: var(--neutral-1000); color: var(--text-on-accent); border-color: var(--neutral-1000); }
-.mb-tag-toggle:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px; }
-/* Task Summary row: 280 × 56 — face, name, count at the right. */
-.mb-owner {
-  display: flex; align-items: center; gap: var(--space-12); width: 100%; min-height: 56px; padding: 0 var(--space-16) 0 10px;
-  background: var(--surface-card); border: var(--border-width-sm) solid var(--border-default); border-radius: var(--radius-md);
-  color: var(--text-body); cursor: pointer; text-align: left;
+/* + New task form */
+.mb-new-task-form { display: flex; gap: var(--space-8); flex-wrap: wrap; align-items: center; margin-bottom: var(--space-16); padding: var(--space-12); background: var(--surface-card); border-radius: var(--radius-card); box-shadow: var(--elevation-card); }
+.mb-input {
+  min-height: 34px; padding: 0 var(--space-12); flex: 1; min-width: 200px;
+  border: var(--border-width-sm) solid var(--border-control); border-radius: var(--radius-lg);
+  background: var(--surface-card); color: var(--text-body); font: 400 0.875rem/1.25rem var(--font-sans);
 }
-.mb-owner-name { flex: 1; margin-left: 4px; }
-.mb-owner:hover { border-color: var(--accent-medium); }
-.mb-owner.is-on { border-color: var(--accent-base); background: var(--accent-subtle); }
-.mb-owner:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px; }
-.mb-task-progress { display: flex; flex-direction: column; margin-top: var(--space-48); }
-/* label · 6 · track (6) · 10 · "6 of 10" · 12 · Export. The Track is flex: 1
-   for rows; in this column that collapsed it to 0px tall — it vanished. */
-.mb-task-progress .mb-panel-h { margin: 0 0 6px; }
-.mb-task-progress .mb-track { flex: none; height: 6px; }
-.mb-task-progress p { margin-top: 10px; }
-.mb-task-progress .mb-button { min-height: 40px; margin-top: var(--space-12); }
+.mb-input:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 1px; }
+.mb-new-task-from { flex: 0 1 220px; min-width: 160px; }
+
+/* Panel: owners and tag toggles */
+.mb-owner { width: 100%; border: none; background: transparent; cursor: pointer; text-align: left; border-radius: var(--radius-lg); }
+.mb-owner:hover { background: var(--surface-subtle); }
+.mb-owner.is-on { background: var(--accent-tint); }
+.mb-owner:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); }
+.mb-owner-name { flex: 1; color: var(--text-strong); }
+.mb-owner .mb-avatar.is-md { width: 26px; height: 26px; }
+.mb-tag-toggles { display: flex; flex-wrap: wrap; gap: 6px; }
+.mb-tag-toggle { cursor: pointer; font-family: var(--font-sans); }
+.mb-tag-toggle[aria-pressed='true'] { background: var(--accent-tint); border-color: var(--accent-base); color: var(--accent-strong); }
+.mb-pcard .mb-track { height: 8px; flex: none; }
+
+@media (max-width: 1023px) { .mb-task-th { display: none; } }

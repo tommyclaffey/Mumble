@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { Icon } from '../Icon/Icon';
 import { href } from '../../data/route';
+import { tagColor } from '../../data/tagColor';
 import './TagEditor.css';
 
 /**
@@ -40,6 +41,7 @@ export function TagEditor(
         <ul className="mb-tags-list">
           {tags.map((t) => (
             <li key={t} className="mb-tag-pill">
+              <span className={`mb-tag-dot is-${tagColor(t)}`} aria-hidden="true" />
               <a className="mb-tag-pill-link" href={href({ name: 'tags', tag: t })}>{t}</a>
               <button type="button" className="mb-tag-pill-remove" aria-label={`Remove tag ${t}`} onClick={() => onChange(tags.filter((x) => x !== t))}>
                 <Icon name="x" size={16} />

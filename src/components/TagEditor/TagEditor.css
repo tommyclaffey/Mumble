@@ -1,38 +1,39 @@
+/* Tags on a recording — the tag pill (white, hairline, colour dot), each with
+   its own remove ×, and a quiet "+ Add tag". */
 .mb-tags { display: grid; gap: var(--space-8); }
-.mb-tags-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-8); }
-.mb-tags-open { min-height: 24px; }
-.mb-tags-open svg { width: 12px; height: 12px; }
-.mb-tags-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-8); }
+.mb-tags-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.mb-tags-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .mb-tag-pill {
-  display: inline-flex; align-items: center; min-height: 24px;
+  display: inline-flex; align-items: center; min-height: 26px; padding-left: 9px;
   border: var(--border-width-sm) solid var(--border-default); border-radius: var(--radius-pill);
   background: var(--surface-card);
 }
-.mb-tag-pill-link {
-  padding: 0 var(--space-4) 0 var(--space-8); color: var(--text-muted); text-decoration: none;
-  font: 500 0.6875rem/1rem var(--font-sans);
-}
-.mb-tag-pill-link:hover { color: var(--text-body); text-decoration: underline; }
+.mb-tag-pill .mb-tag-dot { margin-right: 6px; }
+.mb-tag-pill-link { color: var(--text-body); text-decoration: none; font: 500 0.75rem/1rem var(--font-sans); }
+.mb-tag-pill-link:hover { text-decoration: underline; text-underline-offset: 2px; }
 .mb-tag-pill-remove {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 24px; height: 24px; margin: -1px -1px -1px 0; border: none; background: transparent;
-  color: var(--neutral-500); border-radius: var(--radius-pill); cursor: pointer;
+  width: 24px; height: 24px; margin-left: 2px; border: none; background: transparent;
+  color: var(--text-muted); border-radius: var(--radius-pill); cursor: pointer;
 }
-.mb-tag-pill-remove:hover { background: var(--accent-subtle); color: var(--text-body); }
+.mb-tag-pill-remove:hover { background: var(--surface-subtle); color: var(--text-body); }
+.mb-tag-pill-remove svg { width: 12px; height: 12px; }
 .mb-tag-pill-link:focus-visible, .mb-tag-pill-remove:focus-visible, .mb-tags-add-btn:focus-visible {
   outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 1px; border-radius: var(--radius-pill);
 }
+.mb-tags-open { min-height: 26px; border-style: solid; border-color: transparent; background: transparent; color: var(--text-muted); }
+.mb-tags-open:hover { background: var(--surface-subtle); }
+.mb-tags-open svg { width: 12px; height: 12px; }
 .mb-tags-add { display: flex; gap: var(--space-4); max-width: 240px; }
 .mb-tags-add input {
   flex: 1; min-width: 0; min-height: 28px; padding: 0 var(--space-8);
-  border: var(--border-width-sm) solid var(--border-control); border-radius: var(--radius-md);
-  font: 400 0.75rem/1rem var(--font-sans); background: var(--surface-card); color: var(--text-body);
+  border: var(--border-width-sm) solid var(--border-control); border-radius: var(--radius-lg);
+  font: 400 0.8125rem/1rem var(--font-sans); background: var(--surface-card); color: var(--text-body);
 }
 .mb-tags-add input:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 1px; }
 .mb-tags-add-btn {
   width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;
-  border: var(--border-width-sm) solid var(--border-control); border-radius: var(--radius-md);
+  border: var(--border-width-sm) solid var(--border-control); border-radius: var(--radius-lg);
   background: var(--surface-card); color: var(--text-body); cursor: pointer;
 }
 .mb-tags-add-btn:disabled { color: var(--text-tertiary); cursor: not-allowed; }
-.mb-tag-pill-remove svg { width: 12px; height: 12px; }

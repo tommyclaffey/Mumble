@@ -125,6 +125,44 @@
      edge, invisible as the edge of a checkbox or text field, which WCAG 1.4.11
      needs at 3:1. neutral-500 is 3.9:1. Push back into Figma as border/control. */
   --border-control: var(--neutral-500);
+
+  /* ---- ✨ REFINED (Oct 1 2026) -----------------------------------------
+     The visual pass. Transcribed from the Figma file's additions (page
+     07 · Desktop — Refined): three colours, the tag palette, three shadow
+     styles and the Refined/* type scale. Additive — nothing above changed. */
+  --neutral-75: #F4F4F7;
+  --blue-100:   #E3E8F4;
+  --blue-800:   #24365E;
+
+  --surface-subtle: var(--neutral-75);   /* the side panel, search, segmented track */
+  --accent-tint:    var(--blue-100);     /* the playing line, kind badges, counts */
+  --accent-strong:  var(--blue-800);     /* text on accent-tint: 9.6:1 */
+
+  /* Tags: the colour lives in a DOT, so a label always reads at full
+     contrast on a white pill. The bg/text pairs are for the Tags screen's
+     swatches; every pair passes AA (≥5.6:1). */
+  --tag-gray-dot: #9A9893;   --tag-gray-bg: #EFEFED;   --tag-gray-text: #55534E;
+  --tag-blue-dot: #4C7BD9;   --tag-blue-bg: #E6EFF9;   --tag-blue-text: #1E5A96;
+  --tag-green-dot: #3F9A62;  --tag-green-bg: #E6F2EA;  --tag-green-text: #2B6A44;
+  --tag-purple-dot: #8B5CD6; --tag-purple-bg: #EFE8F8; --tag-purple-text: #6B3FA0;
+  --tag-orange-dot: #E07B3A; --tag-orange-bg: #FBEBDD; --tag-orange-text: #9A4A1C;
+  --tag-yellow-dot: #D9A92E; --tag-yellow-bg: #FAF1D6; --tag-yellow-text: #7A5B0A;
+  --tag-pink-dot: #D9578E;   --tag-pink-bg: #F8E6EF;   --tag-pink-text: #973463;
+
+  /* Elevation — the Figma effect styles. A hairline ring plus soft shadow
+     replaces the 1px grey outline every card used to have. */
+  --elevation-card:   0 0 0 1px rgb(18 18 24 / 0.06), 0 1px 2px rgb(18 18 24 / 0.04), 0 4px 12px rgb(18 18 24 / 0.04);
+  --elevation-raised: 0 0 0 1px rgb(18 18 24 / 0.06), 0 4px 12px rgb(18 18 24 / 0.06), 0 16px 32px rgb(18 18 24 / 0.08);
+  --elevation-accent: 0 4px 12px rgb(61 90 153 / 0.28);
+
+  --radius-card: 16px;      /* cards and panel cards */
+  --radius-control: 10px;   /* search, segmented track, buttons */
+
+  /* The refined frame: 64 header · 240 sidebar · main · 400 side panel. */
+  --layout-header-r: 64px;
+  --layout-sidebar-r: 240px;
+  --layout-panel: 400px;
+  --layout-gutter-r: 56px;
 }
 
 *, *::before, *::after { box-sizing: border-box; }

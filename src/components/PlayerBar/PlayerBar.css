@@ -1,32 +1,37 @@
-/* "Audio Playback" box from the design: one row, 64px tall, bordered. */
+/* The player — Figma page 07: a white card; play · "Line 4 of 13" over the
+   time · the recording's waveform (the scrubber sits on it) · speed. Sticky,
+   so the controls stay in reach while the transcript scrolls. */
 .mb-player {
-  display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-8) var(--space-12);
-  min-height: 64px; padding: var(--space-12) var(--space-16);
-  background: var(--surface-card); border: var(--border-width-sm) solid var(--border-default);
-  border-radius: var(--radius-lg);
-  position: sticky; top: calc(var(--layout-header) + var(--space-12)); z-index: 5;
+  display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-8) var(--space-16);
+  min-height: 64px; padding: 12px var(--space-16) 12px 14px;
+  background: var(--surface-card); border-radius: var(--radius-card); box-shadow: var(--elevation-card);
+  position: sticky; top: calc(var(--layout-header-r) + var(--space-12)); z-index: 5;
 }
-.mb-player-pos { color: var(--text-strong); white-space: nowrap; min-width: 84px; }
+.mb-player-pos { display: flex; flex-direction: column; gap: 2px; min-width: 92px; }
+.mb-player-line { color: var(--text-strong); white-space: nowrap; }
 .mb-player-time { color: var(--text-muted); white-space: nowrap; }
 .mb-player-controls { display: flex; align-items: center; gap: var(--space-4); }
-.mb-player-state { flex-basis: 100%; margin: 0; padding-left: 44px; color: var(--text-muted); }
-.mb-player-state.is-error { color: var(--confidence-low); }
+.mb-player-state { flex-basis: 100%; margin: 0; padding-left: 56px; color: var(--text-muted); font: 500 0.75rem/1rem var(--font-sans); }
+.mb-player-state.is-error { color: var(--accent-strong); }
 
 .mb-player-speed {
-  min-width: 44px; min-height: 28px; padding: 0 var(--space-8);
-  border: var(--border-width-sm) solid var(--border-control); border-radius: var(--radius-md);
-  background: var(--surface-card); color: var(--text-body); cursor: pointer;
-  font: 500 0.75rem/1rem var(--font-sans);
+  min-width: 40px; min-height: 30px; padding: 0 var(--space-8);
+  border: none; border-radius: var(--radius-lg);
+  background: var(--surface-subtle); color: var(--text-strong); cursor: pointer;
+  font: 500 0.8125rem/1rem var(--font-sans);
 }
-.mb-player-speed:hover:not(:disabled) { background: var(--surface-page); }
+.mb-player-speed:hover:not(:disabled) { background: var(--surface-sunken); }
 .mb-player-speed:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px; }
 .mb-player-speed:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* The scrubber, drawn as the design's progress track: sunken rail, accent
-   fill to the playhead, a 16px thumb (24px target). */
+/* The scrubber. With a waveform: the bars are the track, the range input
+   lies on top (transparent) so dragging and the keyboard still work. Without
+   one: a plain rail with an accent fill. */
+.mb-player-wave { position: relative; flex: 1; min-width: 120px; display: flex; align-items: center; height: 36px; }
+.mb-player-wave .mb-wave { position: absolute; inset: 0; height: 100%; pointer-events: none; }
 .mb-player-seek {
-  flex: 1; min-width: 120px;
-  -webkit-appearance: none; appearance: none; height: 24px; margin: 0;
+  position: relative; flex: 1; min-width: 0;
+  -webkit-appearance: none; appearance: none; height: 36px; margin: 0;
   background: transparent; cursor: pointer;
 }
 .mb-player-seek::-webkit-slider-runnable-track {
@@ -43,37 +48,16 @@
   width: 10px; height: 10px; border-radius: var(--radius-pill);
   background: var(--surface-card); border: var(--border-width-md) solid var(--accent-base);
 }
+/* On a waveform the rail disappears; the thumb becomes a thin playhead. */
+.mb-player.has-wave .mb-player-seek::-webkit-slider-runnable-track { background: transparent; height: 36px; }
+.mb-player.has-wave .mb-player-seek::-moz-range-track, .mb-player.has-wave .mb-player-seek::-moz-range-progress { background: transparent; }
+.mb-player.has-wave .mb-player-seek::-webkit-slider-thumb { width: 3px; height: 36px; margin-top: 0; border: none; border-radius: 2px; background: var(--accent-strong); }
+.mb-player.has-wave .mb-player-seek::-moz-range-thumb { width: 3px; height: 36px; border: none; border-radius: 2px; background: var(--accent-strong); }
 .mb-player-seek:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px; border-radius: var(--radius-sm); }
 .mb-player-seek:disabled { cursor: not-allowed; opacity: 0.5; }
 
-/* Phone: two tidy rows — [play · Line 4 of 18 · controls] then
-   [0:42 ──●──── 1:16] — instead of the times bunching together. */
 @media (max-width: 767px) {
-  .mb-player {
-    display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
-    grid-template-areas: 'play pos ctrls' 'now seek total' 'state state state';
-    top: calc(56px + var(--space-8));
-  }
-  .mb-player .mb-play { grid-area: play; }
-  .mb-player-pos { grid-area: pos; min-width: 0; }
-  .mb-player-controls { grid-area: ctrls; }
-  .mb-player-time.is-now { grid-area: now; }
-  .mb-player-seek { grid-area: seek; min-width: 0; }
-  .mb-player-time.is-total { grid-area: total; }
-  .mb-player-state { grid-area: state; padding-left: 0; }
+  .mb-player { top: calc(56px + var(--space-8)); gap: var(--space-8) var(--space-12); padding: var(--space-12); }
+  .mb-player-wave { flex-basis: 100%; order: 5; }
 }
 @media (max-height: 560px) { .mb-player { position: static; } }
-/* Compact: the design's box — a bigger play button, nothing between the
-   times and the track. */
-.mb-player.is-compact { gap: var(--space-12); min-height: 48px; padding: var(--space-8) var(--space-12) var(--space-8) var(--space-8); border-radius: var(--radius-md); }
-.mb-player.is-compact .mb-play { width: 32px; height: 32px; }
-/* Track: 8px, fully rounded, accent fill (Audio player › Track). */
-.mb-player.is-compact .mb-player-seek::-webkit-slider-runnable-track { height: 8px; }
-.mb-player.is-compact .mb-player-seek::-webkit-slider-thumb { margin-top: -3px; }
-.mb-player.is-compact .mb-player-time { color: var(--text-muted); font: 400 0.6875rem/1rem var(--font-sans); }
-.mb-player.is-compact .mb-player-speed { min-width: 44px; min-height: 24px; border-color: var(--border-default); border-radius: var(--radius-sm); font: 500 0.625rem/0.75rem var(--font-sans); color: var(--text-muted); }
-/* Compact fits one row even on a phone: play · 0:00 · track · 1:16 · 1.0× */
-@media (max-width: 767px) {
-  .mb-player.is-compact { display: flex; flex-wrap: nowrap; gap: var(--space-8); padding: var(--space-12); }
-  .mb-player.is-compact .mb-player-seek { min-width: 0; }
-}

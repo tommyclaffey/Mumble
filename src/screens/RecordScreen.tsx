@@ -2,12 +2,15 @@ import { useEffect, useRef, useState } from 'react';
 import { Avatar } from '../components/Avatar/Avatar';
 import { Button } from '../components/Button/Button';
 import { Icon } from '../components/Icon/Icon';
+import { Page, PanelCard } from '../components/Page/Page';
 import { Segmented } from '../components/Segmented/Segmented';
 import { formatDuration, formatTimer, suggestTasks, titleFrom, type Note, type TranscriptLine } from '../data/model';
 import { go } from '../data/route';
 import { useStore } from '../data/store';
 import type { MicRecorder } from '../record/micRecorder';
 import type { Recognizer } from '../record/recognizer';
+import { setRecordingStatus } from '../record/recordingStatus';
+import { peaksFromBlob } from '../record/waveform';
 import { useServices } from '../services';
 import './screens.css';
 import './RecordScreen.css';
@@ -30,7 +33,7 @@ import './RecordScreen.css';
 type Status = 'idle' | 'recording' | 'paused';
 
 export function RecordScreen() {
-  const { dispatch } = useStore();
+  const { dispatch, prefs } = useStore();
   const services = useServices();
   const rec = useRef<Recognizer | null>(null);
   if (!rec.current) rec.current = services.recognizer();
@@ -39,6 +42,8 @@ export function RecordScreen() {
   const available = rec.current.available;
   const [micOk, setMicOk] = useState(mic.current.available);
   const [saving, setSaving] = useState(false);
+  /* Saving is quick but real — each step is said as it happens. */
+  const [step, setStep] = useState(0);
 
   const [status, setStatus] = useState<Status>('idle');
   const [lines, setLines] = useState<TranscriptLine[]>([]);
@@ -48,14 +53,24 @@ export function RecordScreen() {
   const clock = useRef({ base: 0, since: 0 });
   const elapsedNow = () => clock.current.base + (clock.current.since ? (performance.now() - clock.current.since) / 1000 : 0);
 
+  /* The live meter: the mic's real level, sampled with the clock. */
+  const [levels, setLevels] = useState<number[]>(() => Array(48).fill(0));
   useEffect(() => {
     if (status !== 'recording') return;
-    const t = setInterval(() => setElapsed(elapsedNow()), 250);
+    const t = setInterval(() => {
+      setElapsed(elapsedNow());
+      const l = mic.current?.level?.() ?? 0;
+      setLevels((ls) => [...ls.slice(1), l]);
+    }, 120);
     return () => clearInterval(t);
   }, [status]);
 
-  /* Leaving mid-recording must release the microphone. */
-  useEffect(() => () => { rec.current?.stop(); void mic.current?.stop(); }, []);
+  /* Leaving mid-recording must release the microphone — and the header
+     stops saying "Recording". */
+  useEffect(() => () => { rec.current?.stop(); void mic.current?.stop(); setRecordingStatus({ state: 'idle', elapsed: 0 }); }, []);
+
+  /* The header's live indicator. */
+  useEffect(() => { setRecordingStatus({ state: status, elapsed }); }, [status, elapsed]);
 
   function start() {
     setError(null);
@@ -95,6 +110,7 @@ export function RecordScreen() {
     rec.current!.stop();
     const total = elapsedNow();
     setSaving(true);
+    setStep(1);
     const audio = await mic.current!.stop();
     /* An interim phrase still on screen when Stop is pressed was heard; keep it. */
     const all = interim.trim()
@@ -116,16 +132,21 @@ export function RecordScreen() {
     if (audio) {
       try { await services.audioStore.put(id, audio); stored = true; } catch { /* storage full or blocked: keep the transcript */ }
     }
+    setStep(2);
+    /* The waveform is measured from the recording itself. */
+    const peaks = stored && audio ? await peaksFromBlob(audio) : undefined;
+    setStep(3);
     const note: Note = {
       kind: 'note',
       id,
       source: 'browser',
       audio: stored ? 'stored' : undefined,
+      peaks,
       title: titleFrom(all, 'New Mumble'),
       createdAt: now.toISOString(),
       durationSeconds: Math.round(total),
       lines: all,
-      tasks: suggestTasks(all),
+      tasks: prefs.taskHints ? suggestTasks(all) : [],
       tags: [],
     };
     dispatch({ type: 'addCapture', capture: note });
@@ -139,47 +160,122 @@ export function RecordScreen() {
     go({ name: 'recent', filter: 'all' });
   }
 
-  const taskIds = new Set(suggestTasks(lines).map((t) => t.sourceLineId));
+  const spotted = prefs.taskHints ? suggestTasks(lines) : [];
+  const taskIds = new Set(spotted.map((t) => t.sourceLineId));
   const active = status === 'recording';
 
+  /* Space pauses and resumes — what the hint under the controls promises. */
+  const toggleRef = useRef<() => void>(() => {});
+  toggleRef.current = () => { if (saving || !available) return; if (status === 'recording') pause(); else start(); };
+  useEffect(() => {
+    if (!prefs.shortcuts) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== ' ' || e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
+      if ((e.target as HTMLElement | null)?.closest('input, textarea, select, button, a, [role="radio"]')) return;
+      e.preventDefault(); toggleRef.current();
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [prefs.shortcuts]);
+
+  const panel = (
+    <>
+      <PanelCard id="spotted-h" title="Tasks spotted" icon="check" meta={prefs.taskHints ? `${spotted.length} so far` : 'Off'}>
+        <p className="mb-t-meta mb-muted">{prefs.taskHints ? 'Found by phrasing, not by a model. You can edit them after saving.' : 'Task suggestions are off in Settings.'}</p>
+        {spotted.length > 0 && (
+          <ul className="mb-prows">
+            {spotted.map((t) => (
+              <li key={t.id}><div className="mb-prow mb-spotted"><Icon name="check" size={14} /><span className="mb-t-body-sm">{t.text}</span></div></li>
+            ))}
+          </ul>
+        )}
+      </PanelCard>
+      <PanelCard id="try-h" title="Try saying" icon="quote">
+        <dl className="mb-try">
+          <dt>“We need to…”</dt><dd>becomes a task</dd>
+          <dt>“Let’s…”</dt><dd>becomes a task</dd>
+          <dt>“Follow up with…”</dt><dd>becomes a task</dd>
+        </dl>
+      </PanelCard>
+      <PanelCard id="where-h" title="Where your audio goes" icon="lock">
+        <div className="mb-where">
+          <p className="mb-t-label-sm">Recording</p><p className="mb-t-body-sm mb-muted">Saved in this browser only.</p>
+          <p className="mb-t-label-sm">Transcript</p><p className="mb-t-body-sm mb-muted">Written by your browser’s speech service. Chrome and Edge send the audio to their vendor; Safari keeps it on-device where it can.</p>
+        </div>
+      </PanelCard>
+    </>
+  );
+
+  const stepsDone = (n: number) => (step > n ? 'done' : step === n ? 'active' : 'todo');
+
   return (
-    <div className="mb-record">
-      {/* Left half: the controls, centred — as in the "Recording in Progress" frame. */}
-      <section className="mb-record-controls" aria-labelledby="record-h">
-        <h1 id="record-h" className="mb-sr-only">New Mumble</h1>
-        <Segmented
-          label="Capture type" value="note" onChange={() => {}}
-          options={[{ value: 'note', label: 'Mumble' }, { value: 'meeting', label: 'Meeting', disabled: true }]}
-        />
-        <p className="mb-body-small mb-muted mb-record-status" aria-live="polite">
-          {status === 'idle' ? 'Ready when you are' : active ? 'Recording in progress' : 'Paused'}
-        </p>
+    <Page
+      title="New recording"
+      subtitle={status === 'idle' ? 'Ready when you are' : `${active ? 'Recording' : 'Paused'} · saving to this browser as you talk`}
+      headingId="record-h" panel={panel} panelLabel="While you record"
+    >
+      {saving ? (
+        <section className="mb-saving" aria-labelledby="saving-h" aria-live="polite">
+          <h2 id="saving-h" className="mb-t-title">Saving your mumble</h2>
+          <p className="mb-t-body-sm mb-muted">A few seconds. Everything stays in this browser.</p>
+          <ol className="mb-saving-steps">
+            {[
+              ['Recording saved', micOk ? 'audio + transcript' : 'transcript only'],
+              ['Waveform measured', ''],
+              ['Tasks found by phrasing', `${prefs.taskHints ? suggestTasks(lines).length : 0}`],
+            ].map(([label, meta], i) => (
+              <li key={label} className={`is-${stepsDone(i + 1)}`}>
+                <span className="mb-saving-mark" aria-hidden="true">{step > i + 1 ? <Icon name="check" size={12} /> : step === i + 1 ? <Icon name="loader" size={14} /> : null}</span>
+                <span className="mb-t-label">{label}</span>
+                {meta && <span className="mb-t-meta mb-muted">{meta}</span>}
+              </li>
+            ))}
+          </ol>
+        </section>
+      ) : (
+      <section className="mb-recorder" aria-labelledby="record-h">
+        <div className="mb-recorder-mode">
+          <Segmented
+            label="Capture type" value="note" onChange={() => {}} size="sm"
+            options={[{ value: 'note', label: 'Note' }, { value: 'meeting', label: 'Meeting', disabled: true }]}
+          />
+          <p className="mb-t-meta mb-muted mb-recorder-why"><Icon name="info" size={14} /> Meeting needs a model that can tell voices apart. Not in the browser yet.</p>
+        </div>
 
-        <button
-          type="button"
-          className={`mb-rec${active ? ' is-live' : ''}`}
-          onClick={status === 'idle' ? start : active ? pause : start}
-          disabled={!available}
-          aria-label={status === 'idle' ? 'Start recording' : active ? 'Pause recording' : 'Resume recording'}
-        >
-          <span className="mb-rec-disc">{status === 'idle' ? <Icon name="mic" size={32} /> : 'REC'}</span>
-        </button>
+        <div className="mb-recorder-live">
+          <button
+            type="button"
+            className={`mb-rec${active ? ' is-live' : ''}`}
+            onClick={status === 'idle' ? start : active ? pause : start}
+            disabled={!available}
+            aria-label={status === 'idle' ? 'Start recording' : active ? 'Pause recording' : 'Resume recording'}
+          >
+            <span className="mb-rec-disc"><Icon name={active ? 'pause' : 'mic'} size={28} /></span>
+          </button>
+          <div className="mb-recorder-clock">
+            <p className="mb-t-page mb-tabular mb-record-timer" aria-label={`Elapsed ${formatTimer(elapsed)}`}>{formatDuration(elapsed)}</p>
+            <p className="mb-t-label-sm mb-record-status" aria-live="polite">
+              <span className={`mb-dot${active ? ' is-live' : ''}`} aria-hidden="true" />
+              {status === 'idle' ? 'Ready' : active ? 'Listening' : 'Paused'}
+            </p>
+          </div>
+          <div className={`mb-recorder-meter${active ? ' is-live' : ''}`} aria-hidden="true">
+            {levels.map((l, i) => <span key={i} style={{ height: `${Math.round(8 + l * 92)}%` }} />)}
+          </div>
+        </div>
 
-        <p className="mb-display-timer mb-tabular mb-record-timer" aria-label={`Elapsed ${formatTimer(elapsed)}`}>{formatTimer(elapsed)}</p>
-
-        <div className="mb-record-actions">
+        <div className="mb-recorder-actions">
           {status === 'idle' ? (
-            <Button variant="primary" size="lg" block onClick={start} disabled={!available}>Start</Button>
+            <Button variant="primary" onClick={start} disabled={!available}>Start</Button>
           ) : (
             <>
-              <Button size="lg" onClick={active ? pause : start} disabled={saving}>{active ? 'Pause' : 'Resume'}</Button>
-              <Button variant="primary" size="lg" onClick={() => void stopAndSave()} disabled={saving}>
-                {saving ? 'Saving…' : <>Stop &amp; save</>}
-              </Button>
+              <Button onClick={active ? pause : start} icon={active ? 'pause' : 'mic'}>{active ? 'Pause' : 'Resume'}</Button>
+              <Button variant="primary" icon="stop" onClick={() => void stopAndSave()}>Stop &amp; save</Button>
             </>
           )}
+          <Button variant="ghost" onClick={discard}>Discard</Button>
+          {prefs.shortcuts && available && <span className="mb-t-meta mb-muted mb-recorder-key"><kbd className="mb-kbd">Space</kbd> to {status === 'recording' ? 'pause' : status === 'idle' ? 'start' : 'resume'}</span>}
         </div>
-        <p className="mb-meta mb-muted">{active ? 'Mumble is listening…' : ' '}</p>
 
         {error && <p className="mb-record-error" role="alert">{error}</p>}
         {!micOk && available && (
@@ -187,46 +283,36 @@ export function RecordScreen() {
             The audio can’t be recorded in this browser (or the microphone recording was refused), so this will be saved as a transcript only.
           </p>
         )}
-        <p className="mb-meta mb-muted mb-record-fine">
-          {available
-            ? 'Meeting mode needs a model that can tell voices apart, so it’s off in the demo. The recording is saved only in this browser; the transcript is written by your browser’s speech service (Chrome and Edge send the audio to their vendor; Safari keeps it on-device where it can).'
-            : 'This browser has no speech recognition (Firefox doesn’t support it). Open the demo in Chrome, Edge or Safari to record.'}
-        </p>
+        {!available && (
+          <p className="mb-record-error">This browser has no speech recognition (Firefox doesn’t support it). Open the demo in Chrome, Edge or Safari to record.</p>
+        )}
       </section>
+      )}
 
-      <div className="mb-split-rule" aria-hidden="true" />
-
-      {/* Right half: the live transcript, with the close button top right. */}
       <section className="mb-record-live" aria-labelledby="live-h">
-        <button type="button" className="mb-review-close" aria-label="Close without saving" onClick={discard}>
-          <Icon name="x" size={16} />
-        </button>
-        <h2 id="live-h" className="mb-heading-card mb-record-live-h">
-          Live Transcript <span className="mb-meta mb-muted">· Updating in real time</span>
-        </h2>
+        <h2 id="live-h" className="mb-t-over mb-record-live-h">Live transcript <span className="mb-t-meta mb-muted">· updating as you talk</span></h2>
         <div className="mb-record-lines" aria-live="polite" aria-relevant="additions">
           {lines.length === 0 && !interim && (
-            <p className="mb-body mb-muted">
+            <p className="mb-t-body mb-muted">
               Start talking. Say something like “We need to send the proposal by Friday” and watch it get picked up as a task.
             </p>
           )}
           {(lines.length > 0 || interim) && (
-            /* One voice in a Mumble — the frame's turn header, said once. */
             <div className="mb-record-speaker">
               <Avatar name="You" colorIndex={0} size="md" />
-              <span className="mb-label-strong">You</span>
-              <span className="mb-meta mb-muted mb-tabular">{formatDuration(lines[0]?.startsAt ?? 0)}</span>
+              <span className="mb-t-label">You</span>
+              <span className="mb-t-meta mb-muted mb-tabular">{formatDuration(lines[0]?.startsAt ?? 0)}</span>
             </div>
           )}
           {lines.map((l) => (
             <div key={l.id} className={`mb-line${taskIds.has(l.id) ? ' is-task' : ''}`}>
-              <p className="mb-line-text">{l.text}</p>
-              {taskIds.has(l.id) && <span className="mb-line-task">Task</span>}
+              <p className="mb-t-reading mb-line-text">{l.text}</p>
+              {taskIds.has(l.id) && <span className="mb-chip is-tag mb-line-task"><Icon name="check" size={12} /> Task</span>}
             </div>
           ))}
-          {interim && <p className="mb-body mb-record-interim">{interim}</p>}
+          {interim && <p className="mb-t-reading mb-record-interim">{interim}<span className="mb-caret" aria-hidden="true" /></p>}
         </div>
       </section>
-    </div>
+    </Page>
   );
 }

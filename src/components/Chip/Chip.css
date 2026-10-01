@@ -1,62 +1,64 @@
-/* Chips — measured from the hi-fi frames' component instances.
-
-   ⭐ SHAPE says what a chip is (as in the design):
-     Chip / Meta    rounded RECTANGLE (r4) — a fact: 32 min · 4 attendees
-     Chip / Tag     PILL — a tag: Product · Sprint
-     Chip / Action  dashed RECTANGLE — a value to set: Assignee · Due date
-     Chip / Person  pill with a face
-   All 24px tall, 12px side padding. */
+/* Chips — the refined set (Oct 1). SHAPE still says what a chip is:
+     Chip / Meta    a quiet fact (1:16 · 4 people) — soft fill, no edge
+     Chip / Tag     a white PILL with the tag's colour in a dot
+     Chip / Action  a value to set — hairline, becomes solid once set
+     Chip / Filter  narrows a list — segments in one track (see .mb-filterbar) */
 .mb-chip {
-  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-4);
-  min-height: 24px; padding: 0 var(--space-12);
-  border-radius: var(--radius-sm);
-  font: 500 0.625rem/0.75rem var(--font-sans);      /* Chip, from the type scale */
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 24px; padding: 0 10px;
+  border-radius: var(--radius-pill);
+  font: 500 0.75rem/1rem var(--font-sans);
   white-space: nowrap; text-decoration: none;
 }
 .mb-chip.is-meta {
-  background: var(--surface-card); color: var(--text-muted);
-  border: var(--border-width-sm) solid var(--border-default);
+  background: var(--surface-subtle); color: var(--text-muted); border: none;
   cursor: default; user-select: none;
 }
-/* "5 tasks" — accent at 12%, no edge (Rectangle 68 × 22, r4). */
-.mb-chip.is-meta.is-accent { background: color-mix(in srgb, var(--accent-base) 12%, transparent); color: var(--accent-base); border-color: transparent; min-height: 22px; }
-/* Count beside a heading — "Recent Mumbles ⑤": 28 × 20 pill, accent at 16%. */
-.mb-chip.is-meta.is-count {
-  min-width: 28px; min-height: 20px; padding: 0 var(--space-8); border-radius: var(--radius-pill);
-  background: var(--accent-soft); color: var(--accent-base); border-color: transparent;
-  font: 500 0.6875rem/1rem var(--font-sans);
-}
-/* "Low confidence" — accent 7% fill, 16% edge (the design's Low confidence chip). */
-.mb-chip.is-meta.is-low-confidence {
-  background: var(--confidence-low-bg); color: var(--confidence-low); border-color: var(--accent-soft);
-}
+/* "5 tasks" — the accent tint, with the strong accent text (9.6:1). */
+.mb-chip.is-meta.is-accent { background: var(--accent-tint); color: var(--accent-strong); }
+/* A count beside a heading. */
+.mb-chip.is-meta.is-count { min-width: 24px; padding: 0 var(--space-8); background: var(--accent-tint); color: var(--accent-strong); }
+/* "Low confidence" / "Who is this?" — the model's doubt, in the accent tint. */
+.mb-chip.is-meta.is-low-confidence { background: var(--accent-tint); color: var(--accent-strong); }
 
 .mb-chip.is-tag {
-  background: var(--surface-card); color: var(--text-muted);
-  border: var(--border-width-sm) solid var(--border-default); border-radius: var(--radius-pill);
+  padding: 0 10px 0 8px; background: var(--surface-card); color: var(--text-body);
+  border: var(--border-width-sm) solid var(--border-default);
 }
-.mb-chip.is-tag.is-link:hover { color: var(--text-body); border-color: var(--accent-medium); }
+.mb-chip.is-tag.is-link:hover { border-color: var(--border-control); }
+.mb-tag-dot { width: 6px; height: 6px; border-radius: var(--radius-pill); flex-shrink: 0; background: var(--tag-gray-dot); }
 
 .mb-chip.is-action {
   background: var(--surface-card); color: var(--text-muted);
-  border: var(--border-width-sm) dashed var(--border-default);
-  cursor: pointer;
-}
-.mb-chip.is-action:not(.is-empty) { border-style: solid; color: var(--text-body); }
-.mb-chip.is-action:hover { background: var(--accent-subtle); color: var(--text-body); }
-
-/* Filters — 24px rectangles; the chosen one is the 26px black fill (r6). */
-.mb-chip.is-filter {
-  min-height: 24px; padding: 0 var(--space-12);
-  font: 500 0.6875rem/1rem var(--font-sans);
-  background: var(--surface-card); color: var(--text-muted);
   border: var(--border-width-sm) solid var(--border-default);
   cursor: pointer;
 }
-.mb-chip.is-filter:hover { color: var(--text-body); }
-.mb-chip.is-filter[aria-pressed='true'] {
-  min-height: 26px; border-radius: var(--radius-md);
-  background: var(--neutral-1000); color: var(--text-on-accent); border-color: var(--neutral-1000);
+.mb-chip.is-action.is-empty { border-style: dashed; }
+.mb-chip.is-action:not(.is-empty) { color: var(--text-body); }
+.mb-chip.is-action:hover { border-color: var(--border-control); color: var(--text-body); }
+
+/* Filters — segments in one soft track; the chosen one is a white tile. */
+.mb-chip.is-filter {
+  min-height: 30px; padding: 0 var(--space-12); gap: 6px; border-radius: var(--radius-lg);
+  font: 500 0.8125rem/1rem var(--font-sans);
+  background: transparent; color: var(--text-muted); border: none; cursor: pointer;
 }
+.mb-chip.is-filter:hover { color: var(--text-body); }
+.mb-chip.is-filter[aria-pressed='true'] { background: var(--surface-card); color: var(--text-strong); box-shadow: var(--elevation-card); }
+.mb-chip.is-filter .mb-chip-count { color: var(--text-muted); font-weight: 500; font-variant-numeric: tabular-nums; }
 
 .mb-chip:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px; }
+
+/* The view bar: filters in a track, then whatever orders the list. */
+.mb-viewbar { display: flex; align-items: center; gap: var(--space-8); flex-wrap: wrap; margin-bottom: var(--space-24); }
+.mb-filterbar { display: inline-flex; gap: 2px; padding: 3px; border-radius: var(--radius-control); background: var(--surface-subtle); }
+.mb-viewbar-end { margin-left: auto; display: flex; gap: var(--space-8); }
+.mb-dropdown-wrap { position: relative; display: inline-flex; align-items: center; }
+.mb-dropdown {
+  appearance: none; height: 34px; padding: 0 30px 0 12px; cursor: pointer;
+  border: var(--border-width-sm) solid var(--border-default); border-radius: var(--radius-lg);
+  background: var(--surface-card); color: var(--text-body); font: 500 0.8125rem/1rem var(--font-sans);
+}
+.mb-dropdown:hover { border-color: var(--border-control); }
+.mb-dropdown:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 1px; }
+.mb-dropdown-wrap > svg { position: absolute; right: 10px; pointer-events: none; color: var(--text-muted); }

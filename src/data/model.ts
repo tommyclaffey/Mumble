@@ -109,6 +109,10 @@ interface CaptureBase {
   /** Where listening stopped last time, in seconds. Play resumes here; the
       track shows it as the blue "listened" part, as in the design. */
   listenedTo?: number;
+  /** The recording's loudness, 0–1, in even slices — what the waveform draws.
+      Measured from the real audio (demo: scripts/make-demo-peaks.mjs; your
+      recordings: at save). Absent = no waveform, the plain track instead. */
+  peaks?: number[];
 }
 
 /** A solo capture. No speakers, so no diarization and no attendees. */

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Button } from '../Button/Button';
 import { PlayButton } from '../PlayButton/PlayButton';
+import { Waveform } from '../Waveform/Waveform';
 import { formatDuration, positionLabel } from '../../data/model';
 import { SPEEDS, speedLabel, type Speed } from '../../data/store';
 import type { Player } from '../../playback/usePlayer';
@@ -20,9 +21,11 @@ import './PlayerBar.css';
  * (aria-keyshortcuts advertises it; the visible hint row is gone).
  */
 export function PlayerBar(
-  { player, speed, onSpeed, title, compact }:
+  { player, speed, onSpeed, title, compact, peaks }:
   {
     player: Player; speed: Speed; onSpeed: (s: Speed) => void; title: string;
+    /** The recording's real waveform, drawn under the scrubber. */
+    peaks?: number[];
     /** The design's calm Audio Playback box: play · time · track · length ·
         speed. No line label or line-skip buttons (those belong with the
         transcript, where the lines are on screen). */
@@ -37,20 +40,25 @@ export function PlayerBar(
   const state = stateText(p);
 
   return (
-    <section className={`mb-player${compact ? ' is-compact' : ''}`} aria-label="Recording">
+    <section className={`mb-player${compact ? ' is-compact' : ''}${peaks?.length ? ' has-wave' : ''}`} aria-label="Recording">
       <PlayButton size="md" playing={p.playing} onClick={p.toggle} label={`recording of ${title}`} disabled={off} keyshortcuts="Space" />
-      {!compact && <span className="mb-meta-strong mb-tabular mb-player-pos">{off ? 'No recording' : label}</span>}
-      <span className="mb-meta mb-tabular mb-player-time is-now">{off ? '' : formatDuration(p.time)}</span>
-      <input
-        type="range" className="mb-player-seek"
-        min={0} max={Math.max(p.duration, 0.1)} step={0.1} value={Math.min(p.time, p.duration || 0)}
-        onChange={(e) => p.seek(Number(e.target.value))}
-        disabled={off}
-        aria-label="Position in recording"
-        aria-valuetext={`${label}, ${formatDuration(p.time)} of ${formatDuration(p.duration)}`}
-        style={{ '--mb-seek': `${p.duration ? (p.time / p.duration) * 100 : 0}%` } as CSSProperties}
-      />
-      <span className="mb-meta mb-tabular mb-player-time is-total">{off ? 'Transcript only' : formatDuration(p.duration)}</span>
+      {/* Where you are, in words first ("Line 4 of 13"), then the time. */}
+      <div className="mb-player-pos">
+        <span className="mb-t-label-sm mb-player-line">{off ? 'No recording' : label}</span>
+        <span className="mb-t-meta mb-tabular mb-player-time">{off ? 'Transcript only' : `${formatDuration(p.time)} / ${formatDuration(p.duration)}`}</span>
+      </div>
+      <div className="mb-player-wave">
+        <Waveform decorative peaks={peaks} percent={p.duration ? (p.time / p.duration) * 100 : 0} bars={140} />
+        <input
+          type="range" className="mb-player-seek"
+          min={0} max={Math.max(p.duration, 0.1)} step={0.1} value={Math.min(p.time, p.duration || 0)}
+          onChange={(e) => p.seek(Number(e.target.value))}
+          disabled={off}
+          aria-label="Position in recording"
+          aria-valuetext={`${label}, ${formatDuration(p.time)} of ${formatDuration(p.duration)}`}
+          style={{ '--mb-seek': `${p.duration ? (p.time / p.duration) * 100 : 0}%` } as CSSProperties}
+        />
+      </div>
       <div className="mb-player-controls">
         {!compact && <>
           <Button variant="ghost" size="sm" icon="prev" aria-label="Previous line" aria-keyshortcuts="ArrowLeft" onClick={p.prev} disabled={off} />

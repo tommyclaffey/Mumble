@@ -1,118 +1,125 @@
 import { useState } from 'react';
-import { ChipMeta } from '../components/Chip/Chip';
-import { Surface } from '../components/Surface/Surface';
+import { Icon } from '../components/Icon/Icon';
+import { Page, PanelCard } from '../components/Page/Page';
 import { TaskCard } from '../components/TaskCard/TaskCard';
-import { formatWhen, isMeeting, openTasks } from '../data/model';
-import { PlayButton } from '../components/PlayButton/PlayButton';
-import { useListPlayer } from '../playback/useListPlayer';
+import { formatDuration, formatWhen, isMeeting, openTasks } from '../data/model';
 import { href } from '../data/route';
 import { useStore } from '../data/store';
+import { tagColor } from '../data/tagColor';
 import './screens.css';
 import './TagsScreen.css';
 
 /**
- * Tags — list + detail, as in the wireframe: a searchable grid of tag cards
- * (each with its counts), a rule, and the chosen tag's captures and tasks.
- * The chosen tag is in the URL (#/tags/Product), so it survives a reload.
+ * Tags — a grid of tag cards; the chosen one fills the side panel with its
+ * recordings and open tasks (Figma page 07, frame 06). The chosen tag is in
+ * the URL (#/tags/Product), so it survives a reload.
  */
 export function TagsScreen({ tag }: { tag?: string }) {
   const { captures, dispatch } = useStore();
   const [query, setQuery] = useState('');
-  const names = [...new Set(captures.flatMap((c) => c.tags))].sort((a, b) => a.localeCompare(b));
+  const [order, setOrder] = useState<'used' | 'az'>('used');
+  const stats = (n: string) => {
+    const cs = captures.filter((c) => c.tags.includes(n));
+    const last = cs.map((c) => c.createdAt).sort().at(-1);
+    return { captures: cs.length, tasks: cs.reduce((s, c) => s + openTasks(c), 0), last };
+  };
+  const names = [...new Set(captures.flatMap((c) => c.tags))]
+    .sort((a, b) => (order === 'az' ? a.localeCompare(b) : stats(b).captures - stats(a).captures || a.localeCompare(b)));
   const shown = names.filter((n) => n.toLowerCase().includes(query.trim().toLowerCase()));
   const selected = tag && names.includes(tag) ? tag : shown[0];
   const tagged = selected ? captures.filter((c) => c.tags.includes(selected)) : [];
-  const tasks = tagged.flatMap((c) => c.tasks.map((t) => ({ t, from: c })));
-  const count = (n: string) => {
-    const cs = captures.filter((c) => c.tags.includes(n));
-    return { captures: cs.length, tasks: cs.reduce((s, c) => s + openTasks(c), 0) };
-  };
+  const tasks = tagged.flatMap((c) => c.tasks.filter((t) => t.status !== 'done').map((t) => ({ t, from: c })));
   const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`;
-  /* One voice for the tag's mumbles — the design gives each a big play button. */
-  const player = useListPlayer(tagged);
 
-  return (
-    <div className="mb-split mb-tags-split">
-      <section className="mb-split-list" aria-labelledby="tags-h">
-        <h1 id="tags-h" className="mb-display-page mb-page-title">All Tags</h1>
-        <label className="mb-search mb-split-search mb-tag-search">
-          <span className="mb-sr-only">Search tags</span>
-          <input data-search type="search" placeholder="Search tags…" value={query} onChange={(e) => setQuery(e.target.value)} />
-        </label>
-        {shown.length === 0 ? (
-          <div className="mb-empty"><p>{names.length ? `No tags match “${query}”.` : 'No tags yet.'}</p></div>
-        ) : (
-          <ul className="mb-tag-grid" aria-label="Tags">
-            {shown.map((n) => {
-              const k = count(n);
+  const panel = selected && (
+    <>
+      <PanelCard id="tag-detail-h" title={selected} icon="hash" meta="Selected">
+        <p className="mb-t-body-sm mb-muted">{plural(tagged.length, 'recording')} and {plural(tasks.length, 'open task')} carry this tag.</p>
+      </PanelCard>
+      <PanelCard id="tag-recs-h" title="Recordings" icon="mic" meta={tagged.length}>
+        <ul className="mb-prows">
+          {tagged.map((c) => (
+            <li key={c.id}>
+              <div className="mb-prow">
+                <span className="mb-tag-kind" aria-hidden="true"><Icon name={isMeeting(c) ? 'users' : 'mic'} size={14} /></span>
+                <a className="mb-t-body-sm mb-prow-link mb-tag-rec" href={href({ name: 'capture', id: c.id })}>{c.title}</a>
+                <span className="mb-t-meta mb-muted">{formatWhen(c.createdAt).split(' · ')[0]}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </PanelCard>
+      <PanelCard id="tag-tasks-h" title="Open tasks" icon="check" meta={tasks.length}>
+        {tasks.length === 0 ? <p className="mb-t-body-sm mb-muted">No open tasks under this tag.</p> : (
+          <ul className="mb-prows">
+            {tasks.map(({ t, from }) => {
+              const idx = from.lines.findIndex((l) => l.id === t.sourceLineId);
               return (
-                <li key={n}>
-                  <Surface className={`mb-tag-card${n === selected ? ' is-selected' : ''}`}>
-                    <a className="mb-heading-card mb-tag-link" href={href({ name: 'tags', tag: n })} aria-current={n === selected ? 'true' : undefined}>{n}</a>
-                    <div className="mb-card-chips">
-                      <ChipMeta>{plural(k.captures, 'mumble')}</ChipMeta>
-                      <ChipMeta>{plural(k.tasks, 'task')}</ChipMeta>
-                    </div>
-                  </Surface>
+                <li key={t.id}>
+                  <TaskCard
+                    task={t} people={isMeeting(from) ? from.attendees : ['You']} from={from.title}
+                    at={idx >= 0 ? formatDuration(from.lines[idx].startsAt) : undefined}
+                    href={href({ name: 'capture', id: from.id, line: idx + 1 || undefined })}
+                    onToggle={(done) => dispatch({ type: 'setTaskStatus', captureId: from.id, taskId: t.id, status: done ? 'done' : 'todo' })}
+                    onStatus={(status) => dispatch({ type: 'setTaskStatus', captureId: from.id, taskId: t.id, status })}
+                    onDue={(due) => dispatch({ type: 'replaceCapture', capture: { ...from, tasks: from.tasks.map((x) => (x.id === t.id ? { ...x, due } : x)) } })}
+                    onAssign={(who) => dispatch({ type: 'replaceCapture', capture: { ...from, tasks: from.tasks.map((x) => (x.id === t.id ? { ...x, assignee: who } : x)) } })}
+                  />
                 </li>
               );
             })}
           </ul>
         )}
-      </section>
+      </PanelCard>
+    </>
+  );
 
-      <div className="mb-split-rule" aria-hidden="true" />
+  return (
+    <Page title="Tags" subtitle={`${plural(names.length, 'tag')} across ${plural(captures.length, 'recording')}`} panel={panel || undefined} panelLabel="Chosen tag">
+      <div className="mb-viewbar">
+        <label className="mb-search mb-tag-search">
+          <Icon name="search" size={16} />
+          <span className="mb-sr-only">Search tags</span>
+          <input data-search type="search" placeholder="Search tags" value={query} onChange={(e) => setQuery(e.target.value)} />
+        </label>
+        <div className="mb-viewbar-end">
+          <label className="mb-dropdown-wrap">
+            <span className="mb-sr-only">Order</span>
+            <select className="mb-dropdown" value={order} onChange={(e) => setOrder(e.target.value as 'used' | 'az')}>
+              <option value="used">Most used</option>
+              <option value="az">A–Z</option>
+            </select>
+            <Icon name="chevron-down" size={14} />
+          </label>
+        </div>
+      </div>
 
-      {selected && (
-        <section className="mb-split-detail mb-tag-detail" aria-labelledby="tag-detail-h">
-          <h2 id="tag-detail-h" className="mb-display-page mb-meeting-title">{selected}</h2>
-          <div className="mb-card-chips">
-            <ChipMeta tone="count">{plural(tagged.length, 'mumble')}</ChipMeta>
-            <ChipMeta tone="count">{plural(tasks.filter(({ t }) => t.status !== 'done').length, 'task')}</ChipMeta>
-          </div>
-          <div className="mb-review-rule" aria-hidden="true" />
-
-          <h3 className="mb-label-strong mb-tag-detail-h">Mumbles</h3>
-          <ul className="mb-list">
-            {tagged.map((c) => (
-              <li key={c.id}>
-                <Surface className="mb-tag-row mb-stretch">
-                  <div className="mb-card-head">
-                    <a className="mb-heading-sub mb-tag-row-title mb-stretch-link" href={href({ name: 'capture', id: c.id })}>{c.title}</a>
-                    <span className="mb-card-when">{formatWhen(c.createdAt)}</span>
+      {shown.length === 0 ? (
+        <div className="mb-empty"><p>{names.length ? `No tags match “${query}”.` : 'No tags yet.'}</p></div>
+      ) : (
+        <ul className="mb-tag-grid" aria-label="Tags">
+          {shown.map((n) => {
+            const k = stats(n);
+            const c = tagColor(n);
+            return (
+              <li key={n}>
+                <div className={`mb-tag-card mb-stretch${n === selected ? ' is-selected' : ''}`}>
+                  <div className="mb-tag-card-top">
+                    <span className={`mb-tag-swatch is-${c}`} aria-hidden="true"><Icon name="hash" size={18} /></span>
+                    <h2 className="mb-t-heading mb-tag-card-name">
+                      <a className="mb-stretch-link" href={href({ name: 'tags', tag: n })} aria-current={n === selected ? 'true' : undefined}>{n}</a>
+                    </h2>
                   </div>
-                  {c.summary && <p className="mb-body-small mb-muted mb-tag-row-summary">{c.summary}</p>}
-                  <div className="mb-card-rule" aria-hidden="true" />
-                  {c.audio ? (
-                    <span className="mb-raise mb-tag-row-play">
-                      <PlayButton size="md" playing={player.isPlaying(c.id)} onClick={() => player.toggle(c.id)} label={`recording of ${c.title}`} />
-                    </span>
-                  ) : <span className="mb-meta mb-muted">No recording · transcript only</span>}
-                </Surface>
+                  <div className="mb-tag-card-stats mb-t-body-sm">
+                    <span>{plural(k.captures, 'recording')}</span><span>{plural(k.tasks, 'task')}</span>
+                    {k.last && <span className="mb-t-meta mb-muted mb-tag-card-last">{formatWhen(k.last).split(' · ')[0]}</span>}
+                  </div>
+                </div>
               </li>
-            ))}
-          </ul>
-
-          <div className="mb-review-rule" aria-hidden="true" />
-          <h3 className="mb-label-strong mb-tag-detail-h">Tasks</h3>
-          {tasks.length === 0 ? <p className="mb-body mb-muted">No tasks under this tag.</p> : (
-            <ul className="mb-list">
-              {tasks.map(({ t, from }) => (
-                <li key={t.id}>
-                  <TaskCard
-                    task={t} people={isMeeting(from) ? from.attendees : ['You']} from={from.title}
-                    onToggle={(done) => dispatch({ type: 'setTaskStatus', captureId: from.id, taskId: t.id, status: done ? 'done' : 'todo' })}
-                    onStatus={(status) => dispatch({ type: 'setTaskStatus', captureId: from.id, taskId: t.id, status })}
-                    onDue={(due) => dispatch({ type: 'replaceCapture', capture: { ...from, tasks: from.tasks.map((x) => (x.id === t.id ? { ...x, due } : x)) } })}
-                    href={href({ name: 'capture', id: from.id, line: from.lines.findIndex((l) => l.id === t.sourceLineId) + 1 || undefined })}
-                    onAssign={(who) => dispatch({ type: 'replaceCapture', capture: { ...from, tasks: from.tasks.map((x) => (x.id === t.id ? { ...x, assignee: who } : x)) } })}
-                  />
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+            );
+          })}
+        </ul>
       )}
-    </div>
+    </Page>
   );
 }

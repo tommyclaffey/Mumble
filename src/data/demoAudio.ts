@@ -1,4 +1,5 @@
 import timings from './demoAudio.json';
+import demoPeaks from './demoPeaks.json';
 import type { Capture } from './model';
 
 /**
@@ -8,6 +9,7 @@ import type { Capture } from './model';
  * audio can import the transcripts without needing the audio to exist yet.
  */
 const T = timings as Record<string, { duration: number; starts: number[] }>;
+const P = demoPeaks as Record<string, number[]>;
 
 /* A couple of demo meetings start part-listened, so the "listened" track the
    design shows is visible before anyone presses play. Seconds. */
@@ -21,6 +23,7 @@ export function withDemoAudio(c: Capture): Capture {
     audio: 'demo',
     listenedTo: c.listenedTo ?? LISTENED[c.id],
     durationSeconds: Math.round(t.duration),
+    peaks: P[c.id],
     lines: c.lines.map((l, i) => ({ ...l, startsAt: t.starts[i] })),
   };
 }

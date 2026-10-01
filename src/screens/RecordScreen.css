@@ -1,57 +1,73 @@
-/* Recording in Progress — the frame: no sidebar; controls centred in the
-   left half (rule at x 720); the live transcript on the right. */
-.mb-record {
-  display: grid; grid-template-columns: minmax(0, 720fr) 1px minmax(0, 1008fr);
-  min-height: calc(100vh - var(--layout-header));
+/* Record — Figma page 07, frame 02: one recorder card (mode · the mic, the
+   clock, your live level · one main action), the live transcript under it,
+   and the side panel: tasks spotted, what to say, where the audio goes. */
+.mb-recorder, .mb-saving {
+  display: flex; flex-direction: column; gap: var(--space-24);
+  padding: 28px var(--space-32); margin-bottom: var(--space-32);
+  background: var(--surface-card); border-radius: var(--radius-card); box-shadow: var(--elevation-card);
 }
-.mb-record-controls {
-  display: flex; flex-direction: column; align-items: center; gap: var(--space-16);
-  padding: 190px var(--space-48) var(--space-48); text-align: center;
-}
-.mb-record-controls > p { margin: 0; }
-.mb-record-controls .mb-seg { width: 304px; background: var(--surface-card); border: var(--border-width-sm) solid var(--border-default); padding: 3px; }
-.mb-record-status { margin-top: -6px !important; }
+.mb-recorder-mode { display: flex; align-items: center; gap: var(--space-12); flex-wrap: wrap; }
+.mb-recorder-why { margin: 0; display: inline-flex; align-items: center; gap: 6px; }
+.mb-recorder-live { display: flex; align-items: center; gap: var(--space-24); }
 .mb-rec {
-  border: none; padding: 0; cursor: pointer; border-radius: var(--radius-pill);
-  width: 160px; height: 160px; display: flex; align-items: center; justify-content: center;
-  background: var(--accent-soft); margin: var(--space-24) 0 18px;
+  flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+  width: 88px; height: 88px; padding: 0; border: none; border-radius: var(--radius-pill);
+  background: var(--accent-tint); cursor: pointer;
 }
-/* REC disc: 112, the header button's gradient turned vertical, a soft ring. */
 .mb-rec-disc {
-  width: 112px; height: 112px; border-radius: var(--radius-pill);
-  display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(180deg, var(--accent-base), var(--blue-950));
-  color: var(--text-on-accent); font: 700 1.125rem/1.5rem var(--font-sans);   /* Display/Badge */
-  box-shadow: 0 0 0 3px var(--surface-card), 0 0 0 4px var(--accent-base);
+  width: 60px; height: 60px; border-radius: var(--radius-pill); display: inline-flex; align-items: center; justify-content: center;
+  background: var(--accent-base); color: var(--text-on-accent); box-shadow: var(--elevation-accent);
 }
-.mb-rec.is-live { animation: mb-breathe 2.4s ease-in-out infinite; }
-@keyframes mb-breathe { 50% { background: color-mix(in srgb, var(--accent-base) 28%, transparent); } }
+.mb-rec.is-live { animation: mb-halo 1.6s ease-in-out infinite; }
+@keyframes mb-halo { 50% { box-shadow: 0 0 0 8px var(--accent-subtle); } }
 @media (prefers-reduced-motion: reduce) { .mb-rec.is-live { animation: none; } }
-.mb-rec:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 4px; }
 .mb-rec:disabled { cursor: not-allowed; opacity: 0.5; }
-.mb-record-timer { color: var(--text-strong); font-size: 2rem; line-height: 2.75rem; font-weight: 700; margin: 0 0 var(--space-24) !important; }
-.mb-record-actions { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--space-16); width: 100%; max-width: 592px; }
-.mb-record-actions .mb-button { min-height: 44px; }
-.mb-record-error { color: var(--accent-base); background: var(--accent-subtle); padding: var(--space-8) var(--space-12); border-radius: var(--radius-md); font: 500 0.75rem/1rem var(--font-sans); max-width: 592px; }
-.mb-record-fine { max-width: 460px; margin-top: var(--space-24) !important; }
+.mb-rec:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 3px; }
+.mb-recorder-clock p { margin: 0; }
+.mb-record-timer { color: var(--text-strong); font-weight: 700; }
+.mb-record-status { display: flex; align-items: center; gap: 6px; color: var(--accent-strong); }
+.mb-recorder-meter { flex: 1; min-width: 0; height: 56px; display: grid; grid-template-columns: repeat(48, minmax(0, 1fr)); gap: 3px; align-items: center; }
+.mb-recorder-meter span { display: block; width: 100%; max-width: 4px; justify-self: center; border-radius: 2px; background: var(--neutral-100); transition: height 110ms linear; }
+.mb-recorder-meter.is-live span { background: var(--accent-base); }
+@media (prefers-reduced-motion: reduce) { .mb-recorder-meter span { transition: none; } }
+.mb-recorder-actions { display: flex; align-items: center; gap: var(--space-12); flex-wrap: wrap; }
+.mb-recorder-key { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
+.mb-record-error { margin: 0; padding: var(--space-12) var(--space-16); border-radius: var(--radius-control); background: var(--accent-tint); color: var(--accent-strong); font: 400 0.875rem/1.25rem var(--font-sans); }
 
-.mb-record-live { position: relative; padding: var(--space-32) var(--layout-gutter); }
-.mb-record-live .mb-review-close { top: var(--space-32); right: var(--layout-gutter); }
-.mb-record-live-h { display: flex; align-items: baseline; gap: var(--space-4); margin: 24px 0 18px; color: var(--text-strong); }
-.mb-record-lines { display: flex; flex-direction: column; gap: var(--space-8); }
-.mb-record-lines .mb-line { margin-left: 32px; min-height: 24px; align-items: center; }
-.mb-record-lines .mb-line:not(.is-task) { padding: 4px 0; }
-.mb-record-lines .mb-line::before { display: none; }
-.mb-record-speaker { display: flex; align-items: center; gap: var(--space-8); color: var(--text-strong); }
-.mb-record-interim { margin-left: 32px !important; }
-.mb-record-interim { color: var(--text-muted); font-style: italic; margin: 0; }
-.mb-record .mb-split-rule { margin: 0; }
+.mb-saving h2, .mb-saving p { margin: 0; }
+.mb-saving { gap: var(--space-12); max-width: 560px; }
+.mb-saving-steps { list-style: none; margin: var(--space-8) 0 0; padding: 0; }
+.mb-saving-steps li { display: flex; align-items: center; gap: var(--space-12); padding: 12px 0; }
+.mb-saving-steps li + li { border-top: var(--border-width-sm) solid var(--surface-sunken); }
+.mb-saving-steps .mb-t-label { flex: 1; color: var(--text-strong); }
+.mb-saving-steps li.is-todo .mb-t-label { color: var(--text-muted); }
+.mb-saving-mark { width: 22px; height: 22px; border-radius: var(--radius-pill); display: inline-flex; align-items: center; justify-content: center; border: 1.5px solid var(--border-default); color: var(--text-on-accent); }
+.is-done > .mb-saving-mark { background: var(--accent-base); border-color: var(--accent-base); }
+.is-active > .mb-saving-mark { background: var(--accent-tint); border-color: transparent; color: var(--accent-base); }
 
-@media (max-width: 1023px) {
-  .mb-record { grid-template-columns: minmax(0, 1fr); }
-  .mb-record .mb-split-rule { display: none; }
-  .mb-record-controls { padding: var(--space-32) var(--space-16); }
+.mb-record-live-h { margin: 0 0 var(--space-16); color: var(--text-muted); display: flex; gap: 6px; align-items: baseline; }
+.mb-record-live-h .mb-t-meta { text-transform: none; letter-spacing: 0; font-weight: 500; }
+.mb-record-lines { display: flex; flex-direction: column; gap: 6px; }
+.mb-record-speaker { display: flex; align-items: center; gap: 10px; }
+.mb-record-speaker .mb-avatar.is-md { width: 28px; height: 28px; }
+.mb-record-interim { margin: 0; padding: 4px 12px 4px 41px; color: var(--text-muted); }
+.mb-caret { display: inline-block; width: 2px; height: 1.1em; margin-left: 2px; vertical-align: text-bottom; background: var(--accent-base); animation: mb-blink 1s steps(2) infinite; }
+@keyframes mb-blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .mb-caret { animation: none; } }
+
+/* Panel bits */
+.mb-spotted { gap: 10px; align-items: flex-start; color: var(--accent-base); min-height: 0; }
+.mb-spotted .mb-t-body-sm { color: var(--text-strong); }
+.mb-try { display: grid; grid-template-columns: 1fr auto; gap: 10px 12px; margin: 0; }
+.mb-try dt { margin: 0; font: 500 0.875rem/1.25rem var(--font-sans); color: var(--text-strong); }
+.mb-try dd { margin: 0; font: 500 0.75rem/1.25rem var(--font-sans); color: var(--text-muted); text-align: right; }
+.mb-where { display: grid; gap: 2px; }
+.mb-where .mb-t-label-sm { color: var(--text-strong); margin-top: 8px; }
+.mb-where .mb-t-label-sm:first-child { margin-top: 0; }
+
+@media (max-width: 767px) {
+  .mb-recorder, .mb-saving { padding: var(--space-16); }
+  .mb-recorder-live { flex-wrap: wrap; }
+  .mb-recorder-meter { flex-basis: 100%; }
+  .mb-record-interim { padding-left: 14px; }
 }
-/* The review screen hides its side-panel close on narrow screens; this one
-   is the only way out of a recording, so it always shows. */
-@media (max-width: 1023px) { .mb-record-live .mb-review-close { display: inline-flex; } }

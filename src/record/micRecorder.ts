@@ -17,6 +17,9 @@ export interface MicRecorder {
   resume(): void;
   /** Stops and hands back the recording (undefined if nothing was recorded). */
   stop(): Promise<Blob | undefined>;
+  /** How loud the mic is right now, 0–1 — drives the live meter. Optional:
+      without it the meter stays flat rather than pretending. */
+  level?(): number;
 }
 
 export function browserMicRecorder(): MicRecorder {
@@ -25,6 +28,9 @@ export function browserMicRecorder(): MicRecorder {
 
   let rec: MediaRecorder | null = null;
   let stream: MediaStream | null = null;
+  let ctx: AudioContext | null = null;
+  let analyser: AnalyserNode | null = null;
+  let buf: Float32Array<ArrayBuffer> | null = null;
   const parts: Blob[] = [];
 
   return {
@@ -37,6 +43,21 @@ export function browserMicRecorder(): MicRecorder {
       parts.length = 0;
       rec.ondataavailable = (e) => { if (e.data.size) parts.push(e.data); };
       rec.start(1000);
+      /* A level meter on the same stream — the live bars are your voice. */
+      try {
+        ctx = new AudioContext();
+        analyser = ctx.createAnalyser();
+        analyser.fftSize = 1024;
+        ctx.createMediaStreamSource(stream).connect(analyser);
+        buf = new Float32Array(analyser.fftSize);
+      } catch { analyser = null; }
+    },
+    level() {
+      if (!analyser || !buf || rec?.state !== 'recording') return 0;
+      analyser.getFloatTimeDomainData(buf);
+      let sum = 0;
+      for (const v of buf) sum += v * v;
+      return Math.min(1, Math.sqrt(sum / buf.length) * 4);
     },
     pause() { if (rec?.state === 'recording') rec.pause(); },
     resume() { if (rec?.state === 'paused') rec.resume(); },
@@ -47,6 +68,7 @@ export function browserMicRecorder(): MicRecorder {
         r.onstop = () => {
           /* Release the mic — otherwise the browser's recording light stays on. */
           stream?.getTracks().forEach((t) => t.stop());
+          void ctx?.close();
           resolve(parts.length ? new Blob(parts, { type: r.mimeType || parts[0].type }) : undefined);
         };
         r.stop();

@@ -21,9 +21,14 @@ export const speedLabel = (s: Speed) => `${Number.isInteger(s) ? s.toFixed(1) : 
 export interface Prefs {
   /** Playback speed for recordings. Remembered across captures. */
   speed: Speed;
+  /** Space / ← → on a recording. On by default; off for anyone whose
+      assistive tech or habits already use those keys. */
+  shortcuts: boolean;
+  /** Suggest tasks from phrasing ("we need to…") while recording. */
+  taskHints: boolean;
 }
 
-export const DEFAULT_PREFS: Prefs = { speed: 1 };
+export const DEFAULT_PREFS: Prefs = { speed: 1, shortcuts: true, taskHints: true };
 
 export interface State {
   captures: Capture[];
@@ -99,10 +104,14 @@ function load(): State {
          without touching any edits made to them. */
       if (Array.isArray(parsed.captures)) {
         return {
-          captures: parsed.captures.map((c) => (c.source === 'demo' && !c.audio ? withDemoAudio(c) : c)),
+          captures: parsed.captures.map((c) => (c.source === 'demo' && (!c.audio || !c.peaks) ? withDemoAudio(c) : c)),
           /* Only known prefs survive — a save from the read-aloud days had
              engine/voice settings that no longer mean anything. */
-          prefs: { speed: SPEEDS.includes((parsed.prefs as Partial<Prefs> | undefined)?.speed as Speed) ? parsed.prefs.speed : DEFAULT_PREFS.speed },
+          prefs: {
+            speed: SPEEDS.includes((parsed.prefs as Partial<Prefs> | undefined)?.speed as Speed) ? parsed.prefs.speed : DEFAULT_PREFS.speed,
+            shortcuts: typeof parsed.prefs?.shortcuts === 'boolean' ? parsed.prefs.shortcuts : DEFAULT_PREFS.shortcuts,
+            taskHints: typeof parsed.prefs?.taskHints === 'boolean' ? parsed.prefs.taskHints : DEFAULT_PREFS.taskHints,
+          },
         };
       }
     }

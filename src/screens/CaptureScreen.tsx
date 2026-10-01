@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Avatar, colorFor } from '../components/Avatar/Avatar';
 import { Button } from '../components/Button/Button';
-import { ChipMeta } from '../components/Chip/Chip';
 import { TitleBox } from '../components/TitleBox/TitleBox';
 import { TagEditor } from '../components/TagEditor/TagEditor';
 import { TaskCard } from '../components/TaskCard/TaskCard';
 import { Icon } from '../components/Icon/Icon';
 import { PlayerBar } from '../components/PlayerBar/PlayerBar';
 import { SpeakerFix } from '../components/SpeakerFix/SpeakerFix';
-import { Surface } from '../components/Surface/Surface';
+import { Page, PanelCard } from '../components/Page/Page';
 import { Toast, ToastRegion } from '../components/Toast/Toast';
 import {
   correctSpeaker, formatDuration, formatWhen, isLowConfidence, isMeeting, linesBySpeaker,
@@ -41,13 +40,12 @@ export function CaptureScreen({ id, line }: { id: string; line?: number }) {
   const c = capture(id);
   if (!c) {
     return (
-      <div className="mb-page">
-        <h1 className="mb-display-page mb-page-title">Not found</h1>
+      <Page title="Not found">
         <div className="mb-empty">
           <p>That capture doesn’t exist any more.</p>
           <a href={href({ name: 'recent', filter: 'all' })}>Back to Recent</a>
         </div>
-      </div>
+      </Page>
     );
   }
   return <CaptureView key={c.id} c={c} startLine={line} />;
@@ -88,10 +86,10 @@ function CaptureView({ c, startLine }: { c: Capture; startLine?: number }) {
       else if (e.key === 'ArrowRight') { e.preventDefault(); player.next(); }
       else if (e.key === 'ArrowLeft') { e.preventDefault(); player.prev(); }
     }
-    if (!player.hasAudio) return;
+    if (!player.hasAudio || !prefs.shortcuts) return;
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [player]);
+  }, [player, prefs.shortcuts]);
 
   function jumpTo(index: number) {
     if (player.hasAudio) player.seekLine(index);
@@ -191,216 +189,179 @@ function CaptureView({ c, startLine }: { c: Capture; startLine?: number }) {
 
   const meeting = isMeeting(c) ? c : undefined;
   const people = meeting ? meeting.attendees : ['You'];
+  /* Voices the model wasn't sure of — the header says how many, and takes
+     you to the first one. */
+  const unsure = meeting ? meeting.speakers.filter((s) => !s.confirmed && c.lines.some((l) => l.speakerId === s.id && isLowConfidence(l, s))) : [];
+  const done = c.tasks.filter((t) => t.status === 'done').length;
 
-  /* Key moments: the lines tasks came from, in order — each one a place in
-     the recording you can jump to (the design's "Key moments" list). */
-  const moments = c.tasks
-    .map((t) => ({ t, index: c.lines.findIndex((l) => l.id === t.sourceLineId) }))
-    .filter((m) => m.index >= 0)
-    .sort((a, b) => a.index - b.index);
+  const panel = (
+    <>
+      <PanelCard id="summary-h" title="Summary" icon="sparkle" ai meta={c.summary ? 'Written by the model' : undefined}>
+        {c.summary ? (
+          /* The AI surface is its own token — everything the model wrote
+             stays visually separable from everything the user said. */
+          <p className="mb-t-body-sm">{c.summary}</p>
+        ) : (
+          <p className="mb-t-body-sm mb-muted">
+            No summary. Summaries come from the model, and captures recorded in the browser demo don’t go to one.
+          </p>
+        )}
+      </PanelCard>
 
-  return (
-    <div className="mb-review">
-      <div className="mb-review-main">
-        <div className="mb-review-labelrow">
-          {/* "Transcript" is the frame's visible label; the page's heading is the
-              capture's own title, so a screen reader announces WHICH one opened. */}
-          <h1 className="mb-sr-only">{c.title}</h1>
-          <p className="mb-heading-section mb-review-label" aria-hidden="true">Transcript</p>
-          <span className="mb-meta mb-review-when">{formatWhen(c.createdAt)}</span>
-          {/* On narrow screens the details panel (and its close button) is
-              below the whole transcript — so the way back is up here too. */}
-          <a className="mb-button is-ghost is-sm is-icon-only mb-review-close-top" href={href({ name: 'recent', filter: 'all' })} aria-label="Close, back to Recent">
-            <Icon name="x" size={20} />
-          </a>
-        </div>
-        <TitleBox title={c.title} onRename={(title) => dispatch({ type: 'updateCapture', captureId: c.id, patch: { title } })} />
+      <PanelCard id="tasks-h" title="Tasks" icon="check" meta={c.tasks.length ? `${done} of ${c.tasks.length} done` : undefined}>
+        <p className="mb-t-meta mb-muted mb-review-provenance">{c.source === 'demo' ? 'Found by the model' : 'Suggested by phrasing — no model in the browser demo'}</p>
+        {c.tasks.length === 0 ? (
+          <p className="mb-t-body-sm mb-muted">No tasks in this one.</p>
+        ) : (
+          <ul className="mb-prows">
+            {c.tasks.map((t) => {
+              const idx = c.lines.findIndex((l) => l.id === t.sourceLineId);
+              return (
+                <li key={t.id}>
+                  <TaskCard
+                    task={t} people={people}
+                    at={idx >= 0 ? formatDuration(c.lines[idx].startsAt) : undefined}
+                    onToggle={(d) => setTask(t, { status: d ? 'done' : 'todo' })}
+                    onAssign={(who) => setTask(t, { assignee: who })}
+                    onStatus={(status) => setTask(t, { status })}
+                    onDue={(due) => setTask(t, { due })}
+                    onJump={idx >= 0 ? () => jumpTo(idx) : undefined}
+                  />
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </PanelCard>
+
+      <PanelCard id="details-h" title="Details" icon="info">
+        <dl className="mb-pkv">
+          <dt>Length</dt><dd className="mb-tabular">{formatDuration(c.durationSeconds)}</dd>
+          <dt>Words</dt><dd className="mb-tabular">{wordCount(c).toLocaleString()}</dd>
+          <dt>Speakers</dt><dd>{meeting ? `${meeting.speakers.length}${unsure.length ? ` · ${unsure.length} unconfirmed` : ''}` : 'You'}</dd>
+          <dt>Source</dt><dd>{c.source === 'demo' ? 'Demo · synthetic voices' : c.audio ? 'Recorded in this browser' : 'Transcript only'}</dd>
+          <dt>Stored</dt><dd>This browser only</dd>
+        </dl>
+        <Button variant="ghost" size="sm" icon="trash" onClick={remove}>Delete recording</Button>
+      </PanelCard>
+    </>
+  );
+
+  const head = (
+    <>
+      <div className="mb-note-top">
+        <a className="mb-note-back" href={href({ name: 'recent', filter: 'all' })}><Icon name="arrow-left" size={16} /> Recent</a>
+        <span className="mb-note-actions">
+          <Button size="sm" icon="share" onClick={share}>Share</Button>
+          <Button size="sm" icon="download" onClick={exportMarkdown}>Export .md</Button>
+        </span>
+      </div>
+      {/* The page's heading is the capture's title, so a screen reader
+          announces WHICH one opened; the big title is also the rename field. */}
+      <h1 className="mb-sr-only">{c.title}</h1>
+      <TitleBox title={c.title} onRename={(title) => dispatch({ type: 'updateCapture', captureId: c.id, patch: { title } })} />
+      <p className="mb-t-body-sm mb-muted mb-note-meta">
+        {meeting ? 'Meeting' : 'Note'} · {formatWhen(c.createdAt)} · <span className="mb-tabular">{formatDuration(c.durationSeconds)}</span> · {wordCount(c).toLocaleString()} words
+      </p>
+      <div className="mb-note-people">
         {meeting && (
-          <div className="mb-review-attendees" aria-label="Meeting attendees" role="group">
+          <div className="mb-note-attendees" aria-label="Meeting attendees" role="group">
             {meeting.attendees.map((a) => (
               <span key={a} className="mb-person">
                 <Avatar name={a} colorIndex={colorFor(a, meeting.speakers)} size="sm" />
-                <span className="mb-label">{a}</span>
+                <span>{a}</span>
               </span>
             ))}
+            {unsure.length > 0 && (
+              <button type="button" className="mb-chip is-meta is-low-confidence mb-note-unsure"
+                onClick={() => document.querySelector<HTMLElement>(`[data-speaker-trigger="${unsure[0].id}"]`)?.focus()}>
+                {unsure.length} {unsure.length === 1 ? 'voice' : 'voices'} to confirm
+              </button>
+            )}
+            <span className="mb-note-sep" aria-hidden="true" />
           </div>
         )}
+        <TagEditor tags={c.tags} allTags={allTags} onChange={(tags) => dispatch({ type: 'updateCapture', captureId: c.id, patch: { tags } })} />
+      </div>
+      <hr className="mb-rule mb-note-rule" />
+    </>
+  );
 
+  return (
+    <Page head={head} panel={panel} panelLabel="About this capture">
+      <div className="mb-note">
         <PlayerBar
-          compact player={player} title={c.title}
+          compact player={player} title={c.title} peaks={c.peaks}
           speed={prefs.speed} onSpeed={(speed) => dispatch({ type: 'setPrefs', prefs: { speed } })}
         />
 
         <section aria-label="Transcript lines" className="mb-transcript">
-            {c.lines.length === 0 && <p className="mb-muted">No speech was captured.</p>}
-            {turnsOf(c).map((turn, ti) => {
-              const speaker = meeting && turn.speakerId ? meeting.speakers.find((s) => s.id === turn.speakerId) : undefined;
-              const anyLow = turn.lines.some(({ line }) => isLowConfidence(line, speaker));
-              return (
-                <div key={ti} className="mb-turn">
-                  {meeting && speaker && (
-                    <SpeakerFix
-                      speaker={speaker}
-                      lineCount={linesBySpeaker(meeting, speaker.id)}
-                      lowConfidence={anyLow}
-                      startsAt={formatDuration(turn.lines[0].line.startsAt)}
-                      suggestions={meeting.attendees}
-                      onCorrect={(name) => onCorrect(speaker.id, name)}
-                      onPlay={player.hasAudio ? () => player.play(turn.lines[0].index) : undefined}
-                    />
-                  )}
-                  {turn.lines.map(({ line, index }) => {
-                    const task = taskForLine(c, line.id);
-                    const current = player.hasAudio && player.started && index === player.line;
-                    return (
-                      <div
-                        key={line.id}
-                        ref={(el) => { if (el) lineRefs.current.set(index, el); else lineRefs.current.delete(index); }}
-                        tabIndex={-1}
-                        className={`mb-line${current ? ' is-current' : ''}${task ? ' is-task' : ''}${player.hasAudio ? ' is-playable' : ''}`}
-                        aria-current={current ? 'true' : undefined}
-                        /* Click a line to play from it — unless the click was
-                           the end of selecting text to copy. */
-                        onClick={player.hasAudio ? (e) => {
-                          if ((e.target as HTMLElement).closest('button')) return;
-                          if (window.getSelection()?.toString()) return;
-                          player.play(index);
-                        } : undefined}
-                      >
-                        <p className="mb-body-reading mb-line-text">{line.text}</p>
-                        {task && <span className="mb-label mb-line-task">Task</span>}
-                        {player.hasAudio && (
-                          <button
-                            type="button" className="mb-line-play"
-                            aria-label={`Play from line ${index + 1}`}
-                            /* Out of the Tab order: one stop per line put 12+ stops
-                               between the player and the tasks. Keyboard users have
-                               ← → and Space; screen readers can still activate it. */
-                            tabIndex={-1}
-                            onClick={() => player.play(index)}
-                          >
-                            <Icon name="play" size={16} />
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })}
+          {c.lines.length === 0 && <p className="mb-muted">No speech was captured.</p>}
+          {turnsOf(c).map((turn, ti) => {
+            const speaker = meeting && turn.speakerId ? meeting.speakers.find((s) => s.id === turn.speakerId) : undefined;
+            const anyLow = turn.lines.some(({ line }) => isLowConfidence(line, speaker));
+            return (
+              <div key={ti} className="mb-turn">
+                {meeting && speaker && (
+                  <SpeakerFix
+                    speaker={speaker}
+                    lineCount={linesBySpeaker(meeting, speaker.id)}
+                    lowConfidence={anyLow}
+                    startsAt={formatDuration(turn.lines[0].line.startsAt)}
+                    suggestions={meeting.attendees}
+                    onCorrect={(name) => onCorrect(speaker.id, name)}
+                    onPlay={player.hasAudio ? () => player.play(turn.lines[0].index) : undefined}
+                  />
+                )}
+                {turn.lines.map(({ line, index }) => {
+                  const task = taskForLine(c, line.id);
+                  const current = player.hasAudio && player.started && index === player.line;
+                  return (
+                    <div
+                      key={line.id}
+                      ref={(el) => { if (el) lineRefs.current.set(index, el); else lineRefs.current.delete(index); }}
+                      tabIndex={-1}
+                      className={`mb-line${current ? ' is-current' : ''}${task ? ' is-task' : ''}${player.hasAudio ? ' is-playable' : ''}${meeting ? '' : ' is-note'}`}
+                      aria-current={current ? 'true' : undefined}
+                      /* Click a line to play from it — unless the click was
+                         the end of selecting text to copy. */
+                      onClick={player.hasAudio ? (e) => {
+                        if ((e.target as HTMLElement).closest('button')) return;
+                        if (window.getSelection()?.toString()) return;
+                        player.play(index);
+                      } : undefined}
+                    >
+                      <p className="mb-t-reading mb-line-text">{line.text}</p>
+                      {task && <span className="mb-chip is-tag mb-line-task"><Icon name="check" size={12} /> Task</span>}
+                      {player.hasAudio && (
+                        <button
+                          type="button" className="mb-line-play"
+                          aria-label={`Play from line ${index + 1}`}
+                          /* Out of the Tab order: one stop per line put 12+ stops
+                             between the player and the tasks. Keyboard users have
+                             ← → and Space; screen readers can still activate it. */
+                          tabIndex={-1}
+                          onClick={() => player.play(index)}
+                        >
+                          <Icon name="play" size={12} />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
         </section>
 
         <div className="mb-review-foot">
           <button type="button" className="mb-icon-btn" onClick={copyTranscript} aria-label="Copy transcript"><Icon name="copy" size={16} /></button>
-          <span className="mb-meta mb-muted">{c.source === 'demo' ? 'Demo recording' : 'Recorded in this browser'} · {formatWhen(c.createdAt)}</span>
+          <span className="mb-t-meta mb-muted">{c.source === 'demo' ? 'Demo recording' : 'Recorded in this browser'} · {formatWhen(c.createdAt)}</span>
         </div>
-        {/* Edits save as they happen, so "Save Mumble" is the finish: it
-            confirms and takes you back to everything you've captured. */}
-        <Button variant="primary" block size="lg" onClick={() => go({ name: 'recent', filter: 'all' })}>Save Mumble</Button>
       </div>
 
-      <div className="mb-split-rule" aria-hidden="true" />
-
-      <aside className="mb-review-side" aria-label="About this capture">
-        <a className="mb-review-close" href={href({ name: 'recent', filter: 'all' })} aria-label="Close, back to Recent">
-          <Icon name="x" size={16} />
-        </a>
-
-        <section aria-labelledby="tasks-h">
-          <h2 id="tasks-h" className="mb-heading-card mb-review-h">
-            Extracted Tasks <ChipMeta tone="count">{c.tasks.length}</ChipMeta>
-          </h2>
-          <p className="mb-meta mb-muted mb-review-provenance">{c.source === 'demo' ? 'Found by the model' : 'Suggested by phrasing — no model in the browser demo'}</p>
-          {c.tasks.length === 0 ? (
-            <p className="mb-body mb-muted">No tasks in this one.</p>
-          ) : (
-            <ul className="mb-list mb-review-tasks">
-              {c.tasks.map((t) => {
-                const idx = c.lines.findIndex((l) => l.id === t.sourceLineId);
-                return (
-                  <li key={t.id}>
-                    <TaskCard
-                      task={t} people={people}
-                      onToggle={(done) => setTask(t, { status: done ? 'done' : 'todo' })}
-                      onAssign={(who) => setTask(t, { assignee: who })}
-                      onStatus={(status) => setTask(t, { status })}
-                      onDue={(due) => setTask(t, { due })}
-                      onJump={idx >= 0 ? () => jumpTo(idx) : undefined}
-                      jumpLabel={`Line ${idx + 1}`}
-                    />
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
-
-        <div className="mb-review-rule" aria-hidden="true" />
-        <section aria-labelledby="tags-h">
-          <h2 id="tags-h" className="mb-heading-sub mb-review-h">{c.source === 'demo' ? 'Auto-applied Tags' : 'Tags'}</h2>
-          <TagEditor tags={c.tags} allTags={allTags} onChange={(tags) => dispatch({ type: 'updateCapture', captureId: c.id, patch: { tags } })} />
-        </section>
-
-        <div className="mb-review-rule" aria-hidden="true" />
-        <section aria-labelledby="summary-h">
-          <h2 id="summary-h" className="mb-heading-sub mb-review-h">AI Summary</h2>
-          {c.summary ? (
-            /* The AI surface is its own token — everything the model wrote
-               stays visually separable from everything the user said. */
-            <Surface tone="ai" className="mb-summary">
-              <p className="mb-body" style={{ margin: 0 }}>{c.summary}</p>
-            </Surface>
-          ) : (
-            <p className="mb-body-small mb-muted">
-              No summary. Summaries come from the model, and captures recorded in the browser demo don’t go to one.
-            </p>
-          )}
-        </section>
-
-        <div className="mb-review-rule" aria-hidden="true" />
-        <section aria-labelledby="details-h">
-          <h2 id="details-h" className="mb-heading-sub mb-review-h">Session details</h2>
-          <dl className="mb-details">
-            <dt>Duration</dt><dd className="mb-tabular">{formatDuration(c.durationSeconds)}</dd>
-            <dt>Words</dt><dd className="mb-tabular">{wordCount(c).toLocaleString()}</dd>
-            <dt>Speakers</dt><dd>{meeting ? meeting.speakers.map((sp) => sp.name).join(', ') : 'You'}</dd>
-            <dt>Source</dt><dd>{c.source === 'demo' ? 'Demo recording (synthetic voices)' : c.audio ? 'Recorded in this browser' : 'Transcript only'}</dd>
-          </dl>
-        </section>
-
-        {moments.length > 0 && (
-          <>
-            <div className="mb-review-rule" aria-hidden="true" />
-            <section aria-labelledby="moments-h">
-              <h2 id="moments-h" className="mb-heading-sub mb-review-h">Key moments</h2>
-              <ul className="mb-moments">
-                {moments.map(({ t, index }) => (
-                  <li key={t.id}>
-                    <span className="mb-body-small mb-muted">{t.text}</span>
-                    <button
-                      type="button" className="mb-label mb-tabular mb-moment-time"
-                      onClick={() => (player.hasAudio ? player.play(index) : jumpTo(index))}
-                      aria-label={`${player.hasAudio ? 'Play from' : 'Go to'} ${formatDuration(c.lines[index].startsAt)}: ${t.text}`}
-                    >
-                      {formatDuration(c.lines[index].startsAt)}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          </>
-        )}
-
-        <div className="mb-review-rule mb-review-rule-foot" aria-hidden="true" />
-        <div className="mb-review-actions">
-          <Button onClick={share}>Share</Button>
-          <Button variant="primary" onClick={exportMarkdown}>Export</Button>
-        </div>
-        <Button variant="ghost" size="sm" onClick={remove}>Delete capture</Button>
-      </aside>
-
       <ToastRegion>{toast && <Toast message={toast.message} onUndo={toast.undo} onDismiss={dismiss} />}</ToastRegion>
-    </div>
+    </Page>
   );
 }
 

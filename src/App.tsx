@@ -54,7 +54,7 @@ export default function App() {
       {route.name === 'record' && <RecordScreen />}
       {route.name === 'tasks' && <TasksScreen />}
       {route.name === 'tags' && <TagsScreen tag={route.tag} />}
-      {route.name === 'meetings' && <MeetingsScreen id={route.id} />}
+      {route.name === 'meetings' && <MeetingsScreen />}
       {route.name === 'settings' && <SettingsScreen />}
     </AppShell>
   );
