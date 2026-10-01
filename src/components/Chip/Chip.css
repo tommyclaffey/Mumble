@@ -1,30 +1,62 @@
+/* Chips — measured from the hi-fi frames' component instances.
+
+   ⭐ SHAPE says what a chip is (as in the design):
+     Chip / Meta    rounded RECTANGLE (r4) — a fact: 32 min · 4 attendees
+     Chip / Tag     PILL — a tag: Product · Sprint
+     Chip / Action  dashed RECTANGLE — a value to set: Assignee · Due date
+     Chip / Person  pill with a face
+   All 24px tall, 12px side padding. */
 .mb-chip {
-  display: inline-flex; align-items: center; gap: var(--space-4);
-  height: 20px; padding: 0 var(--space-8);
-  border-radius: var(--radius-pill);
-  font: 500 10px/12px var(--font-sans);      /* Chip, from the type scale */
-  white-space: nowrap;
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-4);
+  min-height: 24px; padding: 0 var(--space-12);
+  border-radius: var(--radius-sm);
+  font: 500 0.625rem/0.75rem var(--font-sans);      /* Chip, from the type scale */
+  white-space: nowrap; text-decoration: none;
 }
 .mb-chip.is-meta {
-  background: var(--surface-sunken); color: var(--text-muted);
-  border: none;
-  /* Not interactive, so it must not look it and must not be selectable as
-     though it were a control. */
+  background: var(--surface-card); color: var(--text-muted);
+  border: var(--border-width-sm) solid var(--border-default);
   cursor: default; user-select: none;
 }
-/* 🔴 The one tone that is a claim rather than a fact: the model saying it is
-   unsure. Its colour is NOT in the Figma file -- the vault logs this as an
-   open defect ("Low confidence chip is an override, not a Tone variant"), so
-   the value lives in the not-in-Figma block of tokens.css, named as a gap. */
-.mb-chip.is-meta.is-low-confidence {
-  background: var(--confidence-low-bg); color: var(--confidence-low);
+/* "5 tasks" — accent at 12%, no edge (Rectangle 68 × 22, r4). */
+.mb-chip.is-meta.is-accent { background: color-mix(in srgb, var(--accent-base) 12%, transparent); color: var(--accent-base); border-color: transparent; min-height: 22px; }
+/* Count beside a heading — "Recent Mumbles ⑤": 28 × 20 pill, accent at 16%. */
+.mb-chip.is-meta.is-count {
+  min-width: 28px; min-height: 20px; padding: 0 var(--space-8); border-radius: var(--radius-pill);
+  background: var(--accent-soft); color: var(--accent-base); border-color: transparent;
+  font: 500 0.6875rem/1rem var(--font-sans);
 }
+/* "Low confidence" — accent 7% fill, 16% edge (the design's Low confidence chip). */
+.mb-chip.is-meta.is-low-confidence {
+  background: var(--confidence-low-bg); color: var(--confidence-low); border-color: var(--accent-soft);
+}
+
+.mb-chip.is-tag {
+  background: var(--surface-card); color: var(--text-muted);
+  border: var(--border-width-sm) solid var(--border-default); border-radius: var(--radius-pill);
+}
+.mb-chip.is-tag.is-link:hover { color: var(--text-body); border-color: var(--accent-medium); }
+
 .mb-chip.is-action {
+  background: var(--surface-card); color: var(--text-muted);
+  border: var(--border-width-sm) dashed var(--border-default);
+  cursor: pointer;
+}
+.mb-chip.is-action:not(.is-empty) { border-style: solid; color: var(--text-body); }
+.mb-chip.is-action:hover { background: var(--accent-subtle); color: var(--text-body); }
+
+/* Filters — 24px rectangles; the chosen one is the 26px black fill (r6). */
+.mb-chip.is-filter {
+  min-height: 24px; padding: 0 var(--space-12);
+  font: 500 0.6875rem/1rem var(--font-sans);
   background: var(--surface-card); color: var(--text-muted);
   border: var(--border-width-sm) solid var(--border-default);
   cursor: pointer;
 }
-.mb-chip.is-action:hover { background: var(--accent-subtle); color: var(--text-body); }
-.mb-chip.is-action:focus-visible {
-  outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px;
+.mb-chip.is-filter:hover { color: var(--text-body); }
+.mb-chip.is-filter[aria-pressed='true'] {
+  min-height: 26px; border-radius: var(--radius-md);
+  background: var(--neutral-1000); color: var(--text-on-accent); border-color: var(--neutral-1000);
 }
+
+.mb-chip:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px; }

@@ -1,0 +1,38 @@
+/* Task card — the frame: 72 tall, 6px corners; checkbox 13px in and
+   centred top-to-bottom; text 46px in, 13px down. */
+.mb-taskcard {
+  position: relative; display: flex; gap: 13px; padding: 11px 16px 11px 13px; align-items: flex-start;
+  border-radius: var(--radius-md); min-height: 72px;
+}
+.mb-taskcard-check { align-self: center; }
+.mb-taskcard-body { flex: 1; min-width: 0; display: grid; gap: 6px; }
+.mb-taskcard-text { margin: 0; color: var(--text-strong); padding-top: 2px; }
+.mb-taskcard-text.is-done { text-decoration: line-through; color: var(--text-muted); }
+.mb-taskcard-fields { display: flex; align-items: center; gap: var(--space-8); flex-wrap: wrap; }
+.mb-taskcard-from {
+  position: absolute; right: 16px; bottom: 10px;
+  font: 400 0.625rem/0.75rem var(--font-sans); color: var(--text-muted);
+}
+.mb-select {
+  appearance: none; font-family: var(--font-sans); field-sizing: content;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 9px) 52%, calc(100% - 6px) 52%; background-size: 3px 3px; background-repeat: no-repeat;
+  padding-right: var(--space-16) !important;
+}
+.mb-select.is-progress { background-color: var(--accent-subtle); color: var(--accent-base); border: var(--border-width-sm) solid var(--accent-soft); }
+.mb-taskcard-link { color: inherit; text-decoration: none; }
+.mb-taskcard-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.mb-taskcard-link:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); border-radius: var(--radius-xs); }
+.mb-taskcard-jump { border: none; background: none; padding: 0; font: inherit; text-align: left; cursor: pointer; }
+.mb-link-button {
+  position: relative; border: none; background: none; padding: var(--space-4); cursor: pointer;
+  color: var(--accent-base); text-decoration: underline; text-underline-offset: 2px;
+}
+.mb-link-button:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); border-radius: var(--radius-xs); }
+.mb-chip.is-action.mb-chip-progress { background: var(--accent-subtle); color: var(--accent-base); border: var(--border-width-sm) solid var(--accent-soft); }
+/* Phone: no room for "From:" in the corner — it ran over the chips. It
+   drops under them instead, lined up with the task text. */
+@media (max-width: 767px) {
+  .mb-taskcard { flex-wrap: wrap; row-gap: 6px; }
+  .mb-taskcard-from { position: static; flex-basis: 100%; padding-left: 33px; }
+}

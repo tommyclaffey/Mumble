@@ -1,0 +1,9 @@
+.mb-titlebox { display: flex; }
+.mb-titlebox-input {
+  flex: 1; min-width: 0; height: 36px; padding: 0 var(--space-16);
+  border: var(--border-width-sm) solid var(--border-default); border-radius: var(--radius-md);
+  background: var(--surface-card); color: var(--text-strong);
+  font: 600 0.8125rem/1rem var(--font-sans);   /* Heading/Sub */
+}
+.mb-titlebox-input:hover { border-color: var(--border-control); }
+.mb-titlebox-input:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 1px; }

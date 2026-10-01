@@ -1,0 +1,37 @@
+.mb-speaker { display: grid; gap: var(--space-8); }
+.mb-speaker-row { display: flex; align-items: center; gap: var(--space-8); flex-wrap: wrap; }
+.mb-speaker-name {
+  border: none; background: transparent; padding: 2px var(--space-4); margin: 0 calc(var(--space-4) * -1);
+  color: var(--text-strong); cursor: pointer; border-radius: var(--radius-sm);
+}
+.mb-speaker-name:hover { text-decoration: underline; text-underline-offset: 3px; }
+.mb-speaker-name:hover { background: var(--accent-subtle); }
+.mb-speaker-name:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 1px; }
+.mb-speaker-form {
+  display: grid; gap: var(--space-8); padding: var(--space-12);
+  background: var(--surface-page); border: var(--border-width-sm) solid var(--border-default); border-radius: var(--radius-lg);
+}
+.mb-speaker-form-row { display: flex; gap: var(--space-8); flex-wrap: wrap; }
+.mb-speaker-form input {
+  flex: 1; min-width: 160px; min-height: 28px; padding: 0 var(--space-8);
+  border: var(--border-width-sm) solid var(--border-control); border-radius: var(--radius-md);
+  font: 400 0.8125rem/1rem var(--font-sans); background: var(--surface-card); color: var(--text-body);
+}
+.mb-speaker-form input:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 1px; }
+.mb-speaker-suggest { display: flex; gap: var(--space-8); flex-wrap: wrap; }
+.mb-speaker-time {
+  border: none; background: none; padding: 2px var(--space-4); margin: 0 calc(var(--space-4) * -1);
+  color: var(--text-muted); cursor: pointer; border-radius: var(--radius-xs);
+}
+.mb-speaker-time:hover { color: var(--accent-base); background: var(--accent-subtle); }
+.mb-speaker-time:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); }
+.mb-speaker-flag { cursor: pointer; user-select: auto; font-family: var(--font-sans); }
+.mb-speaker-flag:hover { filter: brightness(0.96); text-decoration: underline; }
+.mb-speaker-flag:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px; }
+.mb-speaker-time-static { color: var(--text-muted); }
+.mb-speaker-reassign {
+  border: none; background: none; padding: 2px var(--space-4); cursor: pointer;
+  color: var(--accent-base); border-radius: var(--radius-xs); font-family: var(--font-sans);
+}
+.mb-speaker-reassign:hover { text-decoration: underline; text-underline-offset: 2px; }
+.mb-speaker-reassign:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); }

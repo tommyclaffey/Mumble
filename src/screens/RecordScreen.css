@@ -1,0 +1,57 @@
+/* Recording in Progress — the frame: no sidebar; controls centred in the
+   left half (rule at x 720); the live transcript on the right. */
+.mb-record {
+  display: grid; grid-template-columns: minmax(0, 720fr) 1px minmax(0, 1008fr);
+  min-height: calc(100vh - var(--layout-header));
+}
+.mb-record-controls {
+  display: flex; flex-direction: column; align-items: center; gap: var(--space-16);
+  padding: 190px var(--space-48) var(--space-48); text-align: center;
+}
+.mb-record-controls > p { margin: 0; }
+.mb-record-controls .mb-seg { width: 304px; background: var(--surface-card); border: var(--border-width-sm) solid var(--border-default); padding: 3px; }
+.mb-record-status { margin-top: -6px !important; }
+.mb-rec {
+  border: none; padding: 0; cursor: pointer; border-radius: var(--radius-pill);
+  width: 160px; height: 160px; display: flex; align-items: center; justify-content: center;
+  background: var(--accent-soft); margin: var(--space-24) 0 18px;
+}
+/* REC disc: 112, the header button's gradient turned vertical, a soft ring. */
+.mb-rec-disc {
+  width: 112px; height: 112px; border-radius: var(--radius-pill);
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, var(--accent-base), var(--blue-950));
+  color: var(--text-on-accent); font: 700 1.125rem/1.5rem var(--font-sans);   /* Display/Badge */
+  box-shadow: 0 0 0 3px var(--surface-card), 0 0 0 4px var(--accent-base);
+}
+.mb-rec.is-live { animation: mb-breathe 2.4s ease-in-out infinite; }
+@keyframes mb-breathe { 50% { background: color-mix(in srgb, var(--accent-base) 28%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .mb-rec.is-live { animation: none; } }
+.mb-rec:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 4px; }
+.mb-rec:disabled { cursor: not-allowed; opacity: 0.5; }
+.mb-record-timer { color: var(--text-strong); font-size: 2rem; line-height: 2.75rem; font-weight: 700; margin: 0 0 var(--space-24) !important; }
+.mb-record-actions { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--space-16); width: 100%; max-width: 592px; }
+.mb-record-actions .mb-button { min-height: 44px; }
+.mb-record-error { color: var(--accent-base); background: var(--accent-subtle); padding: var(--space-8) var(--space-12); border-radius: var(--radius-md); font: 500 0.75rem/1rem var(--font-sans); max-width: 592px; }
+.mb-record-fine { max-width: 460px; margin-top: var(--space-24) !important; }
+
+.mb-record-live { position: relative; padding: var(--space-32) var(--layout-gutter); }
+.mb-record-live .mb-review-close { top: var(--space-32); right: var(--layout-gutter); }
+.mb-record-live-h { display: flex; align-items: baseline; gap: var(--space-4); margin: 24px 0 18px; color: var(--text-strong); }
+.mb-record-lines { display: flex; flex-direction: column; gap: var(--space-8); }
+.mb-record-lines .mb-line { margin-left: 32px; min-height: 24px; align-items: center; }
+.mb-record-lines .mb-line:not(.is-task) { padding: 4px 0; }
+.mb-record-lines .mb-line::before { display: none; }
+.mb-record-speaker { display: flex; align-items: center; gap: var(--space-8); color: var(--text-strong); }
+.mb-record-interim { margin-left: 32px !important; }
+.mb-record-interim { color: var(--text-muted); font-style: italic; margin: 0; }
+.mb-record .mb-split-rule { margin: 0; }
+
+@media (max-width: 1023px) {
+  .mb-record { grid-template-columns: minmax(0, 1fr); }
+  .mb-record .mb-split-rule { display: none; }
+  .mb-record-controls { padding: var(--space-32) var(--space-16); }
+}
+/* The review screen hides its side-panel close on narrow screens; this one
+   is the only way out of a recording, so it always shows. */
+@media (max-width: 1023px) { .mb-record-live .mb-review-close { display: inline-flex; } }

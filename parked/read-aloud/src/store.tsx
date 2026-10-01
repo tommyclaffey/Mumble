@@ -1,0 +1,128 @@
+import {
+  createContext, useCallback, useContext, useEffect, useMemo, useReducer, type ReactNode,
+} from 'react';
+import { demoCaptures } from './demo';
+import { correctSpeaker, isMeeting, type Capture, type Speaker, type TaskStatus } from './model';
+import { DEFAULT_NATURAL_VOICE, type NaturalVoiceId } from '../readAloud/natural/protocol';
+
+/**
+ * App state — captures and preferences, saved to localStorage.
+ *
+ * One reducer, one place. Every change to a capture goes through here, so a
+ * task ticked on the Tasks screen is ticked on the capture screen too — the
+ * same object, not two copies that drift.
+ */
+
+export const READ_RATES = [0.75, 1, 1.25, 1.5] as const;
+export type ReadRate = (typeof READ_RATES)[number];
+
+export interface Prefs {
+  /** Read-aloud speed. 1 is the voice's natural pace. */
+  rate: ReadRate;
+  /** Which voices read aloud: the device's own, or the natural on-device model. */
+  engine: 'device' | 'natural';
+  /** A device voice (SpeechSynthesisVoice.voiceURI), or undefined for "best available". */
+  voiceURI?: string;
+  /** Which natural voice. */
+  naturalVoice: NaturalVoiceId;
+}
+
+export const DEFAULT_PREFS: Prefs = { rate: 1, engine: 'device', naturalVoice: DEFAULT_NATURAL_VOICE };
+
+export interface State {
+  captures: Capture[];
+  prefs: Prefs;
+}
+
+type Action =
+  | { type: 'setTaskStatus'; captureId: string; taskId: string; status: TaskStatus }
+  | { type: 'correctSpeaker'; captureId: string; speakerId: string; name: string }
+  | { type: 'replaceCapture'; capture: Capture }
+  | { type: 'updateCapture'; captureId: string; patch: { title?: string; tags?: string[] } }
+  /** Undo a speaker correction — speakers and attributions ONLY, so a task
+      ticked while the Undo toast was up survives the undo. */
+  | { type: 'restoreSpeakers'; captureId: string; speakers: Speaker[]; lineSpeakers: Record<string, string | undefined> }
+  | { type: 'addCapture'; capture: Capture }
+  | { type: 'deleteCapture'; captureId: string }
+  | { type: 'setPrefs'; prefs: Partial<Prefs> }
+  | { type: 'resetDemo' };
+
+const STORAGE_KEY = 'mumble.v1';
+
+export function initialState(now = new Date()): State {
+  return { captures: demoCaptures(now), prefs: DEFAULT_PREFS };
+}
+
+export function reducer(state: State, action: Action): State {
+  const mapCapture = (id: string, fn: (c: Capture) => Capture): State => ({
+    ...state, captures: state.captures.map((c) => (c.id === id ? fn(c) : c)),
+  });
+
+  switch (action.type) {
+    case 'setTaskStatus':
+      return mapCapture(action.captureId, (c) => ({
+        ...c, tasks: c.tasks.map((t) => (t.id === action.taskId ? { ...t, status: action.status } : t)),
+      }));
+    case 'correctSpeaker':
+      return mapCapture(action.captureId, (c) =>
+        isMeeting(c) ? correctSpeaker(c, action.speakerId, action.name).meeting : c);
+    case 'restoreSpeakers':
+      return mapCapture(action.captureId, (c) => (isMeeting(c) ? {
+        ...c,
+        speakers: action.speakers,
+        lines: c.lines.map((l) => (l.id in action.lineSpeakers ? { ...l, speakerId: action.lineSpeakers[l.id] } : l)),
+      } : c));
+    case 'updateCapture':
+      return mapCapture(action.captureId, (c) => ({ ...c, ...action.patch }));
+    case 'replaceCapture':
+      return mapCapture(action.capture.id, () => action.capture);
+    case 'addCapture':
+      return { ...state, captures: [action.capture, ...state.captures] };
+    case 'deleteCapture':
+      return { ...state, captures: state.captures.filter((c) => c.id !== action.captureId) };
+    case 'setPrefs':
+      return { ...state, prefs: { ...state.prefs, ...action.prefs } };
+    case 'resetDemo':
+      return { ...initialState(), prefs: state.prefs };
+  }
+}
+
+function load(): State {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as State;
+      /* Merge over defaults: a save from before a pref existed still loads. */
+      if (Array.isArray(parsed.captures)) return { ...parsed, prefs: { ...DEFAULT_PREFS, ...parsed.prefs } };
+    }
+  } catch {
+    /* Corrupt or unavailable storage: start from the demo rather than crash.
+       Losing a demo edit is recoverable; a blank screen is not. */
+  }
+  return initialState();
+}
+
+interface Store extends State {
+  dispatch: (a: Action) => void;
+  capture: (id: string) => Capture | undefined;
+}
+
+const Ctx = createContext<Store | null>(null);
+
+export function StoreProvider({ children, initial }: { children: ReactNode; initial?: State }) {
+  const [state, dispatch] = useReducer(reducer, initial, (i) => i ?? load());
+
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* quota / private mode */ }
+  }, [state]);
+
+  const capture = useCallback((id: string) => state.captures.find((c) => c.id === id), [state.captures]);
+  const value = useMemo(() => ({ ...state, dispatch, capture }), [state, capture]);
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
+
+export function useStore(): Store {
+  const s = useContext(Ctx);
+  if (!s) throw new Error('useStore must be used inside <StoreProvider>');
+  return s;
+}

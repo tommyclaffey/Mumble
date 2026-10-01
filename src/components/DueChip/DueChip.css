@@ -1,0 +1,2 @@
+.mb-due-input { font-family: var(--font-sans); min-width: 120px; padding: 0 var(--space-8); }
+.mb-chip.is-action.is-overdue { color: var(--accent-base); border-color: var(--accent-medium); }

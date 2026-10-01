@@ -35,6 +35,10 @@
 
   --blue-50:  #F1F4FB;
   --blue-600: #3D5A99;
+  /* The far stop of the Start Mumble / REC gradient in the hi-fi frames
+     (StartMumbleBtn: #3D5A99 → #141E33). A gradient stop, not a variable,
+     in the file — named here so it isn't a stray hex. */
+  --blue-950: #141E33;
 
   /* Alpha-carrying, so a tint over any surface composites instead of assuming
      what is behind it. Same reason Radix and Tailwind ship alpha ramps. */
@@ -83,6 +87,16 @@
 
   --icon-sm: 16px; --icon-md: 20px; --icon-lg: 24px; --icon-xl: 32px;
 
+  /* ---- Layout — measured from the hi-fi Figma frames (02 · Desktop,
+     1728 × 1117), read via the plugin API on Sept 30. Not in the variable
+     collections; written here so the code's frame IS the design's frame. */
+  --layout-header: 56px;       /* App header */
+  --layout-sidebar: 220px;     /* nav column */
+  --layout-gutter: 40px;       /* frame edge → content, every screen */
+  --layout-nav-row: 36px;      /* Nav item 204 × 36, 4px apart */
+  --layout-split-list: 360px;  /* Meetings list column */
+  --layout-gap: 40px;          /* list ↔ 1px rule ↔ detail */
+
   --font-sans: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
   /* ---- 🔴 NOT IN THE FIGMA FILE ---------------------------------------
@@ -96,12 +110,21 @@
         "`Low confidence` chip is an instance override, not a Tone variant."
         Until it becomes a real Tone, the colour lives here rather than being
         hardcoded in the component.
-     3. border-width — no variable exists; 1px and 2px are used throughout. */
+     3. border-width — no variable exists; 1px and 2px are used throughout.
+     4. border-control — see below. */
   --focus-ring: var(--accent-base);
-  --confidence-low:    #8A5A00;
-  --confidence-low-bg: #FDF3E0;
+  /* The hi-fi design draws "Low confidence" in the accent (7% fill, 16%
+     edge), not amber — so it's aliased to the accent here. */
+  --confidence-low:    var(--accent-base);
+  --confidence-low-bg: var(--accent-subtle);
   --border-width-sm: 1px;
   --border-width-md: 2px;
+
+  /* 4. control border — found by the Sept 30 accessibility audit. The file's
+     only border (border/default, #E0E0E5) is 1.3:1 on white: fine for a card
+     edge, invisible as the edge of a checkbox or text field, which WCAG 1.4.11
+     needs at 3:1. neutral-500 is 3.9:1. Push back into Figma as border/control. */
+  --border-control: var(--neutral-500);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -113,6 +136,10 @@ body {
   color: var(--text-body);
   -webkit-font-smoothing: antialiased;
 }
+
+/* Headings receive focus on navigation so screen readers announce the new
+   page. That focus is programmatic — no ring on a heading nobody tabbed to. */
+h1[tabindex="-1"]:focus { outline: none; }
 
 /* Visible to a screen reader, not to the eye. A heading whose only content is
    an icon is a heading with no text. */

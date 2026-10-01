@@ -1,0 +1,65 @@
+/**
+ * Icons — vectors, never text glyphs.
+ *
+ * Defect #38 in the Figma file: the play triangle, the close button and the
+ * checkmarks were all TEXT CHARACTERS (▶ × ✓). Glyphs carry font side-bearings
+ * that differ at every size, so they cannot be centred reliably — which is why
+ * the play button looked off-centre at 20px and fine at 32px. Every icon here
+ * is a path on a 24-unit grid.
+ *
+ * Sizes come from the icon scale (16/20/24/32), not the layout grid. They are
+ * different axes — see tokens.css.
+ */
+
+export type IconName =
+  | 'clock' | 'list' | 'hash' | 'users' | 'gear' | 'search' | 'mic' | 'play' | 'pause'
+  | 'x' | 'check' | 'pencil' | 'prev' | 'next' | 'download' | 'copy' | 'arrow-left' | 'plus' | 'stop' | 'speaker';
+
+const PATHS: Record<IconName, string> = {
+  clock: 'M12 7v5l3 2 M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
+  list: 'M9 6h11 M9 12h11 M9 18h11 M4 6h.01 M4 12h.01 M4 18h.01',
+  hash: 'M5 9h14 M4 15h14 M10 3 8 21 M16 3l-2 18',
+  users: 'M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20 M10 11.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z M20 20v-1.5a3.5 3.5 0 0 0-2.5-3.35 M15.5 4.65a3.5 3.5 0 0 1 0 6.7',
+  gear: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z',
+  search: 'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14Z M20 20l-4-4',
+  mic: 'M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z M19 11a7 7 0 0 1-14 0 M12 18v3 M8.5 21h7',
+  /* Measured Sept 30: the old triangle sat ~2px right of centre in a 24px
+     circle (its box was offset AND the button nudged it). This one puts the
+     triangle's visual weight dead centre (±0.1px), with the small rightward
+     lean a triangle needs to LOOK centred. No nudge needed. */
+  play: 'M8.5 6.2v11.6a.9.9 0 0 0 1.38.76l9.1-5.8a.9.9 0 0 0 0-1.52l-9.1-5.8A.9.9 0 0 0 8.5 6.2Z',
+  pause: 'M8 5v14 M16 5v14',
+  x: 'M6 6l12 12 M18 6 6 18',
+  check: 'M5 12.5l4.5 4.5L19 7.5',
+  pencil: 'M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z M13.5 6.5l4 4',
+  prev: 'M6 5v14 M18 6 9 12l9 6V6Z',
+  next: 'M18 5v14 M6 6l9 6-9 6V6Z',
+  download: 'M12 4v11 M7 10l5 5 5-5 M5 20h14',
+  copy: 'M9 9h10v11H9z M5 15H4V4h11v1',
+  'arrow-left': 'M19 12H5 M11 6l-6 6 6 6',
+  plus: 'M12 5v14 M5 12h14',
+  stop: 'M7 7h10v10H7z',
+  speaker: 'M4 10v4h4l5 4V6L8 10H4Z M16.5 9a4 4 0 0 1 0 6 M19 6.5a7.5 7.5 0 0 1 0 11',
+};
+
+/** Shapes that read as solid marks rather than outlines. */
+const FILLED: ReadonlySet<IconName> = new Set(['play', 'stop']);
+
+export function Icon({ name, size = 20, label }: { name: IconName; size?: 16 | 20 | 24 | 32; label?: string }) {
+  const filled = FILLED.has(name);
+  return (
+    <svg
+      width={size} height={size} viewBox="0 0 24 24"
+      fill={filled ? 'currentColor' : 'none'}
+      stroke="currentColor" strokeWidth={filled ? 0 : 1.75}
+      strokeLinecap="round" strokeLinejoin="round"
+      role={label ? 'img' : undefined}
+      aria-label={label}
+      aria-hidden={label ? undefined : true}
+      focusable="false"
+      style={{ flexShrink: 0, display: 'block' }}
+    >
+      <path d={PATHS[name]} />
+    </svg>
+  );
+}

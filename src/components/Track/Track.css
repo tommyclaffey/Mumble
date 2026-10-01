@@ -1,0 +1,5 @@
+.mb-track {
+  flex: 1; min-width: 0; height: 6px; border-radius: var(--radius-pill);
+  background: var(--surface-sunken); overflow: hidden;
+}
+.mb-track-fill { height: 100%; background: var(--accent-base); border-radius: inherit; transition: width 200ms ease; }

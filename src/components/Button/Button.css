@@ -1,0 +1,30 @@
+.mb-button {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-8);
+  border-radius: var(--radius-md);
+  border: var(--border-width-sm) solid transparent;
+  font: 500 0.8125rem/1rem var(--font-sans);          /* Label/Large */
+  cursor: pointer; white-space: nowrap;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+.mb-button.is-sm { min-height: 28px; padding: 0 var(--space-12); font: 500 0.75rem/1rem var(--font-sans); }
+.mb-button.is-md { min-height: 36px; padding: 0 var(--space-16); }
+.mb-button.is-lg { min-height: 48px; padding: 0 var(--space-24); font: 500 0.875rem/1.25rem var(--font-sans); }
+.mb-button.is-icon-only.is-sm { width: 28px; padding: 0; }
+.mb-button.is-icon-only.is-md { width: 36px; padding: 0; }
+.mb-button.is-icon-only.is-lg { width: 48px; padding: 0; }
+.mb-button.is-block { width: 100%; }
+
+.mb-button.is-primary   { background: var(--surface-inverse); color: var(--text-on-accent); }
+.mb-button.is-primary:hover:not(:disabled) { background: var(--neutral-1000); }
+
+.mb-button.is-secondary { background: var(--surface-card); color: var(--text-body); border-color: var(--border-default); }
+.mb-button.is-secondary:hover:not(:disabled) { background: var(--surface-page); }
+
+.mb-button.is-accent    { background: var(--accent-base); color: var(--text-on-accent); border-radius: var(--radius-pill); }
+.mb-button.is-accent:hover:not(:disabled) { filter: brightness(1.08); }
+
+.mb-button.is-ghost     { background: transparent; color: var(--text-muted); }
+.mb-button.is-ghost:hover:not(:disabled) { background: var(--accent-subtle); color: var(--text-body); }
+
+.mb-button:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px; }
+.mb-button:disabled { cursor: not-allowed; opacity: 0.5; }

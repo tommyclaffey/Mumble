@@ -1,0 +1,17 @@
+.mb-checkbox {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; margin: -12px;   /* 44 target, 20 footprint */
+  cursor: pointer; flex-shrink: 0;
+}
+.mb-checkbox input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.mb-checkbox-box {
+  width: 20px; height: 20px; border-radius: var(--radius-sm);
+  display: inline-flex; align-items: center; justify-content: center;
+  /* The design's checkbox is a #EEEEF1 fill. Kept, with a 3:1 edge added —
+     the fill alone is 1.16:1 on white and the box disappears (WCAG 1.4.11). */
+  background: var(--surface-sunken);
+  border: var(--border-width-sm) solid var(--border-control);
+  color: var(--text-on-accent);
+}
+.mb-checkbox input:checked + .mb-checkbox-box { background: var(--accent-base); border-color: var(--accent-base); }
+.mb-checkbox input:focus-visible + .mb-checkbox-box { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px; }

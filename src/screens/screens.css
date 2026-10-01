@@ -1,0 +1,105 @@
+/* Shared page layout. Screens compose these; nothing here is screen-specific. */
+/* Every screen: title 32px below the header, 40px in from each side — the
+   hi-fi frames' grid (content x 260 = 220 sidebar + 40). Full width, as
+   designed: the cards run to the right gutter. */
+.mb-page { padding: var(--space-32) var(--layout-gutter); }
+
+/* Whole-card links. The card's one real link (its title) stretches over the
+   whole card, so clicking anywhere on it works — while the controls inside
+   (play, tags, checkboxes) sit above it and keep doing their own thing.
+   One link per card, not a card-sized button swallowing its controls. */
+.mb-stretch { position: relative; transition: border-color 120ms ease, box-shadow 120ms ease; }
+.mb-stretch:hover { border-color: var(--accent-medium); box-shadow: 0 1px 3px rgb(18 18 24 / 0.06); }
+.mb-stretch-link::after { content: ''; position: absolute; inset: 0; border-radius: inherit; z-index: 0; }
+.mb-stretch-link:focus-visible { outline: none; }
+.mb-stretch:has(.mb-stretch-link:focus-visible) { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px; }
+.mb-raise { position: relative; z-index: 1; }
+.mb-page-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-16); flex-wrap: wrap; margin-bottom: var(--space-8); }
+/* Page titles are Heading/Section (16/24 · 600) in the frames, with a count
+   badge beside them — not the 20px Display/Page. */
+.mb-page-title-row { display: flex; align-items: center; gap: var(--space-12); }
+.mb-page .mb-page-title, .mb-split .mb-page-title { font: 600 1rem/1.5rem var(--font-sans); }
+.mb-page-title { margin: 0; color: var(--text-strong); }
+.mb-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-8); margin-bottom: 18px; }
+.mb-list { display: grid; gap: var(--space-8); list-style: none; margin: 0; padding: 0; }
+/* Section labels are SMALL in the design (Attendees, Audio Playback,
+   Extracted Tasks…): a label, not a headline. 20px to its content. */
+.mb-section-title {
+  margin: var(--space-24) 0 var(--space-12); color: var(--text-strong);
+  display: flex; align-items: center; gap: var(--space-8);
+  font: 600 0.875rem/1.25rem var(--font-sans);
+}
+
+/* List + detail: the shape of Meetings, Tasks and Tags in the wireframes —
+   a list column, a 1px rule, the detail. */
+.mb-split {
+  display: grid; grid-template-columns: var(--layout-split-list) 1px minmax(0, 1fr);
+  gap: var(--layout-gap); align-items: start;
+  padding: var(--space-32) var(--layout-gutter); min-height: calc(100vh - var(--layout-header));
+}
+.mb-split-rule { align-self: stretch; background: var(--border-default); margin: calc(var(--space-32) * -1) 0; }
+.mb-split-detail { min-width: 0; }
+/* Below ~1200 there isn't room for a 420 list AND a readable detail beside
+   the sidebar — stack them instead of squeezing the detail to 300px. */
+@media (max-width: 1199px) {
+  .mb-split, .mb-split.mb-tags-split, .mb-split.mb-tasks-split { grid-template-columns: minmax(0, 1fr); }
+  .mb-split-rule { display: none; }
+  .mb-split-detail { border-top: var(--border-width-sm) solid var(--border-default); padding-top: var(--space-24); }
+}
+.mb-muted { color: var(--text-muted); }
+.mb-mobile-only { display: none; }
+.mb-link-row {
+  align-items: center; gap: var(--space-4); margin: calc(var(--space-8) * -1) 0 var(--space-16);
+  color: var(--accent-base); text-decoration: none; font: 500 0.8125rem/1.25rem var(--font-sans);
+  padding: var(--space-4) 0; min-height: 24px;
+}
+.mb-link-row:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); border-radius: var(--radius-xs); }
+
+.mb-search {
+  display: flex; align-items: center; gap: var(--space-8);
+  min-height: 36px; padding: 0 var(--space-12); min-width: 240px;
+  background: var(--surface-card); border: var(--border-width-sm) solid var(--border-control);
+  border-radius: var(--radius-md); color: var(--text-muted);
+}
+.mb-search:focus-within { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 1px; }
+.mb-search input { border: none; outline: none; background: transparent; flex: 1; min-width: 0; font: 400 0.8125rem/1rem var(--font-sans); color: var(--text-body); }
+.mb-search input::placeholder { color: var(--text-muted); }
+
+.mb-empty {
+  padding: var(--space-32); text-align: center; color: var(--text-muted);
+  border: var(--border-width-sm) dashed var(--border-default); border-radius: var(--radius-xl);
+}
+.mb-empty p { margin: 0 0 var(--space-12); }
+
+.mb-notice {
+  display: flex; gap: var(--space-12); align-items: flex-start;
+  padding: var(--space-12) var(--space-16); border-radius: var(--radius-lg);
+  background: var(--surface-sunken); color: var(--text-muted);
+}
+.mb-notice p { margin: 0; }
+
+@media (max-width: 767px) {
+  /* One swipeable row of filters, not pills wrapping onto two lines. */
+  .mb-toolbar { flex-wrap: nowrap; overflow-x: auto; gap: var(--space-8); margin-inline: calc(var(--space-16) * -1); padding: 0 var(--space-16) var(--space-4); scrollbar-width: none; }
+  .mb-toolbar .mb-chip.is-filter { min-width: 0; flex-shrink: 0; }
+  .mb-mobile-only { display: inline-flex; }
+  .mb-page, .mb-split { padding: var(--space-16); }
+  .mb-page-title { font: 700 1.625rem/2rem var(--font-sans); }   /* Display/Mobile */
+  .mb-page-head .mb-search { min-width: 0; flex: 1 1 100%; }
+}
+
+/* Chip / Person — face + name (attendees). */
+.mb-person {
+  display: inline-flex; align-items: center; gap: var(--space-4);
+  padding: 2px var(--space-8) 2px 2px; border-radius: var(--radius-pill);
+  background: var(--surface-card); border: var(--border-width-sm) solid var(--border-default); color: var(--text-body);
+}
+/* The AI block: the tint says "model", the left rule says "read this as one block". */
+.mb-surface.mb-summary { padding: var(--space-16) var(--space-16) var(--space-16) var(--space-16); border-left: 3px solid var(--accent-base); border-radius: var(--radius-sm) var(--radius-lg) var(--radius-lg) var(--radius-sm); }
+.mb-meeting-title { margin: 0 0 var(--space-8); color: var(--text-strong); }
+.mb-review-first { margin-top: 0; }
+.mb-review-rule { height: 1px; background: var(--border-default); margin: var(--space-24) 0 0; }
+.mb-list-tight { gap: var(--space-12); }
+.mb-split-search { display: flex; margin-bottom: var(--space-16); }
+.mb-split-list .mb-list { gap: var(--space-8); }
+.mb-split-list .mb-page-title { margin-bottom: var(--space-4); }

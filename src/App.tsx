@@ -1,67 +1,61 @@
-import { Surface } from './components/Surface/Surface';
-import { ChipMeta } from './components/Chip/Chip';
-import {
-  isLowConfidence, isMeeting, positionLabel, speakerFor, type Capture,
-} from './data/model';
+import { useEffect, useRef } from 'react';
+import { AppShell } from './shell/AppShell';
+import { useRoute, type Route } from './data/route';
+import { useStore } from './data/store';
+import { CaptureScreen } from './screens/CaptureScreen';
+import { MeetingsScreen } from './screens/MeetingsScreen';
+import { RecentScreen } from './screens/RecentScreen';
+import { RecordScreen } from './screens/RecordScreen';
+import { SettingsScreen } from './screens/SettingsScreen';
+import { TagsScreen } from './screens/TagsScreen';
+import { TasksScreen } from './screens/TasksScreen';
 
-/**
- * Foundation check, not a screen.
- *
- * It renders one meeting through the real model and the real tokens so the
- * pieces are proven to fit before any layout is built on them. It gets
- * replaced by the first real screen.
- */
-
-const DEMO: Capture = {
-  kind: 'meeting',
-  id: 'c1',
-  title: 'Q3 planning',
-  createdAt: '2026-08-30T09:12:00Z',
-  durationSeconds: 1840,
-  speakers: [
-    { id: 's1', name: 'Speaker 1', voiceprintId: 'v1', colorIndex: 0 },
-    { id: 's2', name: 'Dana Whitfield', voiceprintId: 'v2', colorIndex: 1 },
-  ],
-  attendeeIds: ['s1', 's2'],
-  lines: [
-    /* Low confidence on the FIRST line on purpose — that is where diarization
-       is weakest, before there is a voiceprint to match against. */
-    { id: 'l1', speakerId: 's1', text: 'Let us start with the roadmap.', startsAt: 0, confidence: 0.52 },
-    { id: 'l2', speakerId: 's2', text: 'I have the numbers from last quarter.', startsAt: 6, confidence: 0.94 },
-    { id: 'l3', speakerId: 's1', text: 'Good. Walk me through the misses first.', startsAt: 12, confidence: 0.91 },
-  ],
-  tasks: [{ id: 't1', text: 'Send the Q2 miss analysis', sourceLineId: 'l3', done: false }],
-  summary: 'Roadmap review. Dana to circulate the Q2 miss analysis.',
-};
+/** Which PAGE this is. A filter change on Recent is the same page. */
+function pageKey(r: Route): string {
+  if (r.name === 'capture') return `capture/${r.id}`;
+  /* Choosing an item in a list + detail screen is NOT a new page — the list
+     stays, focus stays on what you clicked. */
+  if (r.name === 'tags' || r.name === 'meetings') return r.name;
+  return r.name;
+}
 
 export default function App() {
-  const pos = { lineIndex: 1, totalLines: DEMO.lines.length };
+  const route = useRoute();
+  const { capture } = useStore();
+  const key = pageKey(route);
+
+  /* The tab title says where you are — the one thing a screen-reader user
+     and anyone with twelve tabs open both rely on. */
+  const title =
+    route.name === 'capture' ? capture(route.id)?.title ?? 'Not found'
+    : route.name === 'tags' ? (route.tag ? `# ${route.tag}` : 'Tags')
+    : { recent: 'Recent', record: 'New Mumble', tasks: 'Tasks', meetings: 'Meetings', settings: 'Settings' }[route.name];
+  useEffect(() => { document.title = `${title} — Mumble`; }, [title]);
+
+  /* A new page: start at the top, and move focus to its heading so a screen
+     reader announces it. Hash navigation does neither on its own — a capture
+     opened from the bottom of Recent used to open scrolled halfway down, and
+     focus was left on a link that no longer existed. Not on first load. */
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) { first.current = false; return; }
+    window.scrollTo?.(0, 0);
+    const h1 = document.querySelector<HTMLElement>('#main h1');
+    if (h1) {
+      if (!h1.hasAttribute('tabindex')) h1.setAttribute('tabindex', '-1');
+      h1.focus({ preventScroll: true });
+    }
+  }, [key]);
 
   return (
-    <main style={{ padding: 'var(--space-32)', maxWidth: '44rem', margin: '0 auto' }}>
-      <h1 className="mb-display-page">{DEMO.title}</h1>
-      <p className="mb-meta" style={{ color: 'var(--text-secondary)' }}>
-        {isMeeting(DEMO) ? `${DEMO.speakers.length} speakers` : 'Solo note'} · {positionLabel(pos)}
-      </p>
-
-      <Surface tone="ai" className="mb-stack">
-        <p className="mb-label-strong" style={{ color: 'var(--accent-base)' }}>Summary</p>
-        <p className="mb-body-reading" style={{ margin: 0 }}>{DEMO.summary}</p>
-      </Surface>
-
-      <Surface className="mb-stack">
-        {DEMO.lines.map((line) => {
-          const speaker = speakerFor(DEMO, line);
-          return (
-            <p key={line.id} className="mb-body-reading" style={{ margin: '0 0 var(--space-12)' }}>
-              <strong className="mb-label-large">{speaker?.name ?? 'You'}</strong>{' '}
-              {isLowConfidence(line) && <ChipMeta tone="low-confidence">Low confidence</ChipMeta>}
-              <br />
-              {line.text}
-            </p>
-          );
-        })}
-      </Surface>
-    </main>
+    <AppShell route={route}>
+      {route.name === 'recent' && <RecentScreen filter={route.filter} />}
+      {route.name === 'capture' && <CaptureScreen id={route.id} line={route.line} />}
+      {route.name === 'record' && <RecordScreen />}
+      {route.name === 'tasks' && <TasksScreen />}
+      {route.name === 'tags' && <TagsScreen tag={route.tag} />}
+      {route.name === 'meetings' && <MeetingsScreen id={route.id} />}
+      {route.name === 'settings' && <SettingsScreen />}
+    </AppShell>
   );
 }

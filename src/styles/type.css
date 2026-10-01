@@ -1,6 +1,11 @@
 /**
  * Type — 21 named styles, transcribed from the Figma file (Aug 30 2026).
  *
+ * In rem, not px (Sept 30): at the default 16px root every value equals the
+ * Figma px exactly (13px = 0.8125rem), but a reader who has raised their
+ * browser's default font size — a common dyslexia accommodation — now gets
+ * bigger text. In px, that setting did nothing.
+ *
  * All Inter. Zero letter-spacing on every style — the file tracks nothing, so
  * neither does this.
  *
@@ -17,38 +22,38 @@
  */
 
 /* Display */
-.mb-display-page   { font: 600 20px/28px var(--font-sans); }
-.mb-display-timer  { font: 700 32px/40px var(--font-sans); }
-.mb-display-badge  { font: 700 18px/24px var(--font-sans); }
-.mb-display-mobile { font: 700 26px/32px var(--font-sans); }
+.mb-display-page   { font: 600 1.25rem/1.75rem var(--font-sans); }
+.mb-display-timer  { font: 700 2rem/2.5rem var(--font-sans); }
+.mb-display-badge  { font: 700 1.125rem/1.5rem var(--font-sans); }
+.mb-display-mobile { font: 700 1.625rem/2rem var(--font-sans); }
 
 /* Headings */
-.mb-heading-section { font: 600 16px/24px var(--font-sans); }
-.mb-heading-card    { font: 600 14px/20px var(--font-sans); }
-.mb-heading-sub     { font: 600 13px/16px var(--font-sans); }
-.mb-heading-mobile  { font: 600 15px/20px var(--font-sans); }
+.mb-heading-section { font: 600 1rem/1.5rem var(--font-sans); }
+.mb-heading-card    { font: 600 0.875rem/1.25rem var(--font-sans); }
+.mb-heading-sub     { font: 600 0.8125rem/1rem var(--font-sans); }
+.mb-heading-mobile  { font: 600 0.9375rem/1.25rem var(--font-sans); }
 
 /* Body */
-.mb-body         { font: 400 13px/16px var(--font-sans); }
+.mb-body         { font: 400 0.8125rem/1rem var(--font-sans); }
 /* ⭐ Running text. The only style with leading looser than its UI twin. */
-.mb-body-reading { font: 400 13px/20px var(--font-sans); }
-.mb-body-small   { font: 400 12px/16px var(--font-sans); }
-.mb-body-mobile  { font: 400 14px/20px var(--font-sans); }
+.mb-body-reading { font: 400 0.8125rem/1.25rem var(--font-sans); }
+.mb-body-small   { font: 400 0.75rem/1rem var(--font-sans); }
+.mb-body-mobile  { font: 400 0.875rem/1.25rem var(--font-sans); }
 
 /* Labels */
-.mb-label        { font: 500 12px/16px var(--font-sans); }
-.mb-label-strong { font: 600 12px/16px var(--font-sans); }
-.mb-label-large  { font: 500 13px/16px var(--font-sans); }
-.mb-label-mobile { font: 500 14px/20px var(--font-sans); }
+.mb-label        { font: 500 0.75rem/1rem var(--font-sans); }
+.mb-label-strong { font: 600 0.75rem/1rem var(--font-sans); }
+.mb-label-large  { font: 500 0.8125rem/1rem var(--font-sans); }
+.mb-label-mobile { font: 500 0.875rem/1.25rem var(--font-sans); }
 
 /* Meta — timestamps, durations, counts */
-.mb-meta        { font: 400 11px/16px var(--font-sans); }
-.mb-meta-strong { font: 500 11px/16px var(--font-sans); }
-.mb-meta-small  { font: 400 9px/12px  var(--font-sans); }
+.mb-meta        { font: 400 0.6875rem/1rem var(--font-sans); }
+.mb-meta-strong { font: 500 0.6875rem/1rem var(--font-sans); }
+.mb-meta-small  { font: 400 0.5625rem/0.75rem  var(--font-sans); }
 
 /* Chips */
-.mb-chip-text    { font: 500 10px/12px var(--font-sans); }
-.mb-chip-regular { font: 400 10px/12px var(--font-sans); }
+.mb-chip-text    { font: 500 0.625rem/0.75rem var(--font-sans); }
+.mb-chip-regular { font: 400 0.625rem/0.75rem var(--font-sans); }
 
 /* Not a style in the file — a modifier. Durations and timers are columns of
    digits, and proportional figures make them shimmer as the seconds tick. */

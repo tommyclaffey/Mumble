@@ -1,0 +1,14 @@
+/* Meetings — the frame: list 360 (x 260), rule at 660, detail from x 700.
+   Labels are Label/Strong 12/600; sections 20px apart. */
+/* Desktop only — unguarded, this (loaded after screens.css) beat the
+   stacking rule below 1200px and crushed the phone layout. */
+@media (min-width: 1200px) { .mb-split.mb-meetings-split { grid-template-columns: var(--layout-split-list) 1px minmax(0, 1fr); } }
+.mb-meeting { display: flex; flex-direction: column; }
+.mb-meeting-title { margin: 0 0 var(--space-8); color: var(--text-strong); }
+.mb-meeting .mb-player { position: static; }
+.mb-detail-label { margin: 22px 0 6px; font: 600 0.75rem/1rem var(--font-sans); color: var(--text-strong); }
+.mb-detail-h { display: flex; align-items: center; gap: var(--space-8); margin: 32px 0 8px; color: var(--text-strong); }
+.mb-surface.mb-meeting-excerpt { padding: 24px; border-radius: var(--radius-xl); border-left: 3px solid var(--accent-base); }
+.mb-meeting-excerpt p { margin: 0; color: var(--text-body); line-height: 1rem; }
+.mb-meeting-open { display: inline-flex; margin: 12px 0 0; font: 500 0.6875rem/1rem var(--font-sans); }
+.mb-meeting .mb-list-tight { gap: var(--space-12); }

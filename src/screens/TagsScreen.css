@@ -1,0 +1,28 @@
+/* Wireframe: two columns of 232 × 88 tag cards (480 wide), then the rule. */
+/* Desktop only — unguarded, this (loaded after screens.css) beat the
+   stacking rule below 1200px and crushed the phone layout. */
+@media (min-width: 1200px) { .mb-split.mb-tags-split { grid-template-columns: 440px 1px minmax(0, 1fr); } }  /* list x 260–700, rule at 740 */
+.mb-tag-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: var(--space-12); }
+.mb-tag-card { position: relative; padding: var(--space-16); display: grid; align-content: space-between; height: 88px; border-radius: var(--radius-md); }
+.mb-tag-card:hover { border-color: var(--accent-medium); }
+.mb-tag-card.is-selected { border-color: var(--accent-base); box-shadow: inset 3px 0 0 var(--accent-base); }
+.mb-tag-link { color: var(--text-strong); text-decoration: none; }
+/* The whole card is the link's hit area; the link is still the only control. */
+.mb-tag-link::after { content: ''; position: absolute; inset: 0; border-radius: var(--radius-xl); }
+.mb-tag-link:focus-visible { outline: none; }
+.mb-tag-link:focus-visible::after { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px; }
+/* Mumble row — the frame: 119 tall; title 14 down, summary 7 below it,
+   the rule 14 below that, then the 32px play button. */
+.mb-tag-row { padding: 14px var(--space-16) 3px; display: flex; flex-direction: column; gap: 7px; border-radius: var(--radius-md); }
+.mb-tag-row .mb-card-rule { margin: 7px 0 -5px; }
+.mb-tag-row-summary { margin: 0; max-width: 72ch; }
+.mb-tag-row-play { align-self: flex-start; }
+/* Title 88 · counts 116 · rule 148 · "Mumbles" 160 · first row 180. */
+.mb-tag-detail .mb-meeting-title { margin: 0; }
+.mb-tag-detail .mb-review-rule { margin: 10px 0 11px; }
+.mb-tag-detail .mb-list + .mb-review-rule { margin-top: 20px; }
+.mb-tag-detail-h { margin: 0 0 4px; color: var(--text-strong); }
+.mb-tag-row-title { color: var(--text-strong); text-decoration: none; }
+.mb-tag-row-title:hover { text-decoration: underline; }
+.mb-tag-row-title:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); border-radius: var(--radius-xs); }
+

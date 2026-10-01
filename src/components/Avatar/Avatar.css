@@ -1,0 +1,25 @@
+.mb-avatar {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  border-radius: var(--radius-pill); font: 600 0.625rem/0.75rem var(--font-sans);
+  color: var(--text-on-accent);
+}
+.mb-avatar.is-sm { width: 20px; height: 20px; font-size: 0.5625rem; }
+.mb-avatar.is-md { width: 24px; height: 24px; }  /* Avatar in speaker headers: 24 × 24 */
+/* 🔴 Speaker colours are NOT in the Figma file — it defines one accent. These
+   are opacity steps of that accent plus the inverse surface, so no new hue is
+   invented. Logged in BACKLOG as a gap to push back into Figma. */
+.mb-avatar.is-c0 { background: var(--surface-inverse); }
+.mb-avatar.is-c1 { background: var(--accent-base); }
+.mb-avatar.is-c2 { background: var(--neutral-600); }
+.mb-avatar.is-c3 { background: var(--accent-medium); color: var(--text-strong); }  /* white on it measured 2.81:1 */
+.mb-avatar.is-c4 { background: var(--neutral-600); }  /* neutral-500 was 3.9:1 with white */
+.mb-avatar.is-unconfirmed {
+  background: var(--surface-card); color: var(--text-muted);
+  border: var(--border-width-sm) dashed var(--neutral-500);
+}
+
+.mb-avatar-stack { display: inline-flex; align-items: center; }
+/* Overlap with a ring in the card colour, so each face stays separate. */
+.mb-avatar-stack .mb-avatar { box-shadow: 0 0 0 2px var(--surface-card); }
+.mb-avatar-stack .mb-avatar + .mb-avatar { margin-left: -3px; }
+.mb-avatar.is-more { background: var(--surface-sunken); color: var(--text-muted); }

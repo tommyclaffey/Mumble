@@ -1,0 +1,45 @@
+/* Feed card — Home Feed frame: 156 tall, 6px corners, 18/20/12 padding,
+   title row, a one-line summary, a rule 112px down, then one row:
+   play (20) · track (10 thick) · length · tags · task count. */
+.mb-card {
+  min-height: 156px; padding: 18px 20px 12px; border-radius: var(--radius-md);
+  display: flex; flex-direction: column; gap: var(--space-8);
+}
+.mb-card-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-16); }
+.mb-card-title { margin: 0; min-width: 0; }
+.mb-card-title a { color: var(--text-strong); text-decoration: none; }
+.mb-card-title a:hover { text-decoration: underline; text-underline-offset: 3px; }
+/* Meta, tertiary in the design. text-muted rather than text-tertiary: the
+   design's #A6A6AD is 2.3:1 on white — logged as a token defect. */
+.mb-card-when { color: var(--text-muted); white-space: nowrap; font: 400 0.6875rem/1rem var(--font-sans); }
+.mb-card-summary {
+  margin: 0; color: var(--text-muted);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.mb-card-chips { display: flex; flex-wrap: wrap; gap: var(--space-8); align-items: center; }
+.mb-card-rule { height: 1px; background: var(--border-default); margin-top: auto; }
+.mb-card-foot { display: flex; align-items: center; gap: var(--space-8); min-height: 24px; }
+.mb-card-foot .mb-track { height: 10px; border-radius: var(--radius-sm); }
+.mb-card-len { color: var(--text-muted); margin: 0 var(--space-8) 0 var(--space-4); min-width: 34px; }
+/* Tags in the card foot are drawn as rectangles in the frame (Chip / Meta). */
+.mb-chip.is-tag.mb-chip-rect { border-radius: var(--radius-sm); }
+.mb-card-tags { display: flex; gap: 6px; width: 172px; flex-shrink: 0; overflow: hidden; }
+.mb-card-tasks-slot { display: flex; justify-content: flex-end; width: 68px; flex-shrink: 0; }
+.mb-card-tasks { min-width: 68px; }
+.mb-card-noaudio { margin: 0; flex: 1; }
+
+/* Compact — the Meetings list: 360 × 100, 12/16 padding, 8px apart. */
+.mb-card.is-compact { min-height: 100px; padding: 12px 16px 6px; gap: 7px; }  /* 360 × 100 in the frame */
+.mb-card.is-compact .mb-card-when { font-size: 0.625rem; line-height: 0.75rem; }
+.mb-card.is-compact .mb-card-rule { margin-top: 0; }
+.mb-card.is-compact .mb-card-foot .mb-track { height: 8px; }
+/* Selected: the design's accent "backing" peeking out on the left. */
+.mb-card.is-selected { box-shadow: -3px 0 0 var(--accent-base); border-color: var(--accent-medium); }
+
+@media (max-width: 767px) {
+  .mb-card { padding: var(--space-16); }
+  .mb-card-foot { flex-wrap: wrap; }
+  .mb-card-foot .mb-track { flex: 1 1 60%; }
+  .mb-card-tags { width: auto; }
+  .mb-card-tasks-slot { width: auto; margin-left: auto; }
+}

@@ -1,0 +1,125 @@
+.mb-shell {
+  display: grid; min-height: 100vh;
+  grid-template-columns: var(--layout-sidebar) minmax(0, 1fr);
+  grid-template-rows: var(--layout-header) 1fr;
+  grid-template-areas: 'header header' 'side main';
+}
+/* Focus mode (the capture review): the design drops the sidebar so the
+   transcript and its details get the whole width. */
+.mb-shell.is-focus { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'header' 'main'; }
+.mb-shell.is-focus .mb-sidebar { display: none; }
+
+.mb-skip {
+  position: absolute; left: var(--space-16); top: -48px; z-index: 100;
+  background: var(--surface-inverse); color: var(--text-on-accent);
+  padding: var(--space-8) var(--space-12); border-radius: var(--radius-md);
+}
+.mb-skip:focus { top: var(--space-8); }
+
+.mb-header {
+  grid-area: header; position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 var(--space-32) 0 14px;   /* logo sits 14px in, as in the frame */
+  background: var(--surface-card); border-bottom: var(--border-width-sm) solid var(--border-default);
+}
+.mb-wordmark { display: inline-flex; border-radius: var(--radius-sm); }
+.mb-wordmark img { display: block; width: 92px; height: 36px; }
+.mb-header-actions { display: flex; align-items: center; gap: var(--space-16); }
+/* Search: 28px, outlined, 6px corners (App header › Group 17). */
+.mb-header-btn {
+  display: inline-flex; align-items: center; gap: var(--space-4); height: 28px; padding: 0 var(--space-12);
+  border: var(--border-width-sm) solid var(--border-default); border-radius: var(--radius-md);
+  background: var(--surface-card); color: var(--text-muted); cursor: pointer;
+  font: 400 0.75rem/1rem var(--font-sans);
+}
+.mb-header-btn svg { width: 12px; height: 12px; }
+.mb-header-btn:hover { color: var(--text-body); border-color: var(--border-control); }
+/* Start Mumble: 132 × 34 pill, accent → navy gradient left to right, 7px dot. */
+.mb-header-record {
+  display: inline-flex; align-items: center; gap: var(--space-8); height: 34px; padding: 0 var(--space-16) 0 18px;
+  border-radius: var(--radius-pill); text-decoration: none;
+  background: linear-gradient(90deg, var(--accent-base), var(--blue-950));
+  color: var(--text-on-accent); font: 600 0.8125rem/1rem var(--font-sans);
+}
+.mb-header-record:hover { filter: brightness(1.08); }
+.mb-header-record .mb-dot { width: 7px; height: 7px; border-radius: var(--radius-pill); background: currentColor; }
+.mb-wordmark:focus-visible, .mb-nav-item:focus-visible, .mb-tab:focus-visible, .mb-header-record:focus-visible, .mb-header-btn:focus-visible {
+  outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px;
+}
+
+/* The dark sidebar fades into the brand blue at the foot, as in the frames.
+   Both stops are tokens — no new colour. */
+.mb-sidebar {
+  grid-area: side; position: sticky; top: var(--layout-header); height: calc(100vh - var(--layout-header));
+  background: linear-gradient(180deg, var(--neutral-1000) 40%, var(--accent-base) 150%);
+  padding: 22px var(--space-8);
+}
+/* Nav item: 204 × 36, 4px apart, 6px corners, 19px in, 8px icon gap. */
+.mb-sidebar ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-4); }
+.mb-nav-item {
+  position: relative; display: flex; align-items: center; gap: var(--space-8);
+  min-height: var(--layout-nav-row); padding: 0 var(--space-16) 0 19px;
+  border-radius: var(--radius-md);
+  color: var(--neutral-400); text-decoration: none;
+  font: 500 0.8125rem/1rem var(--font-sans);
+}
+.mb-nav-item:hover { color: var(--text-on-accent); background: rgb(255 255 255 / 0.04); }
+.mb-nav-item[aria-current='page'] { color: var(--text-on-accent); background: var(--surface-inverse); }
+.mb-nav-bar {
+  position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px;
+  border-radius: var(--radius-xs); background: transparent;
+}
+.mb-nav-item[aria-current='page'] .mb-nav-bar { background: var(--text-on-accent); }
+
+.mb-main { grid-area: main; min-width: 0; outline: none; }
+
+.mb-tabbar { display: none; }
+
+@media (max-width: 767px) {
+  .mb-shell, .mb-shell.is-focus { grid-template-columns: minmax(0, 1fr); grid-template-rows: 56px 1fr; grid-template-areas: 'header' 'main'; }
+  .mb-sidebar { display: none; }
+  .mb-header { padding: 0 var(--space-16); }
+  .mb-header-actions { display: none; }
+  .mb-main { padding-bottom: 88px; }
+  .mb-tabbar {
+    display: grid; grid-template-columns: repeat(5, 1fr); align-items: end;
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    min-height: 72px; padding: 0 var(--space-8) var(--space-8);
+    background: var(--surface-card); border-top: var(--border-width-sm) solid var(--border-default);
+  }
+  .mb-tab {
+    display: flex; flex-direction: column; align-items: center; gap: var(--space-4);
+    padding: var(--space-8) 0 0; min-height: 48px;
+    color: var(--text-muted); text-decoration: none; font: 500 0.6875rem/1rem var(--font-sans);
+  }
+  .mb-tab[aria-current='page'] { color: var(--accent-base); }
+  .mb-tab-record { color: var(--accent-base); }
+  .mb-tab-record-disc {
+    width: 56px; height: 56px; margin-top: -28px; border-radius: var(--radius-pill);
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(180deg, var(--accent-base), var(--surface-inverse));
+    color: var(--text-on-accent);
+    box-shadow: 0 6px 16px rgb(61 90 153 / 0.35);
+  }
+}
+
+/* Short or heavily zoomed windows: pinned bars would cover the content. */
+@media (max-height: 560px) {
+  .mb-header, .mb-sidebar { position: static; height: auto; }
+  .mb-tabbar { position: static; }
+  .mb-main { padding-bottom: 0; }
+}
+
+/* Tablet (768–1023): the 240px sidebar would take a third of the screen.
+   It becomes a 72px icon rail; labels stay for screen readers (clipped, not
+   removed) and show as tooltips. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .mb-shell { grid-template-columns: 72px minmax(0, 1fr); }
+  .mb-sidebar { padding: 22px var(--space-8); }
+  .mb-nav-item { justify-content: center; padding: 0; }
+  .mb-nav-item svg { width: 20px; height: 20px; }
+  .mb-nav-label {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip-path: inset(50%); white-space: nowrap;
+  }
+}
