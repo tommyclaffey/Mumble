@@ -65,7 +65,11 @@ describe('Recent', () => {
     const titles = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent);
     expect(titles[0]).toBe('Product brainstorm session');
     expect(titles).toHaveLength(5);
-    expect(screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toContain('Today 2');
+    /* Day groups, newest first, accounting for all five — whatever the hour
+       the test runs (at 3am, a recording from 3 hours ago is "Yesterday"). */
+    const groups = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent!).filter((t) => /^(Today|Yesterday|Earlier this week|Earlier) \d+$/.test(t));
+    expect(groups[0]).toMatch(/^Today \d+$/);
+    expect(groups.reduce((n, g) => n + Number(g.split(' ').pop()), 0)).toBe(5);
   });
 
   it('filters by kind, and the filter lives in the URL', async () => {

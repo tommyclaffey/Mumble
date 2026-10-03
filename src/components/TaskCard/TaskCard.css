@@ -51,7 +51,9 @@
   .mb-taskcard.is-table .mb-taskcard-text { flex-basis: calc(100% - 40px); }
   .mb-taskcard-col.is-owner, .mb-taskcard-col.is-status, .mb-taskcard-col.is-from { width: auto; }
   .mb-taskcard-col.is-owner { margin-left: 30px; }
-  .mb-taskcard-col.is-from { flex: 1; min-width: 0; }
+  /* Narrow: owner · status · when on one line, where it came from under it. */
+  .mb-taskcard-col.is-at { order: 4; width: auto; margin-left: auto; }
+  .mb-taskcard-col.is-from { order: 5; flex-basis: calc(100% - 30px); margin-left: 30px; min-width: 0; }
 }
 /* The due date is optional — empty, it's a quiet word, not a dashed box. */
 .mb-taskcard .mb-chip.is-action { min-height: 22px; padding: 0 8px; font: 500 0.75rem/1rem var(--font-sans); }

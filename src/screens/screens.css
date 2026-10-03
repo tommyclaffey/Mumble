@@ -64,7 +64,10 @@
 .mb-link-button:hover { text-decoration: underline; }
 .mb-link-button:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); }
 
+/* Phone: the view bar wraps (search, then order); only the filter strip
+   scrolls sideways — one swipeable row, never a control cut off at the edge. */
 @media (max-width: 767px) {
-  .mb-viewbar { flex-wrap: nowrap; overflow-x: auto; margin-inline: calc(var(--space-16) * -1); padding: 0 var(--space-16) var(--space-4); scrollbar-width: none; }
-  .mb-filterbar { flex-shrink: 0; }
+  .mb-filterbar { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .mb-filterbar > * { flex-shrink: 0; }
+  .mb-viewbar .mb-search { flex: 1 1 100%; max-width: none; }
 }

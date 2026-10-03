@@ -13,4 +13,12 @@
 .mb-keys { display: grid; grid-template-columns: auto 1fr; gap: 10px 12px; align-items: center; margin: 0; }
 .mb-keys dt, .mb-keys dd { margin: 0; }
 .mb-keys dd { font: 400 0.875rem/1.25rem var(--font-sans); color: var(--text-body); }
-@media (max-width: 767px) { .mb-set-row { flex-wrap: wrap; } }
+@media (max-width: 767px) {
+  .mb-set-card { padding: 0 var(--space-16); }
+  .mb-set-row { flex-wrap: wrap; }
+  .mb-set-control { max-width: 100%; }
+  /* The speed choice takes the row and shares it evenly — never past the card. */
+  .mb-set-control:has(.mb-seg) { flex-basis: 100%; }
+  .mb-set .mb-seg { display: flex; width: 100%; }
+  .mb-set .mb-seg-option { flex: 1; min-width: 0; padding: 5px 0; }
+}

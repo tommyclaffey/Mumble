@@ -32,6 +32,9 @@
 @media (prefers-reduced-motion: reduce) { .mb-recorder-meter span { transition: none; } }
 .mb-recorder-actions { display: flex; align-items: center; gap: var(--space-12); flex-wrap: wrap; }
 .mb-recorder-key { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
+.mb-recorder-key .mb-kbd { margin-left: 0; }
+/* No Space bar on a phone. */
+@media (max-width: 767px) { .mb-recorder-key { display: none; } }
 .mb-record-error { margin: 0; padding: var(--space-12) var(--space-16); border-radius: var(--radius-control); background: var(--accent-tint); color: var(--accent-strong); font: 400 0.875rem/1.25rem var(--font-sans); }
 
 .mb-saving h2, .mb-saving p { margin: 0; }

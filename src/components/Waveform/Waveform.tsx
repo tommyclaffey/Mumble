@@ -1,4 +1,6 @@
+import { useEffect, useRef, useState } from 'react';
 import { Track } from '../Track/Track';
+import { resample } from './resample';
 import './Waveform.css';
 
 /**
@@ -18,14 +20,16 @@ export function Waveform(
   { peaks?: number[]; percent: number; label?: string; valueText?: string; bars?: number; decorative?: boolean },
 ) {
   const p = Math.min(100, Math.max(0, percent));
+  const ref = useRef<HTMLDivElement>(null);
+  const n = useFitBars(ref, bars);
   if (!peaks?.length) return decorative ? null : <Track percent={p} label={label} valueText={valueText} />;
-  const heights = resample(peaks, bars);
-  const played = Math.round((p / 100) * bars);
+  const heights = resample(peaks, n);
+  const played = Math.round((p / 100) * n);
   const a11y = decorative
     ? { 'aria-hidden': true as const }
     : { role: 'progressbar', 'aria-label': label, 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': Math.round(p), 'aria-valuetext': valueText };
   return (
-    <div className="mb-wave" style={{ gridTemplateColumns: `repeat(${bars}, minmax(0, 1fr))` }} {...a11y}>
+    <div ref={ref} className="mb-wave" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }} {...a11y}>
       {heights.map((h, i) => (
         <span key={i} className={`mb-wave-bar${i < played ? ' is-played' : ''}`} style={{ height: `${Math.round(18 + h * 82)}%` }} />
       ))}
@@ -33,14 +37,19 @@ export function Waveform(
   );
 }
 
-/** Average the peaks down (or stretch them up) to exactly `n` bars. */
-export function resample(peaks: number[], n: number): number[] {
-  const out: number[] = [];
-  for (let i = 0; i < n; i++) {
-    const from = (i / n) * peaks.length, to = ((i + 1) / n) * peaks.length;
-    let sum = 0, count = 0;
-    for (let j = Math.floor(from); j < Math.max(Math.ceil(to), Math.floor(from) + 1) && j < peaks.length; j++) { sum += peaks[j]; count++; }
-    out.push(count ? sum / count : 0);
-  }
-  return out;
+/**
+ * As many bars as fit — a bar and its gap need ~5px. On a phone the same
+ * recording draws fewer, wider-spaced bars instead of collapsing to nothing.
+ * Without ResizeObserver (tests, old browsers) it keeps `max`.
+ */
+function useFitBars(ref: React.RefObject<HTMLDivElement | null>, max: number): number {
+  const [n, setN] = useState(max);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(([e]) => setN(Math.max(12, Math.min(max, Math.floor(e.contentRect.width / 5)))));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref, max]);
+  return n;
 }
