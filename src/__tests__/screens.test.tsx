@@ -607,6 +607,19 @@ describe('Record', () => {
     expect(screen.getByText(/Firefox doesn’t support it/)).toBeTruthy();
   });
 
+  it('on an insecure (http) page, recording is off and it says why — not a silent failure', () => {
+    const was = Object.getOwnPropertyDescriptor(window, 'isSecureContext');
+    Object.defineProperty(window, 'isSecureContext', { value: false, configurable: true });
+    try {
+      mount('#/record');
+      expect((screen.getByRole('button', { name: 'Start' }) as HTMLButtonElement).disabled).toBe(true);
+      expect(screen.getByText(/Recording needs a secure link/)).toBeTruthy();
+      expect(screen.queryByText(/Firefox doesn’t support it/)).toBeNull();
+    } finally {
+      if (was) Object.defineProperty(window, 'isSecureContext', was); else delete (window as { isSecureContext?: boolean }).isSecureContext;
+    }
+  });
+
   it('leaving mid-recording releases the microphone', async () => {
     const { rec } = mount('#/record');
     fireEvent.click(screen.getByRole('button', { name: 'Start' }));

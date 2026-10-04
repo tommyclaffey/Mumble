@@ -1,11 +1,16 @@
 /// <reference types="vitest/config" />
 import react from '@vitejs/plugin-react'
+import basicSsl from '@vitejs/plugin-basic-ssl'
 import { configDefaults } from 'vitest/config'
 import { defineConfig } from 'vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  /* `npm run dev:phone` serves over HTTPS on the local network. Phones only
+     allow the microphone on a secure origin, so the plain http Wi-Fi link
+     can show every screen but can't record. The certificate is self-signed:
+     the phone warns once ("not private") — tap through to continue. */
+  plugins: [react(), ...(process.env.PHONE ? [basicSsl()] : [])],
   /* Served from https://tommyclaffey.github.io/Mumble/ (capital M — Pages paths are case-sensitive and the repo is 'Mumble'), so assets need the
      repo name as their base path — without it the built page asks for
      /assets/... at the domain root and renders blank. (Growth hit exactly

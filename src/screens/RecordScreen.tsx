@@ -40,7 +40,11 @@ export function RecordScreen() {
   if (!rec.current) rec.current = services.recognizer();
   const mic = useRef<MicRecorder | null>(null);
   if (!mic.current) mic.current = services.mic();
-  const available = rec.current.available;
+  /* Browsers only allow the microphone on a secure (https) page. On a plain
+     http link — e.g. the dev server opened on a phone over Wi-Fi — the
+     buttons would look fine and then silently fail. Say why instead. */
+  const secure = typeof window === 'undefined' || window.isSecureContext !== false;
+  const available = rec.current.available && secure;
   const [micOk, setMicOk] = useState(mic.current.available);
   const [saving, setSaving] = useState(false);
   /* Saving is quick but real — each step is said as it happens. */
@@ -285,7 +289,13 @@ export function RecordScreen() {
             The audio can’t be recorded in this browser (or the microphone recording was refused), so this will be saved as a transcript only.
           </p>
         )}
-        {!available && (
+        {!secure && (
+          <p className="mb-record-error" role="status">
+            Recording needs a secure link. This page is <strong>http://</strong>, so the browser won’t open the microphone.
+            Open the live demo (https) — or, on your own network, run <code>npm run dev:phone</code> and use the https link it prints.
+          </p>
+        )}
+        {secure && !rec.current.available && (
           <p className="mb-record-error">This browser has no speech recognition (Firefox doesn’t support it). Open the demo in Chrome, Edge or Safari to record.</p>
         )}
       </section>
