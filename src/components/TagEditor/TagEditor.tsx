@@ -44,7 +44,6 @@ export function TagEditor(
   const createColor = newColor ?? defaultTagColor(q);
 
   useEffect(() => { if (open) input.current?.focus(); }, [open]);
-  useEffect(() => { setActive(0); setNewColor(null); }, [value]);
 
   /* A click anywhere else closes whatever is open. */
   useEffect(() => {
@@ -119,7 +118,7 @@ export function TagEditor(
                 <Icon name="hash" size={14} />
                 <label htmlFor={`${uid}-in`} className="mb-sr-only">Add a tag</label>
                 <input
-                  ref={input} id={`${uid}-in`} value={value} onChange={(e) => setValue(e.target.value)}
+                  ref={input} id={`${uid}-in`} value={value} onChange={(e) => { setValue(e.target.value); setActive(0); setNewColor(null); }}
                   placeholder="Find or create a tag" autoComplete="off" maxLength={32}
                   role="combobox" aria-expanded aria-controls={`${uid}-list`} aria-autocomplete="list"
                   aria-activedescendant={rows ? optId(active) : undefined}
