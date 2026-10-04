@@ -1,0 +1,12 @@
+.mb-toggle {
+  position: relative; flex-shrink: 0; width: 38px; height: 22px; padding: 0; border: none; cursor: pointer;
+  border-radius: var(--radius-pill); background: var(--border-control); transition: background-color 140ms ease;
+}
+.mb-toggle[aria-checked='true'] { background: var(--accent-base); }
+.mb-toggle-knob {
+  position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: var(--radius-pill);
+  background: var(--surface-card); transition: transform 140ms ease; box-shadow: 0 1px 2px rgb(18 18 24 / 0.2);
+}
+.mb-toggle[aria-checked='true'] .mb-toggle-knob { transform: translateX(16px); }
+.mb-toggle:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .mb-toggle, .mb-toggle-knob { transition: none; } }

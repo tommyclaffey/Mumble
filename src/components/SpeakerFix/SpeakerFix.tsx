@@ -69,13 +69,15 @@ export function SpeakerFix(
         ) : (
           <span className="mb-meta mb-tabular mb-speaker-time-static">{startsAt}</span>
         )}
-        {/* As in the frame: the model's doubt as a chip, and the fix as a link. */}
+        {/* The model's doubt, said as the question it raises — and pressing
+            it opens the fix. How far the answer reaches is said up front. */}
         {lowConfidence && (
           <>
-            <span className="mb-chip is-meta is-low-confidence" title="The model wasn't sure who said this.">Low confidence</span>
-            <button type="button" className="mb-speaker-reassign mb-meta-strong" onClick={() => setOpen(true)} aria-expanded={open}>
-              Reassign
+            <button type="button" className="mb-chip is-meta is-low-confidence mb-speaker-who" onClick={() => setOpen(true)} aria-expanded={open}
+              aria-label={`Who is this? The model wasn’t sure who ${speaker.name} is`}>
+              Who is this?
             </button>
+            <span className="mb-t-meta mb-muted">{lineCount} {lineCount === 1 ? 'line' : 'lines'}, same voice</span>
           </>
         )}
       </div>

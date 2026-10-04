@@ -1,34 +1,39 @@
-import type { ReactNode } from 'react';
+import { BRAND } from '../brand';
+import { useEffect, type ReactNode } from 'react';
 import { Icon, type IconName } from '../components/Icon/Icon';
+import { formatDuration, openTasks, isMeeting } from '../data/model';
 import { go, href, sectionOf, type Route } from '../data/route';
+import { useStore } from '../data/store';
+import { tagColor } from '../data/tagColor';
+import { useRecordingStatus } from '../record/recordingStatus';
 import '../components/Button/Button.css';
 import './AppShell.css';
 
 /**
- * The frame every screen sits in.
+ * The frame every screen sits in (Figma page 07): a white header — logo,
+ * search, Start Mumble — and the navy sidebar. Every screen keeps the
+ * sidebar now, the note included: opening something never throws you out of
+ * the app.
  *
- * Desktop: header + dark sidebar. Mobile (<768px): the sidebar becomes a
- * bottom tab bar with the record button raised in the middle — on a phone the
- * one action that matters is "start talking", so it gets the thumb position.
+ * Desktop: header + sidebar. Tablet: the sidebar is an icon rail. Phone: a
+ * bottom tab bar with the record button raised in the middle.
  *
  * Nav items are LINKS (<a href="#/tasks">), not buttons with click handlers:
- * they go somewhere, so middle-click, copy-link and the browser's back button
- * all work without a line of code.
+ * they go somewhere, so middle-click, copy-link and the back button all work.
  */
 
 type Section = 'recent' | 'tasks' | 'tags' | 'meetings' | 'settings';
 const NAV: { id: Section; label: string; icon: IconName; route: Route }[] = [
   { id: 'recent', label: 'Recent', icon: 'clock', route: { name: 'recent', filter: 'all' } },
   { id: 'tasks', label: 'Tasks', icon: 'list', route: { name: 'tasks' } },
-  { id: 'tags', label: 'Tags', icon: 'hash', route: { name: 'tags' } },
   { id: 'meetings', label: 'Meetings', icon: 'users', route: { name: 'meetings' } },
-  { id: 'settings', label: 'Settings', icon: 'gear', route: { name: 'settings' } },
+  { id: 'tags', label: 'Tags', icon: 'hash', route: { name: 'tags' } },
 ];
+const SETTINGS = { id: 'settings' as const, label: 'Settings', icon: 'gear' as IconName, route: { name: 'settings' } as Route };
 
 /**
- * Header Search: jump to the search box on this screen, or — on a screen
- * without one — to Recent's, which searches every capture. A real action,
- * not a decoration.
+ * Search: jump to the search box on this screen, or — on a screen without
+ * one — to Recent's, which searches every capture. ⌘K does the same.
  */
 function focusSearch() {
   const here = document.querySelector<HTMLInputElement>('[data-search]');
@@ -40,68 +45,132 @@ function focusSearch() {
 
 export function AppShell({ route, children }: { route: Route; children: ReactNode }) {
   const current = sectionOf(route);
-  const recording = route.name === 'record';
-  /* The capture review and recording are focused screens in the design —
-     no sidebar, and no Start Mumble (you're already in a capture). */
-  const focus = route.name === 'capture' || route.name === 'record';
+  const { captures } = useStore();
+  const rec = useRecordingStatus();
+  const onRecord = route.name === 'record';
+
+  /* ⌘K / Ctrl+K — the shortcut the search field advertises. */
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); focusSearch(); }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const counts: Record<Section, number | undefined> = {
+    recent: undefined,
+    tasks: captures.reduce((n, c) => n + openTasks(c), 0),
+    meetings: captures.filter(isMeeting).length,
+    tags: new Set(captures.flatMap((c) => c.tags)).size,
+    settings: undefined,
+  };
+  /* The four tags you use most — a shortcut list that keeps itself current
+     (the design calls it "Pinned"; there's no pinning in the demo, so it says
+     what it is). */
+  const usage = new Map<string, number>();
+  for (const c of captures) for (const t of c.tags) usage.set(t, (usage.get(t) ?? 0) + 1);
+  const topTags = [...usage.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 4);
 
   return (
-    <div className={`mb-shell${focus ? ' is-focus' : ''}`}>
+    /* is-note: on a phone the note's own bar (‹ Recent · share · export)
+       takes the top, as in Figma M04 — not the logo bar plus another row. */
+    <div className={`mb-shell${route.name === 'capture' ? ' is-note' : ''}`}>
       <a className="mb-skip" href="#main" onClick={(e) => { e.preventDefault(); document.getElementById('main')?.focus(); }}>
         Skip to content
       </a>
 
       <header className="mb-header">
-        {/* The logo artwork, exported from the Figma file as-is (92 × 36). */}
-        <a className="mb-wordmark" href={href({ name: 'recent', filter: 'all' })}>
-          <img src={`${import.meta.env.BASE_URL}mumble-logo.png`} alt="Mumble — home" width={92} height={36} />
-        </a>
-        <div className="mb-header-actions">
-          <button type="button" className="mb-header-btn" onClick={focusSearch}>
-            <Icon name="search" size={16} /> Search
+        <div className="mb-header-brand">
+          {/* The logo artwork, exported from the Figma file as-is (92 × 36). */}
+          <a className="mb-wordmark" href={href({ name: 'recent', filter: 'all' })}>
+            <img src={`${import.meta.env.BASE_URL}mumble-logo.png`} alt={BRAND.logoAlt} width={92} height={36} />
+          </a>
+        </div>
+        <div className="mb-header-search">
+          {/* Looks like a field, is a button: it takes you to the search box
+              for the screen you're on. The hint is decoration; its name is "Search". */}
+          <button type="button" className="mb-searchbar" onClick={focusSearch} aria-keyshortcuts="Meta+K Control+K">
+            <Icon name="search" size={16} />
+            <span className="mb-searchbar-text">Search<span className="mb-searchbar-hint" aria-hidden="true"> recordings, people, tasks</span></span>
+            <kbd className="mb-kbd" aria-hidden="true">⌘K</kbd>
           </button>
-          {!recording && !focus && (
+        </div>
+        <div className="mb-header-actions">
+          {onRecord && rec.state !== 'idle' ? (
+            <span className="mb-header-live" role="status">
+              <span className={`mb-dot${rec.state === 'recording' ? ' is-live' : ''}`} aria-hidden="true" />
+              {rec.state === 'recording' ? 'Recording' : 'Paused'} · <span className="mb-tabular">{formatDuration(rec.elapsed)}</span>
+            </span>
+          ) : !onRecord && (
             <a className="mb-header-record" href={href({ name: 'record' })}>
-              <span className="mb-dot" aria-hidden="true" /> Start Mumble
+              <Icon name="mic" size={16} /> {BRAND.startLabel}
             </a>
           )}
         </div>
       </header>
 
       <nav className="mb-sidebar" aria-label="Main">
-        <ul>
-          {NAV.map((n) => (
-            <li key={n.id}>
-              <a className="mb-nav-item" href={href(n.route)} aria-current={current === n.id ? 'page' : undefined} title={n.label}>
-                {/* The accent bar is INSIDE the item (Figma decision #3) — it
-                    cannot drift out of sync with the active row. */}
-                <span className="mb-nav-bar" aria-hidden="true" />
-                <Icon name={n.icon} size={16} />
-                <span className="mb-nav-label">{n.label}</span>
-              </a>
-            </li>
-          ))}
+        <ul className="mb-nav">
+          {NAV.map((n) => <NavItem key={n.id} n={n} active={current === n.id} count={counts[n.id]} />)}
         </ul>
+        {topTags.length > 0 && (
+          <div className="mb-nav-section">
+            <p className="mb-t-over mb-nav-section-h" id="top-tags-h">Top tags</p>
+            <ul className="mb-nav" aria-labelledby="top-tags-h">
+              {topTags.map(([t, n]) => (
+                <li key={t}>
+                  <a className="mb-nav-item is-tag" href={href({ name: 'tags', tag: t })}
+                    aria-current={route.name === 'tags' && route.tag === t ? 'page' : undefined}>
+                    <span className={`mb-nav-dot is-${tagColor(t)}`} aria-hidden="true" />
+                    <span className="mb-nav-label">{t}</span>
+                    <span className="mb-nav-count" aria-label={`${n} ${n === 1 ? 'recording' : 'recordings'}`}>{n}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        <div className="mb-nav-foot">
+          <ul className="mb-nav"><NavItem n={SETTINGS} active={current === 'settings'} /></ul>
+          <p className="mb-nav-privacy"><Icon name="lock" size={14} /> <span>Stays in this browser</span></p>
+        </div>
       </nav>
 
       <main id="main" className="mb-main" tabIndex={-1}>{children}</main>
 
       <nav className="mb-tabbar" aria-label="Main tabs">
-        {NAV.filter((n) => n.id !== 'tags').map((n, i) => (
-          <TabLink key={n.id} n={n} active={current === n.id} before={i === 2} />
+        {[NAV[0], NAV[1], NAV[2], SETTINGS].map((n, i) => (
+          <TabLink key={n.id} n={n} active={current === n.id} before={i === 2} recording={onRecord && rec.state !== 'idle'} />
         ))}
       </nav>
     </div>
   );
 }
 
-function TabLink({ n, active, before }: { n: (typeof NAV)[number]; active: boolean; before: boolean }) {
+function NavItem({ n, active, count }: { n: { id: string; label: string; icon: IconName; route: Route }; active: boolean; count?: number }) {
+  return (
+    <li>
+      <a className="mb-nav-item" href={href(n.route)} aria-current={active ? 'page' : undefined} title={n.label}>
+        <Icon name={n.icon} size={18} />
+        <span className="mb-nav-label">{n.label}</span>
+        {count !== undefined && <span className="mb-nav-count">{count}</span>}
+      </a>
+    </li>
+  );
+}
+
+function TabLink({ n, active, before, recording }: { n: { id: string; label: string; icon: IconName; route: Route }; active: boolean; before: boolean; recording: boolean }) {
   return (
     <>
+      {/* The raised record disc. While a recording runs it becomes a stop
+          square and says "Recording" — the tab bar itself tells you, from
+          anywhere in the app (Figma page 08, Tab bar · Active=Recording). */}
       {before && (
-        <a className="mb-tab mb-tab-record" href={href({ name: 'record' })} aria-label="Start Mumble">
-          <span className="mb-tab-record-disc"><Icon name="mic" size={24} /></span>
-          <span aria-hidden="true">Mumble</span>
+        <a className={`mb-tab mb-tab-record${recording ? ' is-recording' : ''}`} href={href({ name: 'record' })}
+          aria-label={recording ? 'Recording in progress' : BRAND.startLabel} aria-current={recording ? 'page' : undefined}>
+          <span className="mb-tab-record-disc"><Icon name={recording ? 'stop' : 'mic'} size={24} /></span>
+          <span aria-hidden="true">{recording ? 'Recording' : BRAND.name}</span>
         </a>
       )}
       <a className="mb-tab" href={href(n.route)} aria-current={active ? 'page' : undefined}>

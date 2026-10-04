@@ -1,15 +1,17 @@
+/* One soft track; the chosen option is a white tile with the card shadow. */
 .mb-seg {
-  display: inline-flex; padding: 2px; gap: 2px;
-  background: var(--surface-sunken); border-radius: var(--radius-pill);
+  display: inline-flex; padding: 3px; gap: 2px;
+  background: var(--surface-subtle); border-radius: var(--radius-control);
 }
 .mb-seg-option {
   flex: 1; border: none; background: transparent; cursor: pointer;
-  border-radius: var(--radius-pill); color: var(--text-muted);
-  font: 500 0.75rem/1rem var(--font-sans); padding: var(--space-8) var(--space-16);
+  border-radius: var(--radius-lg); color: var(--text-muted);
+  font: 500 0.8125rem/1rem var(--font-sans); padding: 7px var(--space-12);
   font-variant-numeric: tabular-nums; white-space: nowrap;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
 }
-.mb-seg.is-sm .mb-seg-option { padding: var(--space-4) var(--space-8); font: 500 0.6875rem/1rem var(--font-sans); }
+.mb-seg.is-sm .mb-seg-option { padding: 5px 10px; }
 .mb-seg-option:hover:not(:disabled) { color: var(--text-body); }
-.mb-seg-option[aria-checked='true'] { background: var(--surface-inverse); color: var(--text-on-accent); }
+.mb-seg-option[aria-checked='true'] { background: var(--surface-card); color: var(--text-strong); box-shadow: var(--elevation-card); }
 .mb-seg-option:disabled { cursor: not-allowed; color: var(--text-tertiary); }
 .mb-seg-option:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 1px; }

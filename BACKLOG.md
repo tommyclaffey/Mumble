@@ -12,6 +12,12 @@ Newest decisions at the top of each section.
 
 ## 🟡 Design-system gaps found by building (push back into Figma)
 
+- ✅ **(Oct 1) Synced back into Figma page 07:** "Pinned tags" → "Top tags"
+  (no pinning exists); the Tasks Status column restored (it's the control that
+  moves a task); "This week" → "All recordings"; the Figma-only "Group: Status"
+  select and collapse chevrons removed. Figma and code match again.
+- **(Oct 1) The record meter is your real mic level** (AnalyserNode); the
+  Figma frame's bars are illustrative.
 - **`border/control` is new** — added in code as `--border-control`
   (neutral-500). The file's only border token is invisible on form controls.
 - **`--text-secondary` (#80808C) fails AA** for small text on white (3.9:1).
@@ -48,6 +54,15 @@ Newest decisions at the top of each section.
   (Phase 3: "the 7 images on the site go stale").
 
 ## ✅ Done
+
+- **Oct 1 — the refined design, built** (branch `redesign`). Figma page
+  07 · Desktop — Refined, all 8 screens: one shell (white header with search
+  + ⌘K, navy sidebar with counts and top tags, a side panel of cards on every
+  screen), the note inside the app, Meetings opening the note, the Tasks table,
+  the Tags grid, Settings with switches that work. Waveforms are the REAL
+  audio (demo: `scripts/make-demo-peaks.mjs`; yours: measured at save). New
+  prefs: keyboard shortcuts, task suggestions. 104 tests; axe clean in jsdom
+  and in real Chrome (desktop + phone, with contrast).
 
 - **Oct 1 — live.** `app-v1` fast-forwarded into `main`; Pages switched on
   (source: GitHub Actions). https://tommyclaffey.github.io/Mumble/

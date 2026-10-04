@@ -1,151 +1,142 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Avatar, colorFor } from '../components/Avatar/Avatar';
 import { CaptureCard } from '../components/CaptureCard/CaptureCard';
-import { ChipMeta } from '../components/Chip/Chip';
+import { ChipFilter } from '../components/Chip/Chip';
 import { Icon } from '../components/Icon/Icon';
-import { PlayerBar } from '../components/PlayerBar/PlayerBar';
-import { Surface } from '../components/Surface/Surface';
-import { TagEditor } from '../components/TagEditor/TagEditor';
-import { TaskCard } from '../components/TaskCard/TaskCard';
+import { Page, PanelCard } from '../components/Page/Page';
 import { matches } from '../data/filters';
-import { formatDuration, isMeeting, type Meeting } from '../data/model';
-import { go, href } from '../data/route';
+import { isLowConfidence, isMeeting, linesBySpeaker, openTasks, type Meeting } from '../data/model';
+import { href } from '../data/route';
 import { useStore } from '../data/store';
-import { usePlayer } from '../playback/usePlayer';
+import { useListPlayer } from '../playback/useListPlayer';
 import './screens.css';
 import './MeetingsScreen.css';
 
 /**
- * Meetings — list + detail, as in the design (and the published mockup):
- * the meetings on the left, the chosen one on the right with its attendees,
- * recording, summary, tasks and tags. Opening the full transcript is one
- * link away.
+ * Meetings — the list (Figma page 07, frame 07). A meeting opens the same
+ * note screen as everything else: one detail view for a recording, not three
+ * (the flow fix from the refinement diagnosis).
  *
- * ONE player for the screen: a card's play button plays that meeting in the
- * detail panel, so two recordings can never overlap.
+ * The side panel: who you meet with (press a person to see only their
+ * meetings), and voices the model wasn't sure of — each a link to the line
+ * where you can say who it was.
  */
-export function MeetingsScreen({ id }: { id?: string }) {
-  const { captures, prefs, dispatch } = useStore();
+type When = 'all' | 'week' | 'open';
+const WHEN: { id: When; label: string }[] = [
+  { id: 'all', label: 'All' }, { id: 'week', label: 'This week' }, { id: 'open', label: 'With open tasks' },
+];
+const WEEK = 7 * 86_400_000;
+
+export function MeetingsScreen() {
+  const { captures } = useStore();
   const [query, setQuery] = useState('');
+  const [when, setWhen] = useState<When>('all');
+  const [person, setPerson] = useState<string | null>(null);
+  const [oldestFirst, setOldestFirst] = useState(false);
+  const [now] = useState(() => Date.now());
   const q = query.trim().toLowerCase();
-  const meetings = captures
-    .filter(isMeeting)
+  const all = captures.filter(isMeeting);
+  const test = (m: Meeting, w: When) => (w === 'week' ? now - new Date(m.createdAt).getTime() < WEEK : w === 'open' ? openTasks(m) > 0 : true);
+  const meetings = all
     .filter((c) => matches(c, 'all', query) || c.attendees.some((a) => a.toLowerCase().includes(q)))
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  const selected = meetings.find((m) => m.id === id) ?? meetings[0];
-  const player = usePlayer(selected, prefs.speed);
+    .filter((m) => test(m, when) && (person === null || m.attendees.includes(person)))
+    .sort((a, b) => (oldestFirst ? a : b).createdAt.localeCompare((oldestFirst ? b : a).createdAt));
+  const player = useListPlayer(meetings);
 
-  /* Play from a card: select it, then play once its recording is attached. */
-  const [pending, setPending] = useState<string | undefined>();
-  const { play } = player;
-  useEffect(() => {
-    if (pending && selected?.id === pending) { setPending(undefined); play(); }
-  }, [pending, selected?.id, play]);
+  const people = new Map<string, number>();
+  for (const m of all) for (const a of m.attendees) people.set(a, (people.get(a) ?? 0) + 1);
+  const unsure = all.flatMap((m) => m.speakers
+    .filter((s) => !s.confirmed && m.lines.some((l) => l.speakerId === s.id && isLowConfidence(l, s)))
+    .map((s) => ({ m, s, line: m.lines.findIndex((l) => l.speakerId === s.id) + 1 })));
 
-  /* On narrower screens the detail sits BELOW the list, so choosing a meeting
-     would look like nothing happened. Bring the detail into view. */
-  const detailRef = useRef<HTMLElement>(null);
-  const lastId = useRef(id);
-  useEffect(() => {
-    if (lastId.current === id) return;
-    lastId.current = id;
-    if (window.matchMedia?.('(max-width: 1199px)').matches) detailRef.current?.scrollIntoView?.({ block: 'start' });
-  }, [id]);
-
-  function playCard(m: Meeting) {
-    if (m.id === selected?.id) { player.toggle(); return; }
-    go({ name: 'meetings', id: m.id });
-    setPending(m.id);
-  }
-
-  const allTags = [...new Set(captures.flatMap((x) => x.tags))].sort((a, b) => a.localeCompare(b));
-
-  return (
-    <div className="mb-split mb-meetings-split">
-      <section className="mb-split-list" aria-labelledby="meetings-h">
-        <h1 id="meetings-h" className="mb-display-page mb-page-title">Meetings</h1>
-        <label className="mb-search mb-split-search">
-          <Icon name="search" size={16} />
-          <span className="mb-sr-only">Search meetings</span>
-          <input data-search type="search" placeholder="Search meetings or people" value={query} onChange={(e) => setQuery(e.target.value)} />
-        </label>
-        {meetings.length === 0 ? (
-          <div className="mb-empty"><p>{query ? `No meetings match “${query}”.` : 'No meetings yet.'}</p></div>
-        ) : (
-          <ul className="mb-list" aria-label="Meetings">
-            {meetings.map((m) => (
-              <li key={m.id}>
-                <CaptureCard
-                  variant="compact" capture={m} selected={m.id === selected?.id}
-                  linkTo={href({ name: 'meetings', id: m.id })}
-                  playing={m.id === selected?.id && player.playing}
-                  progress={m.id === selected?.id && player.started ? { time: player.time, duration: player.duration, line: player.line } : undefined}
-                  onPlay={() => playCard(m)}
-                />
+  const panel = (
+    <>
+      <PanelCard id="people-h" title="People" icon="user" meta={person ? <button type="button" className="mb-link-button" onClick={() => setPerson(null)}>Show everyone</button> : people.size}>
+        <ul className="mb-prows">
+          {[...people.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([name, n]) => (
+            <li key={name}>
+              <button type="button" className={`mb-prow mb-owner${person === name ? ' is-on' : ''}`} aria-pressed={person === name}
+                onClick={() => setPerson((p) => (p === name ? null : name))}>
+                <Avatar name={name} colorIndex={colorFor(name)} size="md" />
+                <span className="mb-t-body-sm mb-owner-name">{name}</span>
+                <span className="mb-t-meta mb-muted">{n} {n === 1 ? 'meeting' : 'meetings'}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </PanelCard>
+      {unsure.length > 0 && (
+        <PanelCard id="voices-h" title="Voices to confirm" icon="help" meta={unsure.length} desktopOnly>
+          <ul className="mb-prows">
+            {unsure.map(({ m, s, line }) => (
+              <li key={`${m.id}-${s.id}`}>
+                <div className="mb-prow">
+                  <Avatar name={s.name} colorIndex={s.colorIndex} unconfirmed size="md" />
+                  <div className="mb-prow-text">
+                    <span className="mb-t-body-sm">{s.name}</span>
+                    <span className="mb-t-meta mb-muted">{m.title} · {linesBySpeaker(m, s.id)} lines, same voice</span>
+                  </div>
+                </div>
+                <a className="mb-button is-md is-block mb-voice-who" href={href({ name: 'capture', id: m.id, line })}>Who is this?</a>
               </li>
             ))}
           </ul>
-        )}
-      </section>
-
-      <div className="mb-split-rule" aria-hidden="true" />
-
-      {selected && (
-        <section ref={detailRef} className="mb-split-detail mb-meeting" aria-labelledby="meeting-h">
-          <h2 id="meeting-h" className="mb-display-page mb-meeting-title">{selected.title}</h2>
-          {/* Pills under the title in the frame (Chip / Tag shape). */}
-          <div className="mb-card-chips">
-            <span className="mb-chip is-tag"><span className="mb-tabular">{formatDuration(selected.durationSeconds)}</span></span>
-            <span className="mb-chip is-tag">{new Date(selected.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-          </div>
-
-          <h3 className="mb-detail-label">Attendees</h3>
-          <div className="mb-card-chips">
-            {selected.attendees.map((a) => (
-              <span key={a} className="mb-person">
-                <Avatar name={a} colorIndex={colorFor(a, selected.speakers)} size="sm" />
-                <span className="mb-label">{a}</span>
-              </span>
-            ))}
-          </div>
-
-          <h3 className="mb-detail-label">Audio Playback</h3>
-          <PlayerBar compact player={player} title={selected.title} speed={prefs.speed} onSpeed={(speed) => dispatch({ type: 'setPrefs', prefs: { speed } })} />
-
-          {/* The frame shows the transcript itself here — the opening lines, as
-              one passage — with the full, line-by-line view a click away. */}
-          <h3 className="mb-detail-label">Transcript</h3>
-          <Surface tone="ai" className="mb-meeting-excerpt">
-            <p className="mb-body">{selected.lines.slice(0, 6).map((l) => l.text).join(' ')}</p>
-          </Surface>
-          <a className="mb-link-row mb-meeting-open" href={href({ name: 'capture', id: selected.id })}>
-            View full transcript <span aria-hidden="true">→</span>
-          </a>
-
-          <h3 className="mb-heading-card mb-detail-h">
-            Extracted Tasks <ChipMeta tone="count">{selected.tasks.length}</ChipMeta>
-          </h3>
-          {selected.tasks.length === 0 ? <p className="mb-body mb-muted">No tasks in this meeting.</p> : (
-            <ul className="mb-list mb-list-tight">
-              {selected.tasks.map((t) => (
-                <li key={t.id}>
-                  <TaskCard
-                    task={t} people={selected.attendees}
-                    onToggle={(done) => dispatch({ type: 'setTaskStatus', captureId: selected.id, taskId: t.id, status: done ? 'done' : 'todo' })}
-                    onStatus={(status) => dispatch({ type: 'setTaskStatus', captureId: selected.id, taskId: t.id, status })}
-                    onDue={(due) => dispatch({ type: 'replaceCapture', capture: { ...selected, tasks: selected.tasks.map((x) => (x.id === t.id ? { ...x, due } : x)) } })}
-                    href={href({ name: 'capture', id: selected.id, line: selected.lines.findIndex((l) => l.id === t.sourceLineId) + 1 || undefined })}
-                    onAssign={(who) => dispatch({ type: 'replaceCapture', capture: { ...selected, tasks: selected.tasks.map((x) => (x.id === t.id ? { ...x, assignee: who } : x)) } })}
-                  />
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <h3 className="mb-detail-label">Tags</h3>
-          <TagEditor tags={selected.tags} allTags={allTags} onChange={(tags) => dispatch({ type: 'updateCapture', captureId: selected.id, patch: { tags } })} />
-        </section>
+          <p className="mb-t-meta mb-muted">One answer fixes every line in that voice.</p>
+        </PanelCard>
       )}
-    </div>
+    </>
+  );
+
+  return (
+    <Page title="Meetings" subtitle={`${all.length} meetings with ${people.size} people`} panel={panel} panelLabel="People">
+      {/* Phone: the voices to confirm, one card under the title (Figma M07). */}
+      {unsure.length > 0 && (
+        <div className="mb-phone-only mb-phone-card">
+          <div className="mb-prow" style={{ padding: 0 }}>
+            <Avatar name={unsure[0].s.name} colorIndex={unsure[0].s.colorIndex} unconfirmed size="md" />
+            <div className="mb-prow-text">
+              <p className="mb-t-label" style={{ margin: 0, color: 'var(--text-strong)' }}>{unsure.length} {unsure.length === 1 ? 'voice' : 'voices'} to confirm</p>
+              <span className="mb-t-meta mb-muted">{unsure[0].s.name} · {unsure[0].m.title}</span>
+            </div>
+            <a className="mb-button is-sm mb-voice-who" style={{ margin: 0 }} href={href({ name: 'capture', id: unsure[0].m.id, line: unsure[0].line })}>Who is this?</a>
+          </div>
+        </div>
+      )}
+      <label className="mb-search mb-search-page">
+        <Icon name="search" size={16} />
+        <span className="mb-sr-only">Search meetings</span>
+        <input data-search type="search" placeholder="Search meetings or people" value={query} onChange={(e) => setQuery(e.target.value)} />
+      </label>
+      <div className="mb-viewbar">
+        <div className="mb-filterbar" role="group" aria-label="Filter meetings">
+          {WHEN.map((w) => (
+            <ChipFilter key={w.id} pressed={when === w.id} onClick={() => setWhen(w.id)}>
+              {w.label} <span className="mb-chip-count">{all.filter((m) => test(m, w.id)).length}</span>
+            </ChipFilter>
+          ))}
+        </div>
+        <div className="mb-viewbar-end">
+          <label className="mb-dropdown-wrap">
+            <span className="mb-sr-only">Order</span>
+            <select className="mb-dropdown" value={oldestFirst ? 'oldest' : 'newest'} onChange={(e) => setOldestFirst(e.target.value === 'oldest')}>
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+            </select>
+            <Icon name="chevron-down" size={14} />
+          </label>
+        </div>
+      </div>
+      {meetings.length === 0 ? (
+        <div className="mb-empty"><p>{query || person || when !== 'all' ? 'No meetings match.' : 'No meetings yet.'}</p></div>
+      ) : (
+        <ul className="mb-list" aria-label="Meetings">
+          {meetings.map((m) => (
+            <li key={m.id}>
+              <CaptureCard variant="meeting" level={2} capture={m} playing={player.isPlaying(m.id)} progress={player.progressOf(m.id)} onPlay={() => player.toggle(m.id)} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </Page>
   );
 }

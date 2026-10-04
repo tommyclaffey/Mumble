@@ -1,13 +1,11 @@
+/* The frame (Figma page 07): 64px white header across the top; a 240px navy
+   sidebar; the page. Every screen keeps the sidebar. */
 .mb-shell {
   display: grid; min-height: 100vh;
-  grid-template-columns: var(--layout-sidebar) minmax(0, 1fr);
-  grid-template-rows: var(--layout-header) 1fr;
+  grid-template-columns: var(--layout-sidebar-r) minmax(0, 1fr);
+  grid-template-rows: var(--layout-header-r) 1fr;
   grid-template-areas: 'header header' 'side main';
 }
-/* Focus mode (the capture review): the design drops the sidebar so the
-   transcript and its details get the whole width. */
-.mb-shell.is-focus { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'header' 'main'; }
-.mb-shell.is-focus .mb-sidebar { display: none; }
 
 .mb-skip {
   position: absolute; left: var(--space-16); top: -48px; z-index: 100;
@@ -16,71 +14,105 @@
 }
 .mb-skip:focus { top: var(--space-8); }
 
+/* ---- Header: brand · search (centred) · action ---------------------------- */
 .mb-header {
   grid-area: header; position: sticky; top: 0; z-index: 10;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 var(--space-32) 0 14px;   /* logo sits 14px in, as in the frame */
-  background: var(--surface-card); border-bottom: var(--border-width-sm) solid var(--border-default);
+  display: grid; grid-template-columns: 216px minmax(0, 1fr) 216px; align-items: center;
+  padding: 0 var(--space-24);
+  background: var(--surface-card); border-bottom: var(--border-width-sm) solid var(--surface-sunken);
 }
 .mb-wordmark { display: inline-flex; border-radius: var(--radius-sm); }
 .mb-wordmark img { display: block; width: 92px; height: 36px; }
-.mb-header-actions { display: flex; align-items: center; gap: var(--space-16); }
-/* Search: 28px, outlined, 6px corners (App header › Group 17). */
-.mb-header-btn {
-  display: inline-flex; align-items: center; gap: var(--space-4); height: 28px; padding: 0 var(--space-12);
-  border: var(--border-width-sm) solid var(--border-default); border-radius: var(--radius-md);
-  background: var(--surface-card); color: var(--text-muted); cursor: pointer;
-  font: 400 0.75rem/1rem var(--font-sans);
+.mb-header-search { display: flex; justify-content: center; }
+.mb-searchbar {
+  display: flex; align-items: center; gap: 10px; width: min(480px, 100%); height: 40px; padding: 0 var(--space-8) 0 14px;
+  border: none; border-radius: var(--radius-control); background: var(--surface-subtle);
+  color: var(--text-muted); cursor: text; text-align: left;
+  font: 400 0.875rem/1.25rem var(--font-sans);
 }
-.mb-header-btn svg { width: 12px; height: 12px; }
-.mb-header-btn:hover { color: var(--text-body); border-color: var(--border-control); }
-/* Start Mumble: 132 × 34 pill, accent → navy gradient left to right, 7px dot. */
+.mb-searchbar-text { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mb-searchbar:hover { background: var(--surface-sunken); }
+.mb-kbd {
+  margin-left: auto; padding: 2px 6px; border-radius: 5px;
+  background: var(--surface-card); border: var(--border-width-sm) solid var(--border-default);
+  font: 500 0.75rem/1rem var(--font-sans); color: var(--text-muted);
+}
+.mb-header-actions { display: flex; justify-content: flex-end; }
 .mb-header-record {
-  display: inline-flex; align-items: center; gap: var(--space-8); height: 34px; padding: 0 var(--space-16) 0 18px;
+  display: inline-flex; align-items: center; gap: var(--space-8); height: 40px; padding: 0 18px 0 16px;
   border-radius: var(--radius-pill); text-decoration: none;
-  background: linear-gradient(90deg, var(--accent-base), var(--blue-950));
-  color: var(--text-on-accent); font: 600 0.8125rem/1rem var(--font-sans);
+  background: var(--accent-base); box-shadow: var(--elevation-accent);
+  color: var(--text-on-accent); font: 500 0.875rem/1.25rem var(--font-sans);
 }
 .mb-header-record:hover { filter: brightness(1.08); }
-.mb-header-record .mb-dot { width: 7px; height: 7px; border-radius: var(--radius-pill); background: currentColor; }
-.mb-wordmark:focus-visible, .mb-nav-item:focus-visible, .mb-tab:focus-visible, .mb-header-record:focus-visible, .mb-header-btn:focus-visible {
+/* While recording, Start Mumble becomes a live indicator — never a second
+   way to start a recording while one is running. */
+.mb-header-live {
+  display: inline-flex; align-items: center; gap: var(--space-8); height: 40px; padding: 0 var(--space-16) 0 14px;
+  border-radius: var(--radius-pill); background: var(--accent-tint); color: var(--accent-strong);
+  font: 500 0.875rem/1.25rem var(--font-sans);
+}
+.mb-dot { width: 8px; height: 8px; border-radius: var(--radius-pill); background: var(--accent-base); }
+.mb-dot.is-live { animation: mb-pulse 1.4s ease-in-out infinite; }
+@keyframes mb-pulse { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .mb-dot.is-live { animation: none; } }
+.mb-wordmark:focus-visible, .mb-nav-item:focus-visible, .mb-tab:focus-visible, .mb-header-record:focus-visible, .mb-searchbar:focus-visible {
   outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px;
 }
 
-/* The dark sidebar fades into the brand blue at the foot, as in the frames.
-   Both stops are tokens — no new colour. */
+/* ---- Sidebar: the brand's navy, fading to accent at the foot -------------- */
 .mb-sidebar {
-  grid-area: side; position: sticky; top: var(--layout-header); height: calc(100vh - var(--layout-header));
-  background: linear-gradient(180deg, var(--neutral-1000) 40%, var(--accent-base) 150%);
-  padding: 22px var(--space-8);
+  grid-area: side; position: sticky; top: var(--layout-header-r); height: calc(100vh - var(--layout-header-r));
+  display: flex; flex-direction: column; overflow-y: auto;
+  background: linear-gradient(170deg, var(--neutral-1000) 0%, var(--blue-800) 62%, var(--accent-base) 100%);
+  padding: 20px var(--space-12) var(--space-16);
 }
-/* Nav item: 204 × 36, 4px apart, 6px corners, 19px in, 8px icon gap. */
-.mb-sidebar ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-4); }
+.mb-nav { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
 .mb-nav-item {
-  position: relative; display: flex; align-items: center; gap: var(--space-8);
-  min-height: var(--layout-nav-row); padding: 0 var(--space-16) 0 19px;
-  border-radius: var(--radius-md);
+  display: flex; align-items: center; gap: 10px;
+  min-height: 34px; padding: 0 10px; border-radius: var(--radius-lg);
   color: var(--neutral-400); text-decoration: none;
   font: 500 0.8125rem/1rem var(--font-sans);
 }
-.mb-nav-item:hover { color: var(--text-on-accent); background: rgb(255 255 255 / 0.04); }
-.mb-nav-item[aria-current='page'] { color: var(--text-on-accent); background: var(--surface-inverse); }
-.mb-nav-bar {
-  position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px;
-  border-radius: var(--radius-xs); background: transparent;
+.mb-nav-item:hover { color: var(--text-on-accent); background: rgb(255 255 255 / 0.05); }
+.mb-nav-item[aria-current='page'] { color: var(--text-on-accent); background: rgb(255 255 255 / 0.1); }
+.mb-nav-label { flex: 1; min-width: 0; }
+.mb-nav-count { font: 500 0.75rem/1rem var(--font-sans); color: var(--neutral-400); font-variant-numeric: tabular-nums; }
+.mb-nav-item.is-tag { padding-left: 12px; gap: 12px; min-height: 32px; }
+.mb-nav-dot { width: 8px; height: 8px; border-radius: var(--radius-pill); flex-shrink: 0; }
+.mb-nav-section { margin-top: 20px; }
+.mb-nav-section-h { margin: 0 0 4px; padding: 4px 10px; color: var(--neutral-400); }
+.mb-nav-foot { margin-top: auto; padding-top: var(--space-16); display: grid; gap: var(--space-8); }
+.mb-nav-privacy {
+  display: flex; align-items: center; gap: 10px; margin: 0; padding: 10px 12px; border-radius: var(--radius-lg);
+  background: rgb(255 255 255 / 0.06); color: var(--neutral-400); font: 500 0.75rem/1rem var(--font-sans);
 }
-.mb-nav-item[aria-current='page'] .mb-nav-bar { background: var(--text-on-accent); }
+
+/* Tag dots — one colour per tag, shared with the tag pills. */
+.is-gray > .mb-tag-dot, .mb-nav-dot.is-gray, .mb-tag-dot.is-gray { background: var(--tag-gray-dot); }
+.mb-nav-dot.is-blue, .mb-tag-dot.is-blue { background: var(--tag-blue-dot); }
+.mb-nav-dot.is-green, .mb-tag-dot.is-green { background: var(--tag-green-dot); }
+.mb-nav-dot.is-purple, .mb-tag-dot.is-purple { background: var(--tag-purple-dot); }
+.mb-nav-dot.is-orange, .mb-tag-dot.is-orange { background: var(--tag-orange-dot); }
+.mb-nav-dot.is-yellow, .mb-tag-dot.is-yellow { background: var(--tag-yellow-dot); }
+.mb-nav-dot.is-pink, .mb-tag-dot.is-pink { background: var(--tag-pink-dot); }
 
 .mb-main { grid-area: main; min-width: 0; outline: none; }
-
 .mb-tabbar { display: none; }
 
 @media (max-width: 767px) {
-  .mb-shell, .mb-shell.is-focus { grid-template-columns: minmax(0, 1fr); grid-template-rows: 56px 1fr; grid-template-areas: 'header' 'main'; }
+  .mb-shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: 56px 1fr; grid-template-areas: 'header' 'main'; }
   .mb-sidebar { display: none; }
-  .mb-header { padding: 0 var(--space-16); }
+  .mb-header { grid-template-columns: auto 1fr; padding: 0 var(--space-16); }
+  .mb-header-search { justify-content: flex-end; }
+  /* Search is an icon button on a phone; its name stays for screen readers. */
+  .mb-searchbar { width: 40px; height: 40px; padding: 0; justify-content: center; }
+  .mb-searchbar-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .mb-kbd { display: none; }
   .mb-header-actions { display: none; }
   .mb-main { padding-bottom: 88px; }
+  .mb-shell.is-note { grid-template-rows: 1fr; grid-template-areas: 'main'; }
+  .mb-shell.is-note .mb-header { display: none; }
   .mb-tabbar {
     display: grid; grid-template-columns: repeat(5, 1fr); align-items: end;
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
@@ -97,10 +129,10 @@
   .mb-tab-record-disc {
     width: 56px; height: 56px; margin-top: -28px; border-radius: var(--radius-pill);
     display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(180deg, var(--accent-base), var(--surface-inverse));
-    color: var(--text-on-accent);
-    box-shadow: 0 6px 16px rgb(61 90 153 / 0.35);
+    background: var(--accent-base); color: var(--text-on-accent); box-shadow: var(--elevation-accent);
   }
+  .mb-tab-record.is-recording .mb-tab-record-disc { box-shadow: 0 0 0 6px var(--accent-tint), var(--elevation-accent); }
+  .mb-tab-record.is-recording .mb-tab-record-disc svg { width: 18px; height: 18px; }
 }
 
 /* Short or heavily zoomed windows: pinned bars would cover the content. */
@@ -110,16 +142,16 @@
   .mb-main { padding-bottom: 0; }
 }
 
-/* Tablet (768–1023): the 240px sidebar would take a third of the screen.
-   It becomes a 72px icon rail; labels stay for screen readers (clipped, not
-   removed) and show as tooltips. */
+/* Tablet (768–1023): the sidebar becomes a 72px icon rail; labels stay for
+   screen readers (clipped, not removed). */
 @media (min-width: 768px) and (max-width: 1023px) {
   .mb-shell { grid-template-columns: 72px minmax(0, 1fr); }
-  .mb-sidebar { padding: 22px var(--space-8); }
-  .mb-nav-item { justify-content: center; padding: 0; }
-  .mb-nav-item svg { width: 20px; height: 20px; }
-  .mb-nav-label {
-    position: absolute; width: 1px; height: 1px; overflow: hidden;
-    clip-path: inset(50%); white-space: nowrap;
+  .mb-header { grid-template-columns: auto 1fr auto; gap: var(--space-16); }
+  .mb-sidebar { padding: 20px var(--space-8); }
+  .mb-nav-item { justify-content: center; padding: 0; min-height: 40px; }
+  .mb-nav-label, .mb-nav-count, .mb-nav-section, .mb-nav-privacy span {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
   }
+  .mb-nav-section { display: none; }
+  .mb-nav-privacy { justify-content: center; }
 }

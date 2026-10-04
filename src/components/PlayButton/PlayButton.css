@@ -3,11 +3,12 @@
   border: none; border-radius: var(--radius-pill); cursor: pointer;
   background: var(--accent-base); color: var(--text-on-accent);
 }
-.mb-play.is-xs { width: 20px; height: 20px; }  /* Play button in cards: 20 × 20 */
-.mb-play.is-xs svg { width: 13px; height: 13px; }
-.mb-play.is-sm { width: 24px; height: 24px; }
-.mb-play.is-md { width: 32px; height: 32px; }
-.mb-play.is-lg { width: 48px; height: 48px; }
+.mb-play.is-xs { width: 34px; height: 34px; }  /* cards (Figma page 07) */
+.mb-play.is-xs svg { width: 15px; height: 15px; }
+.mb-play.is-sm { width: 28px; height: 28px; }
+.mb-play.is-sm svg { width: 13px; height: 13px; }
+.mb-play.is-md { width: 40px; height: 40px; box-shadow: var(--elevation-accent); }
+.mb-play.is-lg { width: 48px; height: 48px; box-shadow: var(--elevation-accent); }
 .mb-play:hover:not(:disabled) { filter: brightness(1.1); }
 .mb-play:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px; }
-.mb-play:disabled { background: var(--neutral-400); cursor: not-allowed; }
+.mb-play:disabled { background: var(--neutral-400); cursor: not-allowed; box-shadow: none; }

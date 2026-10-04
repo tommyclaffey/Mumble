@@ -35,3 +35,12 @@
 }
 .mb-speaker-reassign:hover { text-decoration: underline; text-underline-offset: 2px; }
 .mb-speaker-reassign:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); }
+/* Refined (Oct 1): 28px faces, the name in Label, "Who is this?" as the flag. */
+.mb-speaker-row { gap: 10px; }
+.mb-speaker .mb-avatar.is-md { width: 28px; height: 28px; font-size: 0.6875rem; }
+.mb-speaker-name { font: 500 0.875rem/1.25rem var(--font-sans); }
+.mb-speaker-time, .mb-speaker-time-static { font: 500 0.75rem/1rem var(--font-sans); }
+.mb-speaker-who { border: none; cursor: pointer; font-family: var(--font-sans); }
+.mb-speaker-who:hover { filter: brightness(0.97); }
+.mb-speaker-who:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px; }
+.mb-speaker-form { margin-left: 38px; background: var(--surface-card); border: none; box-shadow: var(--elevation-card); border-radius: var(--radius-control); }

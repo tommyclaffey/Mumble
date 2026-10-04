@@ -1,0 +1,3 @@
+.mb-wave { display: grid; align-items: center; gap: 2px; height: 26px; min-width: 0; flex: 1; }
+.mb-wave-bar { display: block; width: 100%; max-width: 3px; justify-self: center; border-radius: 2px; background: var(--neutral-100); }
+.mb-wave-bar.is-played { background: var(--accent-base); }

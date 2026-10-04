@@ -1,133 +1,121 @@
-/* Transcript Review — the hi-fi frame: no sidebar; transcript column 880
-   from x 40; a 1px rule at 960; details panel 688 from x 1000; 40px gaps.
-   Columns scale with the window in the same 880 : 688 proportion. */
-.mb-review {
-  display: grid; grid-template-columns: minmax(0, 880fr) 1px minmax(320px, 688fr);
-  gap: var(--layout-gap); align-items: start;
-  padding: var(--space-32) var(--layout-gutter) var(--space-48);
-  min-height: calc(100vh - var(--layout-header));
+/* The note — Figma page 07, frame 04. Inside the app (the sidebar stays):
+   back link and actions; the title (which is also the rename field); the
+   meta line, people and tags; then the player and the transcript. Summary,
+   tasks and details live in the side panel. */
+.mb-note-top { display: flex; align-items: center; gap: var(--space-8); margin: -16px 0 var(--space-24); }
+.mb-note-back {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 8px 6px 4px; margin-left: -4px;
+  color: var(--text-muted); text-decoration: none; border-radius: var(--radius-lg);
+  font: 500 0.8125rem/1rem var(--font-sans);
 }
-.mb-review-main { min-width: 0; display: flex; flex-direction: column; gap: var(--space-16); }
-/* "Transcript" (Heading/Section) with the date at the column's right edge. */
-.mb-review-labelrow { display: flex; align-items: center; gap: var(--space-12); margin: 20px 0 -12px; }  /* title box sits 4px under the label */
-.mb-review-label { margin: 0; color: var(--text-strong); }
-.mb-review-when { margin-left: auto; color: var(--text-muted); }
-.mb-review-close-top { display: none; color: var(--text-muted); text-decoration: none; }
-.mb-review-attendees { display: flex; flex-wrap: wrap; gap: var(--space-8); }
-.mb-review-main .mb-player { position: sticky; top: calc(var(--layout-header) + var(--space-12)); z-index: 5; }
-.mb-review-foot { display: flex; align-items: center; gap: var(--space-8); padding-left: 32px; margin-top: var(--space-4); }
+.mb-note-back:hover { color: var(--text-body); background: var(--surface-subtle); }
+.mb-note-back:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); }
+.mb-note-actions { margin-left: auto; display: flex; gap: var(--space-8); }
+.mb-note-meta { margin: var(--space-8) 0 var(--space-12); }
+.mb-note-people { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; }
+.mb-note-attendees { display: contents; }
+.mb-note-sep { width: 3px; height: 3px; border-radius: var(--radius-pill); background: var(--neutral-400); }
+.mb-note-unsure { border: none; cursor: pointer; font-family: var(--font-sans); }
+.mb-note-unsure:hover { filter: brightness(0.97); }
+.mb-note-unsure:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px; }
+.mb-note-rule { margin: var(--space-24) 0; }
+.mb-note { display: flex; flex-direction: column; gap: var(--space-24); }
+.mb-review-provenance { margin: -6px 0 0; }
+
+.mb-transcript { display: flex; flex-direction: column; gap: 22px; }
+.mb-turn { display: flex; flex-direction: column; gap: 6px; }
+
+/* A line. Two independent marks (from the design system):
+   · is-task     a soft accent fill + a "Task" pill — a task was said here
+   · is-current  the READING BAR: a 3px accent edge + tint — playing now
+   On different properties, so a line can be both and stay legible.
+   Text sits under the speaker's name (avatar 28 + 10). */
+.mb-line {
+  position: relative; display: flex; align-items: center; gap: var(--space-12);
+  padding: 4px 36px 4px 38px; border-radius: 2px 8px 8px 2px; outline: none;
+  border-left: 3px solid transparent;
+  /* Auto-scroll lands BELOW the sticky header + player, ABOVE the tab bar. */
+  scroll-margin-top: 176px; scroll-margin-bottom: var(--space-24);
+}
+.mb-line.is-note { padding-left: 14px; }
+@media (max-width: 767px) { .mb-line { scroll-margin-top: 216px; scroll-margin-bottom: 104px; padding-left: 14px; } }
+.mb-line-text { margin: 0; flex: 1; color: var(--text-body); }
+.mb-line.is-task { background: var(--accent-subtle); }
+.mb-line.is-current { background: var(--accent-tint); border-left-color: var(--accent-base); }
+.mb-line.is-current .mb-line-text { color: var(--text-strong); }
+.mb-line-task { min-height: 22px; gap: 4px; color: var(--accent-strong); }
+.mb-line-task svg { color: var(--accent-base); }
+.mb-line:focus-visible { box-shadow: 0 0 0 var(--border-width-md) var(--focus-ring); }
+
+/* The whole line is the target — click to play from it. Its play mark shows
+   only where it's relevant: hovered, or playing now. Always reachable by
+   keyboard (← → and Space), so it's out of the Tab order. */
+.mb-line.is-playable { cursor: pointer; }
+.mb-line.is-playable:not(.is-current):hover { background: var(--surface-subtle); }
+.mb-line.is-playable.is-task:not(.is-current):hover { background: var(--accent-soft); }
+.mb-line-play {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; padding: 0;
+  border: none; border-radius: var(--radius-pill); background: var(--surface-card);
+  color: var(--accent-base); cursor: pointer; opacity: 0; box-shadow: var(--elevation-card);
+}
+.mb-line.is-task .mb-line-play { right: 8px; }
+.mb-line.is-task { padding-right: 112px; }
+.mb-line.is-task .mb-line-task { position: absolute; right: 40px; }
+.mb-line:hover .mb-line-play, .mb-line.is-current .mb-line-play, .mb-line-play:focus-visible { opacity: 1; }
+.mb-line-play:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); }
+
+.mb-review-foot { display: flex; align-items: center; gap: var(--space-8); padding-left: 38px; }
 .mb-icon-btn {
   display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px;
   border: none; border-radius: var(--radius-md); background: transparent; color: var(--text-muted); cursor: pointer;
 }
-.mb-icon-btn:hover { background: var(--surface-sunken); color: var(--text-body); }
+.mb-icon-btn:hover { background: var(--surface-subtle); color: var(--text-body); }
 .mb-icon-btn:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); }
 
-/* Details panel: sections divided by 1px rules, labels Heading/Sub. */
-.mb-review-side { position: relative; display: flex; flex-direction: column; gap: 0; padding-top: 20px; }
-.mb-review-close {
-  position: absolute; top: 0; right: 0; width: 32px; height: 32px;
-  display: inline-flex; align-items: center; justify-content: center;
-  border: var(--border-width-sm) solid var(--border-default); border-radius: var(--radius-md);
-  background: var(--surface-card); color: var(--text-muted);
-}
-.mb-review-close:hover { color: var(--text-body); border-color: var(--border-control); }
-.mb-review-close:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px; }
-.mb-review-h { display: flex; align-items: center; gap: var(--space-8); margin: 0 0 var(--space-8); color: var(--text-strong); }
-.mb-review-provenance { margin: calc(var(--space-4) * -1) 0 var(--space-8); }
-.mb-review-tasks { gap: var(--space-12); }
-.mb-review-rule { height: 1px; background: var(--border-default); margin: var(--space-24) 0 var(--space-12); }
-.mb-review-rule-foot { margin-top: var(--space-32); }
-.mb-review-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: var(--space-8); }
-.mb-review-actions .mb-button { min-height: 40px; }  /* 339 × 40 in the frame */
-.mb-review .mb-split-rule { margin: calc(var(--space-32) * -1) 0 calc(var(--space-48) * -1); }
-
-.mb-moments { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-12); }
-.mb-moments li { display: flex; align-items: center; justify-content: space-between; gap: var(--space-16); }
-.mb-moment-time {
-  border: none; background: none; padding: 0 var(--space-4); cursor: pointer;
-  color: var(--accent-base); border-radius: var(--radius-xs); font-family: var(--font-sans);
-}
-.mb-moment-time:hover { text-decoration: underline; text-underline-offset: 2px; }
-.mb-moment-time:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); }
-
-@media (max-width: 1023px) {
-  .mb-review { grid-template-columns: minmax(0, 1fr); padding: var(--space-24); }
-  .mb-review .mb-split-rule { display: none; }
-  .mb-review-close-top { display: inline-flex; }
-  .mb-review-close { display: none; }
-  .mb-review-labelrow { margin-top: 0; }
-}
-@media (max-width: 767px) { .mb-review { padding: var(--space-16); } }
-
-.mb-transcript { margin-top: var(--space-4); display: flex; flex-direction: column; gap: 20px; }
-.mb-turn { display: flex; flex-direction: column; gap: var(--space-8); }
-
-/* A line. Two independent marks:
-   · is-task     a filled pill (background) + the word "Task"
-   · is-current  a gutter bar on the left edge — the line being played
-   They sit on different properties, so a line can be both and stay legible. */
-/* Transcript line — 24 tall, 4px top/bottom; lines start 32px in, under the
-   speaker's name (avatar 24 + 8). */
-.mb-line {
-  position: relative; display: flex; align-items: flex-start; gap: var(--space-12);
-  padding: var(--space-4) 0; margin-left: 32px;
-  border-radius: var(--radius-lg); outline: none;
-  /* Auto-scroll and focus must land BELOW the sticky header + reader bar and
-     ABOVE the phone tab bar — the line being read used to scroll under them. */
-  scroll-margin-top: 176px;
-  scroll-margin-bottom: var(--space-24);
-}
-@media (max-width: 767px) { .mb-line { scroll-margin-top: 216px; scroll-margin-bottom: 104px; } }
-.mb-line-text { margin: 0; flex: 1; color: var(--text-body); font: 400 0.8125rem/1rem var(--font-sans); }  /* Body 13/16 */
-.mb-line::before {
-  content: ''; position: absolute; left: -10px; top: 4px; bottom: 4px;
-  width: 3px; border-radius: var(--radius-xs); background: transparent;
-}
-.mb-line.is-current::before { background: var(--accent-base); }
-.mb-line.is-current .mb-line-text { color: var(--text-strong); }
-.mb-line.is-task { background: var(--accent-subtle); border-radius: var(--radius-lg); padding: var(--space-4) var(--space-8); }  /* 7% fill, r8, text 8px in */
-.mb-line.is-task .mb-line-text { color: var(--accent-base); }
-.mb-line-task { color: var(--accent-base); font: 500 0.625rem/1rem var(--font-sans); }
-.mb-line:focus-visible { box-shadow: 0 0 0 var(--border-width-md) var(--focus-ring); }
-
-/* Read-from-here: quiet until the line is hovered or the button focused, so a
-   transcript reads as text, not as a column of controls. Always reachable by
-   keyboard, because :focus-visible reveals it. */
-.mb-line-play {
-  /* Out of the flow, so it never makes a line taller than the design's 24. */
-  position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 20px; height: 20px; padding: 0;
-  border: none; border-radius: var(--radius-pill); background: transparent;
-  color: var(--accent-base); cursor: pointer; opacity: 0;
-}
-/* The design has no per-line controls — a transcript should read as text.
-   The whole line is the target (it tints on hover, the pointer changes), and
-   its play mark appears only where it's relevant: hovered, or playing now. */
-.mb-line.is-playable { cursor: pointer; }
-.mb-line.is-playable:hover { background: var(--surface-sunken); }
-.mb-line.is-playable.is-task:hover { background: var(--accent-medium); }
-.mb-line.is-playable.is-task:hover .mb-line-text, .mb-line.is-playable.is-task:hover .mb-line-task { color: var(--text-on-accent); }
-.mb-line:hover .mb-line-play, .mb-line.is-current .mb-line-play, .mb-line-play:focus-visible { opacity: 1; }
-.mb-line.is-task:hover .mb-line-play { color: var(--text-on-accent); }
-.mb-line-play:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); }
-
-
-
-.mb-details { display: grid; grid-template-columns: auto 1fr; gap: var(--space-8) var(--space-16); margin: 0; font: 400 0.8125rem/1rem var(--font-sans); }
-.mb-details dt { color: var(--text-muted); }
-.mb-details dd { margin: 0; color: var(--text-body); text-align: right; }
-
-
-@media (max-width: 1023px) {
-    }
 @media (max-width: 767px) {
-  /* Mobile reading text is one step up (Body/Mobile, 14/20) — and the line
-     keeps its looser leading, because that four pixels is the feature. */
-  .mb-line-text { font-size: 0.9375rem; line-height: 1.5rem; }
+
+  .mb-review-foot { padding-left: 0; }
+  .mb-line.is-task { padding-right: 12px; flex-wrap: wrap; }
+  .mb-line.is-task .mb-line-task { position: static; }
 }
 
-
-/* Two task lines in a row must read as two pills, not one blob. */
-
+/* ---- Phone (Figma page 08, M04 / M04b / M04c) ---------------------------
+   One recording, three views — Transcript · Tasks · Summary — instead of a
+   transcript with the whole side panel stacked under it. The player docks
+   above the tab bar, so pause and "where am I" are in reach in every view. */
+.mb-note-views { margin: calc(var(--space-8) * -1) 0 var(--space-16); }
+.mb-note-views .mb-seg { display: flex; width: 100%; }
+@media (max-width: 767px) {
+  .mb-note-rule { margin: var(--space-16) 0; }
+  /* The note's bar IS the top bar on a phone (Figma M04). */
+  .mb-note-top {
+    position: sticky; top: 0; z-index: 12; flex-wrap: nowrap;
+    margin: -24px -16px 20px; padding: 6px 12px 6px 12px; min-height: 52px;
+    background: var(--surface-card); border-bottom: var(--border-width-sm) solid var(--surface-sunken);
+  }
+  .mb-note-back { color: var(--accent-base); font-size: 0.875rem; }
+  .mb-note-sep { display: none; }
+  .mb-note-top .mb-button { padding: 0; width: 40px; justify-content: center; font-size: 0; gap: 0; }
+  .mb-note-top .mb-button svg { width: 18px; height: 18px; }
+  :is([data-phone-view='transcript'], [data-phone-view='tasks'], [data-phone-view='summary']) .mb-panel { background: transparent; border-top: none; padding: 0 var(--space-16) var(--space-16); }
+  [data-phone-view='transcript'] .mb-panel { display: none; }
+  [data-phone-view='tasks'] .mb-transcript, [data-phone-view='summary'] .mb-transcript,
+  [data-phone-view='tasks'] .mb-review-foot, [data-phone-view='summary'] .mb-review-foot { display: none; }
+  [data-phone-view='tasks'] .mb-pcard[aria-labelledby='summary-h'],
+  [data-phone-view='tasks'] .mb-pcard[aria-labelledby='details-h'],
+  [data-phone-view='summary'] .mb-pcard[aria-labelledby='tasks-h'] { display: none; }
+  /* The docked mini player. */
+  :is([data-phone-view='transcript'], [data-phone-view='tasks'], [data-phone-view='summary']) .mb-player {
+    position: fixed; left: 12px; right: 12px; top: auto; bottom: calc(80px + env(safe-area-inset-bottom, 0px)); z-index: 15;
+    box-shadow: var(--elevation-raised);
+  }
+  :is([data-phone-view='transcript'], [data-phone-view='tasks'], [data-phone-view='summary']) .mb-player-pos { flex: 1; }
+  :is([data-phone-view='transcript'], [data-phone-view='tasks'], [data-phone-view='summary']) .mb-player-controls { margin-left: auto; }
+  /* Room for the docked player at the end of whatever is showing. */
+  [data-phone-view='transcript'] .mb-layout-main { padding-bottom: 170px; }
+  [data-phone-view='tasks'] .mb-layout-main, [data-phone-view='summary'] .mb-layout-main { padding-bottom: 0; }
+  :is([data-phone-view='transcript'], [data-phone-view='tasks'], [data-phone-view='summary']) .mb-panel { padding-bottom: 170px; }
+  .mb-line { scroll-margin-bottom: 240px; scroll-margin-top: 80px; }
+}

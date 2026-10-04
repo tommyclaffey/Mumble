@@ -1,42 +1,34 @@
-import { useEffect, useState } from 'react';
+import { BRAND } from '../brand';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Button } from '../components/Button/Button';
+import { ChipMeta } from '../components/Chip/Chip';
+import { Icon } from '../components/Icon/Icon';
+import { Page, PanelCard } from '../components/Page/Page';
 import { Segmented } from '../components/Segmented/Segmented';
+import { Toggle } from '../components/Toggle/Toggle';
 import { SPEEDS, speedLabel, useStore } from '../data/store';
 import { useServices } from '../services';
 import './screens.css';
 import './SettingsScreen.css';
 
 /**
- * Settings — the frame's two-column layout (a section list, a 1px rule, the
- * section), filled with sections that DO something in this demo.
- *
- * The frame's Account / Integrations / Notifications / Plan have nothing
- * behind them without accounts, so they aren't here: a settings page of
- * switches that change nothing is the "control that doesn't do what it
- * says" defect, many times over. (Read-aloud voices lived here until Sept 30
- * — parked in parked/read-aloud.)
+ * Settings (Figma page 07, frame 08) — only settings this demo can honour.
+ * Every switch here changes something; nothing is shown that isn't built
+ * (accounts, plans and integrations aren't, so they aren't here).
  */
-type Section = 'playback' | 'recording' | 'privacy';
-const SECTIONS: { id: Section; label: string }[] = [
-  { id: 'playback', label: 'Playback' },
-  { id: 'recording', label: 'Recording' },
-  { id: 'privacy', label: 'Privacy & data' },
-];
-
 export function SettingsScreen() {
   const { prefs, dispatch, captures } = useStore();
   const { audioStore } = useServices();
-  const [section, setSection] = useState<Section>('playback');
   const [used, setUsed] = useState<string | null>(null);
 
   useEffect(() => {
     navigator.storage?.estimate?.().then((e) => {
-      if (e.usage !== undefined) setUsed(`${(e.usage / 1_000_000).toFixed(1)} MB`);
+      if (e.usage !== undefined) setUsed(e.usage < 100_000 ? 'under 0.1 MB' : `${(e.usage / 1_000_000).toFixed(1)} MB`);
     }).catch(() => {});
   }, [captures]);
 
   function reset() {
-    if (!window.confirm('Reset to the demo captures? Recordings you made will be removed.')) return;
+    if (!window.confirm('Reset to the demo recordings? Recordings you made will be removed.')) return;
     dispatch({ type: 'resetDemo' });
     void audioStore.clear();
   }
@@ -45,72 +37,91 @@ export function SettingsScreen() {
     if (!mine.length) return;
     if (!window.confirm(`Delete the audio of ${mine.length} recording${mine.length === 1 ? '' : 's'}? The transcripts stay.`)) return;
     void audioStore.clear();
-    for (const c of mine) dispatch({ type: 'replaceCapture', capture: { ...c, audio: undefined } });
+    for (const c of mine) dispatch({ type: 'replaceCapture', capture: { ...c, audio: undefined, peaks: undefined } });
   }
   const stored = captures.filter((c) => c.audio === 'stored').length;
+  const setPref = (p: Partial<typeof prefs>) => dispatch({ type: 'setPrefs', prefs: p });
+
+  const panel = (
+    <>
+      <PanelCard id="storage-h" title="Storage" icon="database" meta="This browser">
+        <dl className="mb-pkv">
+          <dt>Recordings</dt><dd className="mb-tabular">{captures.length}</dd>
+          <dt>Made by you</dt><dd className="mb-tabular">{stored}</dd>
+          {used && <><dt>Space used</dt><dd className="mb-tabular">{used}</dd></>}
+          <dt>Demo voices</dt><dd>Synthetic, labelled</dd>
+        </dl>
+      </PanelCard>
+      <PanelCard id="keys-h" title="Shortcuts" icon="keyboard" desktopOnly>
+        <dl className="mb-keys">
+          <dt><kbd className="mb-kbd">Space</kbd></dt><dd>Play or pause</dd>
+          <dt><kbd className="mb-kbd">← →</kbd></dt><dd>Previous or next line</dd>
+          <dt><kbd className="mb-kbd">⌘K</kbd></dt><dd>Search</dd>
+        </dl>
+      </PanelCard>
+      <PanelCard id="about-h" title="About" icon="info">
+        <p className="mb-t-body-sm mb-muted">{BRAND.name} is a voice-first notes demo. Capture by speaking; review by listening. Demo recordings use synthetic voices, one per person.</p>
+      </PanelCard>
+    </>
+  );
 
   return (
-    <div className="mb-settings-split">
-      <nav className="mb-settings-nav" aria-labelledby="settings-h">
-        <h1 id="settings-h" className="mb-display-page mb-page-title">Settings</h1>
-        <ul>
-          {SECTIONS.map((s) => (
-            <li key={s.id}>
-              <button type="button" className="mb-settings-tab" aria-current={section === s.id ? 'true' : undefined} onClick={() => setSection(s.id)}>
-                {s.label}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </nav>
+    <Page title="Settings" subtitle="Everything here is saved in this browser." panel={panel} panelLabel="Storage and shortcuts">
+      <Section title="Playback">
+        <Row label="Default speed" hint="Recordings start at this speed. Voices keep their natural pitch.">
+          <Segmented
+            label="Playback speed" value={prefs.speed} size="sm"
+            onChange={(speed) => setPref({ speed })}
+            options={SPEEDS.map((r) => ({ value: r, label: speedLabel(r) }))}
+          />
+        </Row>
+        <Row label="Keyboard shortcuts" hint="Space plays or pauses a recording; arrow keys move by line.">
+          <Toggle label="Keyboard shortcuts" on={prefs.shortcuts} onChange={(shortcuts) => setPref({ shortcuts })} />
+        </Row>
+      </Section>
 
-      <div className="mb-split-rule" aria-hidden="true" />
+      <Section title="Recording">
+        <Row label="Find tasks while I talk" hint="Lines like “We need to…” are suggested as tasks. It’s phrasing, not a model, and it says so.">
+          <Toggle label="Find tasks while I talk" on={prefs.taskHints} onChange={(taskHints) => setPref({ taskHints })} />
+        </Row>
+        <Row label="Transcription" hint="Your browser’s speech service writes the transcript as you talk. Chrome and Edge send the audio to their vendor to do that; Safari keeps it on-device where it can.">
+          <span className="mb-t-label-sm mb-muted">Browser speech service</span>
+        </Row>
+        <Row label="Meeting mode" hint="Telling voices apart needs a model that doesn’t run in the browser yet.">
+          <ChipMeta>Not in the browser yet</ChipMeta>
+        </Row>
+      </Section>
 
-      <section className="mb-settings-body" aria-labelledby="section-h">
-        <h2 id="section-h" className="mb-heading-section mb-settings-h">{SECTIONS.find((s) => s.id === section)!.label}</h2>
+      <Section title="Privacy & data">
+        <Row label="Where recordings live" hint={`Audio, transcripts and edits never leave this browser.${used ? ` Using ${used} here.` : ''}`}>
+          <span className="mb-t-label-sm"><Icon name="lock" size={14} /> This browser only</span>
+        </Row>
+        <Row label="Delete my audio" hint={`${stored ? `${stored} recording${stored === 1 ? '' : 's'} saved with audio.` : 'None yet.'} Removes the audio; the transcripts stay.`}>
+          <Button size="sm" onClick={deleteRecordings} disabled={!stored}>Delete audio</Button>
+        </Row>
+        <Row label="Reset demo" hint="Brings back the 5 demo recordings and removes anything you recorded.">
+          <Button size="sm" onClick={reset}>Reset demo</Button>
+        </Row>
+      </Section>
+    </Page>
+  );
+}
 
-        {section === 'playback' && (
-          <div className="mb-field">
-            <span className="mb-meta-strong">Speed</span>
-            <Segmented
-              label="Playback speed" value={prefs.speed}
-              onChange={(speed) => dispatch({ type: 'setPrefs', prefs: { speed } })}
-              options={SPEEDS.map((r) => ({ value: r, label: speedLabel(r) }))}
-            />
-            <p className="mb-meta mb-muted">Also changeable while listening, from any capture. Pitch stays natural at every speed.</p>
-          </div>
-        )}
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  const id = `set-${title.replace(/\W+/g, '-').toLowerCase()}`;
+  return (
+    <section className="mb-set" aria-labelledby={id}>
+      <h2 id={id} className="mb-t-over mb-set-h">{title}</h2>
+      <div className="mb-set-card">{children}</div>
+    </section>
+  );
+}
 
-        {section === 'recording' && (
-          <>
-            <div className="mb-setting-row">
-              <div><p className="mb-label-strong">Transcription</p><p className="mb-meta mb-muted">Your browser’s speech service writes the transcript as you talk. Chrome and Edge send the audio to their vendor to do that; Safari keeps it on-device where it can.</p></div>
-            </div>
-            <div className="mb-setting-row">
-              <div><p className="mb-label-strong">Meeting mode</p><p className="mb-meta mb-muted">Off in the demo. Telling voices apart needs a model the browser doesn’t have.</p></div>
-            </div>
-            <div className="mb-setting-row">
-              <div><p className="mb-label-strong">Task suggestions</p><p className="mb-meta mb-muted">New recordings suggest tasks from phrasing (“we need to…”, “let’s…”). No model runs in the browser demo, and the suggestions say so.</p></div>
-            </div>
-          </>
-        )}
-
-        {section === 'privacy' && (
-          <>
-            <div className="mb-setting-row">
-              <div><p className="mb-label-strong">Where your data lives</p><p className="mb-meta mb-muted">In this browser only — captures, edits and recordings. Nothing is sent to Mumble.{used ? ` Using ${used} here.` : ''}</p></div>
-            </div>
-            <div className="mb-setting-row">
-              <div><p className="mb-label-strong">Recordings you made</p><p className="mb-meta mb-muted">{stored ? `${stored} saved with audio.` : 'None yet.'} Deleting removes the audio and keeps the transcripts.</p></div>
-              <Button size="sm" onClick={deleteRecordings} disabled={!stored}>Delete audio</Button>
-            </div>
-            <div className="mb-setting-row">
-              <div><p className="mb-label-strong">Demo data</p><p className="mb-meta mb-muted">Puts the five demo captures back and removes anything you recorded. The demo recordings use synthetic voices, one per person.</p></div>
-              <Button size="sm" variant="primary" onClick={reset}>Reset demo</Button>
-            </div>
-          </>
-        )}
-      </section>
+function Row({ label, hint, children }: { label: string; hint: string; children: ReactNode }) {
+  return (
+    <div className="mb-set-row">
+      <div className="mb-set-text"><p className="mb-t-label mb-set-label">{label}</p><p className="mb-t-body-sm mb-muted">{hint}</p></div>
+      <div className="mb-set-control">{children}</div>
     </div>
   );
 }

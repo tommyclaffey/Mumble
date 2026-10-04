@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { tagColor } from '../../data/tagColor';
 import './Chip.css';
 
 /**
@@ -23,9 +24,12 @@ export function ChipMeta({ children, tone = 'default', className = '', title }: 
   return <span className={`mb-chip is-meta is-${tone} ${className}`.trim()} title={title}>{children}</span>;
 }
 
-export function ChipTag({ children, href, className = '' }: Common & { href?: string }) {
+/** A tag pill: white, hairline edge, the tag's colour in a dot (see tagColor). */
+export function ChipTag({ children, href, className = '', color }: Common & { href?: string; color?: string }) {
   const cls = `mb-chip is-tag ${className}`.trim();
-  return href ? <a className={`${cls} is-link`} href={href}>{children}</a> : <span className={cls}>{children}</span>;
+  const c = color ?? (typeof children === 'string' ? tagColor(children) : 'gray');
+  const inner = <><span className={`mb-tag-dot is-${c}`} aria-hidden="true" />{children}</>;
+  return href ? <a className={`${cls} is-link`} href={href}>{inner}</a> : <span className={cls}>{inner}</span>;
 }
 
 export function ChipAction(

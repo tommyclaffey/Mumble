@@ -1,9 +1,12 @@
-.mb-titlebox { display: flex; }
+/* The title IS the rename field: it reads as the page's 32px title, and
+   shows it's editable only on hover and focus. */
+.mb-titlebox { display: flex; margin-left: -8px; }
 .mb-titlebox-input {
-  flex: 1; min-width: 0; height: 36px; padding: 0 var(--space-16);
-  border: var(--border-width-sm) solid var(--border-default); border-radius: var(--radius-md);
-  background: var(--surface-card); color: var(--text-strong);
-  font: 600 0.8125rem/1rem var(--font-sans);   /* Heading/Sub */
+  flex: 1; min-width: 0; height: 48px; padding: 0 8px;
+  border: var(--border-width-sm) solid transparent; border-radius: var(--radius-control);
+  background: transparent; color: var(--text-strong);
+  font: 600 2rem/2.5rem var(--font-sans); letter-spacing: -0.015em;
 }
-.mb-titlebox-input:hover { border-color: var(--border-control); }
-.mb-titlebox-input:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 1px; }
+.mb-titlebox-input:hover { background: var(--surface-subtle); }
+.mb-titlebox-input:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 1px; background: var(--surface-card); }
+@media (max-width: 767px) { .mb-titlebox-input { font-size: 1.75rem; height: 44px; } }

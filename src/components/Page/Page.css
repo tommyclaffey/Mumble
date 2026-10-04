@@ -1,0 +1,80 @@
+/* Page — main column + the docked side panel (400px, grey surface, white
+   cards). Below 1200px the panel stacks under the content. */
+.mb-layout { display: grid; grid-template-columns: minmax(0, 1fr); min-height: calc(100vh - var(--layout-header-r)); }
+.mb-layout.has-panel { grid-template-columns: minmax(0, 1fr) var(--layout-panel); }
+.mb-layout-main { min-width: 0; padding: var(--space-40) var(--layout-gutter-r) var(--space-48); }
+.mb-layout-main > * { max-width: 1040px; }
+
+.mb-pagehead { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-16); margin-bottom: var(--space-24); }
+.mb-pagehead-title { margin: 0; color: var(--text-strong); }
+.mb-pagehead-sub { margin: 6px 0 0; color: var(--text-muted); }
+.mb-pagehead-actions { display: flex; gap: var(--space-8); }
+h1.mb-pagehead-title:focus { outline: none; }
+
+.mb-panel {
+  position: sticky; top: var(--layout-header-r); align-self: start;
+  height: calc(100vh - var(--layout-header-r)); overflow-y: auto;
+  display: flex; flex-direction: column; gap: var(--space-16);
+  padding: var(--space-24);
+  background: var(--surface-subtle); border-left: var(--border-width-sm) solid var(--neutral-100);
+}
+
+.mb-pcard {
+  display: flex; flex-direction: column; gap: var(--space-12);
+  padding: 18px 20px; border-radius: var(--radius-card);
+  background: var(--surface-card); box-shadow: var(--elevation-card);
+}
+.mb-pcard.is-ai { background: var(--surface-ai); }
+.mb-pcard-head { display: flex; align-items: center; gap: var(--space-8); }
+.mb-pcard-icon { display: inline-flex; color: var(--accent-base); }
+.mb-pcard-title { margin: 0; flex: 1; color: var(--text-strong); }
+.mb-pcard-meta { color: var(--text-muted); }
+.mb-pcard p { margin: 0; }
+
+/* Rows inside panel cards: hairline-divided. */
+.mb-prows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.mb-prows > li + li { border-top: var(--border-width-sm) solid var(--neutral-50); }
+.mb-prow { display: flex; align-items: center; gap: 10px; padding: 10px 0; min-height: 44px; }
+.mb-prows > li:first-child .mb-prow { padding-top: 2px; }
+.mb-plink { display: inline-flex; align-items: center; gap: 6px; color: var(--accent-base); text-decoration: none; font: 500 0.8125rem/1rem var(--font-sans); border-radius: var(--radius-xs); }
+.mb-plink:hover { text-decoration: underline; text-underline-offset: 3px; }
+.mb-plink:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px; }
+.mb-pkv { display: grid; grid-template-columns: auto 1fr; gap: var(--space-8) var(--space-16); margin: 0; }
+.mb-pkv dt { color: var(--text-muted); font: 400 0.875rem/1.25rem var(--font-sans); }
+.mb-pkv dd { margin: 0; text-align: right; color: var(--text-body); font: 400 0.875rem/1.25rem var(--font-sans); }
+.mb-pstats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-12); }
+.mb-pstats strong { display: block; font: 600 1.25rem/1.75rem var(--font-sans); color: var(--text-strong); }
+.mb-pstats span { font: 500 0.75rem/1rem var(--font-sans); color: var(--text-muted); }
+
+/* Mid-size laptops: a slimmer panel leaves the main column room to breathe. */
+@media (max-width: 1439px) {
+  .mb-layout.has-panel { grid-template-columns: minmax(0, 1fr) 340px; }
+  .mb-layout-main { padding-left: var(--space-40); padding-right: var(--space-40); }
+  .mb-panel { padding: var(--space-16); }
+}
+@media (max-width: 1199px) {
+  .mb-layout.has-panel { grid-template-columns: minmax(0, 1fr); }
+  .mb-panel { position: static; height: auto; overflow: visible; border-left: none; border-top: var(--border-width-sm) solid var(--neutral-100); }
+}
+@media (max-width: 767px) {
+  .mb-layout-main { padding: var(--space-24) var(--space-16) var(--space-32); }
+  .mb-panel { padding: var(--space-16); }
+  .mb-pagehead { flex-wrap: wrap; }
+  .mb-t-page { font-size: 1.75rem; line-height: 2.25rem; }
+}
+
+/* ---- Phone (Figma page 08) ---------------------------------------------
+   Things that exist only on one side of the breakpoint. */
+.mb-phone-only { display: none; }
+@media (max-width: 767px) {
+  .mb-phone-only { display: block; }
+  .is-desktop-only { display: none !important; }
+  .mb-layout { min-height: 0; }
+}
+/* A phone-shaped stand-in for a panel card, placed in the content. */
+.mb-phone-card {
+  margin-bottom: 20px; padding: var(--space-16);
+  background: var(--surface-card); border-radius: var(--radius-card); box-shadow: var(--elevation-card);
+}
+.mb-phone-card-head { display: flex; align-items: center; gap: var(--space-8); margin-bottom: var(--space-8); }
+.mb-phone-card-title { margin: 0; flex: 1; font: 600 1rem/1.5rem var(--font-sans); color: var(--text-strong); }

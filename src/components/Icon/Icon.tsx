@@ -13,7 +13,9 @@
 
 export type IconName =
   | 'clock' | 'list' | 'hash' | 'users' | 'gear' | 'search' | 'mic' | 'play' | 'pause'
-  | 'x' | 'check' | 'pencil' | 'prev' | 'next' | 'download' | 'copy' | 'arrow-left' | 'plus' | 'stop' | 'speaker';
+  | 'x' | 'check' | 'pencil' | 'prev' | 'next' | 'download' | 'copy' | 'arrow-left' | 'plus' | 'stop' | 'speaker'
+  | 'sparkle' | 'lock' | 'chevron-down' | 'info' | 'help' | 'keyboard' | 'database' | 'arrow-right' | 'share'
+  | 'quote' | 'user' | 'chart' | 'trash' | 'loader';
 
 const PATHS: Record<IconName, string> = {
   clock: 'M12 7v5l3 2 M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
@@ -40,12 +42,28 @@ const PATHS: Record<IconName, string> = {
   plus: 'M12 5v14 M5 12h14',
   stop: 'M7 7h10v10H7z',
   speaker: 'M4 10v4h4l5 4V6L8 10H4Z M16.5 9a4 4 0 0 1 0 6 M19 6.5a7.5 7.5 0 0 1 0 11',
+  /* Added for the refined design (Oct 1) — the same 24-grid, round-capped
+     line style as the rest. */
+  sparkle: 'M12 3l1.9 5.4L19 10l-5.1 1.6L12 17l-1.9-5.4L5 10l5.1-1.6L12 3Z',
+  lock: 'M6 11h12v9H6z M8.5 11V8a3.5 3.5 0 0 1 7 0v3',
+  'chevron-down': 'M6 9l6 6 6-6',
+  info: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z M12 16v-4 M12 8h.01',
+  help: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3 M12 17h.01',
+  keyboard: 'M3 6h18v12H3z M7 10h.01 M11 10h.01 M15 10h.01 M7 14h10',
+  database: 'M12 8c4.4 0 8-1.3 8-3s-3.6-3-8-3-8 1.3-8 3 3.6 3 8 3Z M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5 M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3',
+  'arrow-right': 'M5 12h14 M13 6l6 6-6 6',
+  share: 'M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7 M16 6l-4-4-4 4 M12 2v13',
+  quote: 'M7 17c2 0 3-1.5 3-3.5V8H5v5h3 M17 17c2 0 3-1.5 3-3.5V8h-5v5h3',
+  user: 'M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z',
+  chart: 'M4 4v15a1 1 0 0 0 1 1h15 M9 16v-4 M13 16V8 M17 16v-6',
+  trash: 'M4 7h16 M10 11v6 M14 11v6 M6 7l1 13h10l1-13 M9 7V4h6v3',
+  loader: 'M21 12a9 9 0 1 1-6.2-8.6',
 };
 
 /** Shapes that read as solid marks rather than outlines. */
 const FILLED: ReadonlySet<IconName> = new Set(['play', 'stop']);
 
-export function Icon({ name, size = 20, label }: { name: IconName; size?: 16 | 20 | 24 | 32; label?: string }) {
+export function Icon({ name, size = 20, label }: { name: IconName; size?: 12 | 14 | 16 | 18 | 20 | 24 | 28 | 32; label?: string }) {
   const filled = FILLED.has(name);
   return (
     <svg

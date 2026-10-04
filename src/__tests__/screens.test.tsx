@@ -61,25 +61,31 @@ afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 describe('Recent', () => {
   it('lists every capture, newest first', () => {
     mount('#/recent');
-    const titles = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
+    /* Grouped by day (h2), each recording an h3 under its day. */
+    const titles = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent);
     expect(titles[0]).toBe('Product brainstorm session');
     expect(titles).toHaveLength(5);
+    /* Day groups, newest first, accounting for all five — whatever the hour
+       the test runs (at 3am, a recording from 3 hours ago is "Yesterday"). */
+    const groups = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent!).filter((t) => /^(Today|Yesterday|Earlier this week|Earlier) \d+$/.test(t));
+    expect(groups[0]).toMatch(/^Today \d+$/);
+    expect(groups.reduce((n, g) => n + Number(g.split(' ').pop()), 0)).toBe(5);
   });
 
   it('filters by kind, and the filter lives in the URL', async () => {
     mount('#/recent');
-    fireEvent.click(screen.getByRole('button', { name: 'Meetings' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Meetings/ }));
     await navigate(window.location.hash);
     expect(window.location.hash).toBe('#/recent?filter=meetings');
-    expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(3);
-    expect(screen.getByRole('button', { name: 'Meetings' }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(3);
+    expect(screen.getByRole('button', { name: /^Meetings/ }).getAttribute('aria-pressed')).toBe('true');
   });
 
   it('search looks inside transcripts, not just titles', async () => {
     mount('#/recent');
     expect(screen.queryByRole('searchbox')).toBeNull(); // calm until asked for, as in the design
     fireEvent.change(await openSearch(), { target: { value: 'sandbox keys' } });
-    const titles = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
+    const titles = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent);
     expect(titles).toEqual(['Weekly team standup']);
   });
 
@@ -296,6 +302,58 @@ describe('Capture — rename and tag', () => {
     expect(screen.getAllByRole('link', { name: 'Product' })).toHaveLength(1);
   });
 
+  it('a new tag gets the colour you pick, and it shows everywhere', async () => {
+    mount('#/capture/c4');
+    fireEvent.click(screen.getByRole('button', { name: 'Add tag' }));
+    fireEvent.change(screen.getByLabelText('Add a tag'), { target: { value: 'Pricing' } });
+    expect(screen.getByRole('option', { name: /Create\s*Pricing/ })).toBeTruthy();
+    fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Colour for Pricing' })).getByRole('radio', { name: 'Green' }));
+    fireEvent.submit(screen.getByLabelText('Add a tag').closest('form')!);
+    expect(screen.getByRole('link', { name: 'Pricing' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Colour of Pricing: green. Change' })).toBeTruthy();
+    await navigate('#/tags');
+    expect(document.querySelector('.mb-tag-swatch.is-green')).toBeTruthy();
+  });
+
+  it('a new tag’s colour is your choice — typing never changes it', () => {
+    mount('#/capture/c4');
+    fireEvent.click(screen.getByRole('button', { name: 'Add tag' }));
+    const input = screen.getByLabelText('Add a tag');
+    const picked = () => screen.getByRole('radiogroup', { name: /^Colour for/ }).querySelector('[aria-checked="true"]')?.getAttribute('aria-label');
+    fireEvent.change(input, { target: { value: 'P' } });
+    const start = picked();
+    for (const v of ['Pr', 'Pri', 'Pric', 'Prici', 'Pricin', 'Pricing']) {
+      fireEvent.change(input, { target: { value: v } });
+      expect(picked()).toBe(start);
+    }
+    fireEvent.click(within(screen.getByRole('radiogroup', { name: /^Colour for/ })).getByRole('radio', { name: 'Orange' }));
+    fireEvent.change(input, { target: { value: 'Pricing page' } });
+    expect(picked()).toBe('Orange');
+  });
+
+  it('a tag’s dot changes its colour', () => {
+    mount('#/capture/c4');
+    fireEvent.click(screen.getByRole('button', { name: 'Colour of Ideas: yellow. Change' }));
+    fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Colour for Ideas' })).getByRole('radio', { name: 'Purple' }));
+    expect(screen.getByRole('button', { name: 'Colour of Ideas: purple. Change' })).toBeTruthy();
+  });
+
+  it('the picker filters existing tags; arrows and Enter add one; Escape closes', () => {
+    mount('#/capture/c4');
+    fireEvent.click(screen.getByRole('button', { name: 'Add tag' }));
+    const input = screen.getByLabelText('Add a tag');
+    fireEvent.change(input, { target: { value: 'cl' } });
+    const names = screen.getAllByRole('option').map((o) => o.textContent);
+    expect(names.some((n) => n?.startsWith('Client'))).toBe(true);
+    expect(names.some((n) => n?.startsWith('Product'))).toBe(false);
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    fireEvent.keyDown(input, { key: 'ArrowUp' });
+    fireEvent.submit(input.closest('form')!);
+    expect(screen.getAllByRole('link').some((a) => a.getAttribute('href') === '#/tags/Client')).toBe(true);
+    fireEvent.keyDown(input, { key: 'Escape' });
+    expect(screen.queryByLabelText('Add a tag')).toBeNull();
+  });
+
   it('removes a tag', () => {
     mount('#/capture/c4');
     fireEvent.click(screen.getByRole('button', { name: 'Remove tag Ideas' }));
@@ -308,14 +366,16 @@ describe('Capture — a note is not a meeting', () => {
   it('a note has no speakers, attendees or confidence flags', () => {
     mount('#/capture/c1');
     expect(screen.queryByRole('group', { name: 'Meeting attendees' })).toBeNull();
-    expect(screen.queryByText(/^Low confidence/)).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Who is this\?/ })).toBeNull();
     expect(screen.queryByRole('button', { name: /Correct who this speaker is/ })).toBeNull();
   });
 
   it('a meeting has all three', () => {
     mount('#/capture/c2');
     expect(screen.getByRole('group', { name: 'Meeting attendees' })).toBeTruthy();
-    expect(screen.getAllByText(/^Low confidence/)).toHaveLength(4);
+    /* The model's doubt: flagged on each of Speaker 3's four turns, and counted in the header. */
+    expect(screen.getAllByRole('button', { name: /^Who is this\?/ })).toHaveLength(4);
+    expect(screen.getByRole('button', { name: '1 voice to confirm' })).toBeTruthy();
   });
 });
 
@@ -332,7 +392,8 @@ describe('Capture — speaker correction', () => {
     fix('Sarah Lee');
     expect(screen.queryAllByRole('button', { name: /^Speaker 3\./ })).toHaveLength(0);
     expect(screen.getAllByRole('button', { name: 'Sarah Lee. Correct who this speaker is' })).toHaveLength(4);
-    expect(screen.queryByText(/^Low confidence/)).toBeNull();
+    expect(screen.queryAllByRole('button', { name: /^Who is this\?/ })).toHaveLength(0);
+    expect(screen.queryByRole('button', { name: /voice to confirm/ })).toBeNull();
     expect(toast().textContent).toMatch(/Sarah Lee · 4 lines updated/);
   });
 
@@ -341,7 +402,7 @@ describe('Capture — speaker correction', () => {
     fix('Sarah Lee');
     fireEvent.click(within(toast()).getByRole('button', { name: 'Undo' }));
     expect(screen.getAllByRole('button', { name: 'Speaker 3. Correct who this speaker is' })).toHaveLength(4);
-    expect(screen.getAllByText(/^Low confidence/)).toHaveLength(4);
+    expect(screen.getAllByRole('button', { name: /^Who is this\?/ })).toHaveLength(4);
   });
 
   it('undo reverses the correction only — a task ticked meanwhile stays ticked', () => {
@@ -360,7 +421,8 @@ describe('Capture — speaker correction', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
     /* Merge: Speaker 3 was Maya all along. Maya is still one speaker. */
     expect(screen.getByText(/Maya Chen · 4 lines updated/)).toBeTruthy();
-    expect(screen.getByText('You, Maya Chen, John Park')).toBeTruthy();
+    const speakers = screen.getByText('Speakers', { selector: 'dt' }).nextElementSibling!;
+    expect(speakers.textContent).toBe('3'); // You, Maya Chen, John Park — no duplicate Maya, none unconfirmed
   });
 
   it('Escape cancels and returns focus to the name', () => {
@@ -384,7 +446,7 @@ describe('Focus never falls to nowhere', () => {
 
   it('ticking a task out of a filtered view lands on the heading', () => {
     mount('#/tasks');
-    fireEvent.click(screen.getByRole('button', { name: 'To Do' }));
+    fireEvent.click(screen.getByRole('button', { name: /^To do/ }));
     fireEvent.click(screen.getByRole('checkbox', { name: 'Done: Audit the enterprise onboarding funnel' }));
     expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1 }));
   });
@@ -398,11 +460,11 @@ describe('Focus never falls to nowhere', () => {
 
   it('changing a filter is NOT a new page — focus stays on the filter', async () => {
     mount('#/recent');
-    const chip = screen.getByRole('button', { name: 'Ideas' });
+    const chip = screen.getByRole('button', { name: /^Notes/ });
     chip.focus();
     fireEvent.click(chip);
     await navigate(window.location.hash);
-    expect(document.activeElement?.textContent).toBe('Ideas');
+    expect(document.activeElement?.textContent).toMatch(/^Notes/);
   });
 
   it('Undo stays while you are on it, however long that takes', async () => {
@@ -465,7 +527,7 @@ describe('Record', () => {
     /* Honest provenance: no model, so no summary and a rule-based label. */
     expect(screen.getByText(/Suggested by phrasing/)).toBeTruthy();
     expect(screen.getByText(/No summary/)).toBeTruthy();
-    expect(screen.getAllByText('We need to send the proposal by Friday').length).toBe(2); // the task card + its Key moment
+    expect(screen.getAllByText('We need to send the proposal by Friday').length).toBe(1); // the task, in the side panel
     /* The interim phrase on screen at Stop was heard, so it was kept. */
     expect(screen.getByText('and also the')).toBeTruthy();
   });
@@ -554,11 +616,32 @@ describe('Record', () => {
 });
 
 describe('Settings', () => {
-  it('has only sections that do something, in the frame’s two-column layout', () => {
+  it('has only settings that do something — every switch changes a preference', () => {
     mount('#/settings');
-    expect(screen.getAllByRole('button').filter((b) => b.className.includes('mb-settings-tab')).map((b) => b.textContent))
-      .toEqual(['Playback', 'Recording', 'Privacy & data']);
+    expect(screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent).slice(0, 3)).toEqual(['Playback', 'Recording', 'Privacy & data']);
     expect(screen.getByRole('radiogroup', { name: 'Playback speed' })).toBeTruthy();
+    const keys = screen.getByRole('switch', { name: 'Keyboard shortcuts' });
+    expect(keys.getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(keys);
+    expect(screen.getByRole('switch', { name: 'Keyboard shortcuts' }).getAttribute('aria-checked')).toBe('false');
+  });
+
+  it('turning shortcuts off really turns them off', async () => {
+    const { audio } = mount('#/settings');
+    fireEvent.click(screen.getByRole('switch', { name: 'Keyboard shortcuts' }));
+    await navigate('#/capture/c1');
+    fireEvent.keyDown(window, { key: ' ' });
+    await flush();
+    expect(audio.made.length === 0 || audio.main.paused).toBe(true);
+  });
+
+  it('turning task suggestions off means a recording suggests none', async () => {
+    const { rec } = mount('#/settings');
+    fireEvent.click(screen.getByRole('switch', { name: 'Find tasks while I talk' }));
+    await navigate('#/record');
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+    act(() => rec.say('We need to send the proposal by Friday.'));
+    expect(screen.getByText('We need to send the proposal by Friday.').closest('.mb-line')!.className).not.toContain('is-task');
   });
 
   it('reset also removes recordings made in this browser', async () => {
@@ -566,7 +649,6 @@ describe('Settings', () => {
     await store.put('b1', new Blob(['x']));
     vi.spyOn(window, 'confirm').mockReturnValue(true);
     mount('#/settings', { store });
-    fireEvent.click(screen.getByRole('button', { name: 'Privacy & data' }));
     fireEvent.click(screen.getByRole('button', { name: 'Reset demo' }));
     await flush();
     expect(await store.get('b1')).toBeUndefined();
@@ -574,25 +656,30 @@ describe('Settings', () => {
 });
 
 describe('List + detail screens', () => {
-  it('Meetings: the newest is shown first; choosing another shows it beside the list', async () => {
+  it('Meetings: newest first, and a meeting opens the same note screen as everything else', async () => {
     mount('#/meetings');
-    expect(document.getElementById('meeting-h')!.textContent).toBe('Product Sync');
+    expect(screen.getAllByRole('heading', { level: 2 })[0].textContent).toBe('Product Sync');
     fireEvent.click(screen.getByRole('link', { name: 'Weekly team standup' }));
     await navigate(window.location.hash);
-    expect(window.location.hash).toBe('#/meetings/c3');
-    expect(document.getElementById('meeting-h')!.textContent).toBe('Weekly team standup');
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Meetings'); // the list stayed
+    expect(window.location.hash).toBe('#/capture/c3');
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Weekly team standup');
   });
 
-  it('Meetings: a card’s play plays that meeting in the one detail player', async () => {
+  it('Meetings: a card plays its recording; a person in the panel filters the list', async () => {
     const { audio } = mount('#/meetings');
     fireEvent.click(screen.getByRole('button', { name: 'Play recording of Client call — Northbank' }));
-    await navigate(window.location.hash);
     await flush();
-    expect(document.getElementById('meeting-h')!.textContent).toBe('Client call — Northbank');
-    expect(audio.made).toHaveLength(1); // one player for the screen — nothing can overlap
     expect(audio.main.src).toMatch(/c5\.m4a$/);
     expect(audio.main.paused).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: /^Alex Rivera/ }));
+    expect(within(screen.getByRole('list', { name: 'Meetings' })).getAllByRole('heading').map((h) => h.textContent)).toEqual(['Weekly team standup']);
+  });
+
+  it('Meetings: an unsure voice links to the line where you can say who it is', () => {
+    mount('#/meetings');
+    /* In the side panel on a laptop, in a card under the title on a phone —
+       both go to the same line. */
+    for (const a of screen.getAllByRole('link', { name: 'Who is this?' })) expect(a.getAttribute('href')).toBe('#/capture/c2?line=1');
   });
 
   it('Tasks: filter by tag, and the panel counts who owns what', () => {
@@ -605,7 +692,7 @@ describe('List + detail screens', () => {
 
   it('Tasks: "Mine" shows only tasks assigned to you', () => {
     mount('#/tasks');
-    fireEvent.click(screen.getByRole('button', { name: 'Mine' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Mine/ }));
     const labels = screen.getAllByRole('checkbox').map((c) => c.getAttribute('aria-label'));
     expect(labels.length).toBeGreaterThan(0);
     const owners = [...document.querySelectorAll<HTMLSelectElement>('.mb-taskcard select[id^="as-"]')].map((x) => x.value);
@@ -622,9 +709,9 @@ describe('Everything that looks clickable does something', () => {
     expect(screen.getByRole('link', { name: 'Product Sync' }).className).toContain('mb-stretch-link');
   });
 
-  it('Reassign, beside the Low confidence flag, opens the speaker fix', () => {
+  it('"Who is this?", the low-confidence flag, opens the speaker fix', () => {
     mount('#/capture/c2');
-    fireEvent.click(screen.getAllByRole('button', { name: 'Reassign' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: /^Who is this\?/ })[0]);
     expect(screen.getByLabelText('Who is this?')).toBeTruthy();
   });
 
@@ -639,7 +726,7 @@ describe('Everything that looks clickable does something', () => {
   it('task status moves on the Tasks screen, and shows on the capture', async () => {
     mount('#/tasks');
     fireEvent.change(screen.getByLabelText('Status of Follow up with design team on dashboard'), { target: { value: 'in-progress' } });
-    const inProgress = screen.getByRole('heading', { name: /^In Progress/ }).closest('section')!;
+    const inProgress = screen.getByRole('heading', { name: /^In progress/ }).closest('section')!;
     expect(within(inProgress).getByText('Follow up with design team on dashboard')).toBeTruthy();
     await navigate('#/capture/c2');
     expect(screen.getByRole('button', { name: /Follow up with design team on dashboard is in progress/ })).toBeTruthy();
@@ -655,7 +742,7 @@ describe('Everything that looks clickable does something', () => {
 
   it('+ New Task adds a task to the chosen capture', () => {
     mount('#/tasks');
-    fireEvent.click(screen.getByRole('button', { name: '+ New Task' }));
+    fireEvent.click(screen.getByRole('button', { name: 'New task' }));
     fireEvent.change(screen.getByLabelText('New task'), { target: { value: 'Book the venue' } });
     fireEvent.change(screen.getByLabelText('From capture'), { target: { value: 'c5' } });
     fireEvent.click(screen.getByRole('button', { name: 'Add' }));
@@ -667,9 +754,10 @@ describe('Everything that looks clickable does something', () => {
 describe('Navigation', () => {
   it('the current section is marked, and a reload keeps the route', () => {
     mount('#/tasks');
-    const current = screen.getAllByRole('link', { current: 'page' });
-    expect(current.some((a) => a.textContent === 'Tasks')).toBe(true);
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('All Tasks');
+    /* Marked in the sidebar and in the phone tab bar alike. */
+    expect(screen.getAllByRole('link', { name: /^Tasks/, current: 'page' }).length).toBeGreaterThan(0);
+    expect(screen.queryAllByRole('link', { name: /^Recent/, current: 'page' })).toHaveLength(0);
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Tasks');
   });
 
   it('a missing capture says so instead of rendering blank', () => {
@@ -681,11 +769,30 @@ describe('Navigation', () => {
     mount('#/tags');
     fireEvent.click(screen.getByRole('link', { name: 'Ideas' }));
     await navigate(window.location.hash);
-    /* List + detail: the tag list stays; the chosen tag shows beside it. */
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('All Tags');
-    expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Ideas');
-    expect(screen.getByRole('link', { name: 'Ideas' }).getAttribute('aria-current')).toBe('true');
+    /* The tag grid stays; the chosen tag fills the side panel. */
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Tags');
+    expect(document.getElementById('tag-detail-h')!.textContent).toBe('Ideas');
+    expect(within(screen.getByRole('list', { name: 'Tags' })).getByRole('link', { name: 'Ideas' }).getAttribute('aria-current')).toBe('true');
     expect(screen.getByRole('link', { name: 'Product brainstorm session' })).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Read-aloud speed idea' })).toBeTruthy();
+  });
+});
+
+describe('Redesign QA (Oct 1)', () => {
+  it('"1 voice to confirm" opens the fix for that voice', () => {
+    mount('#/capture/c2');
+    fireEvent.click(screen.getByRole('button', { name: '1 voice to confirm' }));
+    expect(screen.getByLabelText('Who is this?')).toBeTruthy();
+    expect(screen.getByText(/Applies to all 4 lines in this voice/)).toBeTruthy();
+  });
+
+  it('New task opens where it was pressed, and is there even when a filter shows nothing', () => {
+    mount('#/tasks');
+    /* Client tag × Maya Chen: nothing matches. */
+    fireEvent.click(within(screen.getByRole('group', { name: 'Filter by tag' })).getByRole('button', { name: 'Client' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Maya Chen/ }));
+    expect(screen.getByText('No tasks match these filters.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'New task' }));
+    expect(screen.getByLabelText('New task')).toBeTruthy();
   });
 });

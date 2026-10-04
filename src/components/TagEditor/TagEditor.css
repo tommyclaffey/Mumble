@@ -1,38 +1,103 @@
+/* Tags on a recording — the tag pill (white, hairline, colour dot) and the
+   tag picker. Every tag shows in the same pill shape everywhere. */
 .mb-tags { display: grid; gap: var(--space-8); }
-.mb-tags-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-8); }
-.mb-tags-open { min-height: 24px; }
-.mb-tags-open svg { width: 12px; height: 12px; }
-.mb-tags-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-8); }
+.mb-tags-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.mb-tags-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+
 .mb-tag-pill {
-  display: inline-flex; align-items: center; min-height: 24px;
+  position: relative; display: inline-flex; align-items: center; min-height: 28px; padding-left: 1px;
   border: var(--border-width-sm) solid var(--border-default); border-radius: var(--radius-pill);
-  background: var(--surface-card);
+  background: var(--surface-card); transition: border-color 120ms ease;
 }
-.mb-tag-pill-link {
-  padding: 0 var(--space-4) 0 var(--space-8); color: var(--text-muted); text-decoration: none;
-  font: 500 0.6875rem/1rem var(--font-sans);
+.mb-tag-pill:hover { border-color: var(--border-control); }
+/* The dot is the colour control: a 24px target (WCAG 2.5.8) around a 7px dot. */
+.mb-tag-pill-dot {
+  display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0;
+  border: none; background: transparent; border-radius: var(--radius-pill); cursor: pointer;
 }
-.mb-tag-pill-link:hover { color: var(--text-body); text-decoration: underline; }
+.mb-tag-pill-dot .mb-tag-dot { width: 7px; height: 7px; transition: transform 120ms ease; }
+.mb-tag-pill-dot:hover { background: var(--surface-subtle); }
+.mb-tag-pill-dot:hover .mb-tag-dot, .mb-tag-pill-dot[aria-expanded='true'] .mb-tag-dot { transform: scale(1.35); }
+.mb-tag-pill-link { padding: 0 2px; color: var(--text-body); text-decoration: none; font: 500 0.75rem/1rem var(--font-sans); }
+.mb-tag-pill-link:hover { text-decoration: underline; text-underline-offset: 2px; }
 .mb-tag-pill-remove {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 24px; height: 24px; margin: -1px -1px -1px 0; border: none; background: transparent;
-  color: var(--neutral-500); border-radius: var(--radius-pill); cursor: pointer;
+  width: 24px; height: 24px; margin: 0 1px 0 0; border: none; background: transparent;
+  color: var(--text-muted); border-radius: var(--radius-pill); cursor: pointer;
 }
-.mb-tag-pill-remove:hover { background: var(--accent-subtle); color: var(--text-body); }
-.mb-tag-pill-link:focus-visible, .mb-tag-pill-remove:focus-visible, .mb-tags-add-btn:focus-visible {
-  outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 1px; border-radius: var(--radius-pill);
+.mb-tag-pill-remove:hover { background: var(--surface-subtle); color: var(--text-body); }
+
+/* "+ Add tag" — the same pill shape, dashed: a tag that isn't there yet. */
+.mb-tags-add-wrap { position: relative; }
+.mb-tags-open {
+  display: inline-flex; align-items: center; gap: 5px; min-height: 28px; padding: 0 11px 0 9px;
+  border: var(--border-width-sm) dashed var(--border-control); border-radius: var(--radius-pill);
+  background: transparent; color: var(--text-muted); cursor: pointer; font: 500 0.75rem/1rem var(--font-sans);
 }
-.mb-tags-add { display: flex; gap: var(--space-4); max-width: 240px; }
-.mb-tags-add input {
-  flex: 1; min-width: 0; min-height: 28px; padding: 0 var(--space-8);
-  border: var(--border-width-sm) solid var(--border-control); border-radius: var(--radius-md);
-  font: 400 0.75rem/1rem var(--font-sans); background: var(--surface-card); color: var(--text-body);
+.mb-tags-open:hover, .mb-tags-open[aria-expanded='true'] { border-style: solid; color: var(--text-strong); background: var(--surface-card); }
+
+/* Popovers: the picker, and a pill's colour choice. */
+.mb-tag-pop {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 30;
+  background: var(--surface-card); border-radius: var(--radius-control); box-shadow: var(--elevation-raised);
+  animation: mb-pop 120ms ease-out;
 }
-.mb-tags-add input:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 1px; }
-.mb-tags-add-btn {
-  width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;
-  border: var(--border-width-sm) solid var(--border-control); border-radius: var(--radius-md);
-  background: var(--surface-card); color: var(--text-body); cursor: pointer;
+@keyframes mb-pop { from { opacity: 0; transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { .mb-tag-pop { animation: none; } }
+.mb-tag-pop-colors { padding: 12px; display: grid; gap: 8px; width: max-content; }
+.mb-tag-pop-colors p { margin: 0; }
+
+.mb-tag-picker { width: 280px; padding: 6px; }
+.mb-tag-search {
+  display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 10px; margin-bottom: 4px;
+  border-radius: var(--radius-lg); background: var(--surface-subtle); color: var(--text-muted);
 }
-.mb-tags-add-btn:disabled { color: var(--text-tertiary); cursor: not-allowed; }
-.mb-tag-pill-remove svg { width: 12px; height: 12px; }
+.mb-tag-search input { flex: 1; min-width: 0; border: none; outline: none; background: transparent; color: var(--text-strong); font: 400 0.875rem/1.25rem var(--font-sans); }
+.mb-tag-search input::placeholder { color: var(--text-muted); }
+.mb-tag-search:focus-within { box-shadow: 0 0 0 var(--border-width-md) var(--focus-ring); }
+
+.mb-tag-options { list-style: none; margin: 0; padding: 0; max-height: 220px; overflow-y: auto; }
+.mb-tag-option {
+  display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 10px;
+  border-radius: var(--radius-lg); cursor: pointer; color: var(--text-body); font: 500 0.875rem/1.25rem var(--font-sans);
+}
+.mb-tag-option .mb-tag-dot { width: 8px; height: 8px; }
+.mb-tag-option.is-active { background: var(--accent-tint); color: var(--accent-strong); }
+.mb-tag-option-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mb-tag-option.is-create { color: var(--text-muted); }
+.mb-tag-option.is-create.is-active { color: var(--accent-strong); }
+.mb-tag-preview {
+  display: inline-flex; align-items: center; gap: 6px; margin-left: 4px; padding: 1px 9px 1px 7px;
+  border: var(--border-width-sm) solid var(--border-default); border-radius: var(--radius-pill);
+  background: var(--surface-card); color: var(--text-body); font: 500 0.75rem/1.25rem var(--font-sans);
+}
+.mb-tag-empty { padding: 8px 10px; }
+
+.mb-tag-create { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px 6px; border-top: var(--border-width-sm) solid var(--surface-sunken); margin-top: 4px; }
+.mb-tag-hint { margin: 0; padding: 6px 10px 4px; border-top: var(--border-width-sm) solid var(--surface-sunken); margin-top: 4px; }
+.mb-tag-hint kbd { padding: 0 4px; margin-right: 2px; border: var(--border-width-sm) solid var(--border-default); border-radius: 4px; font: 500 0.6875rem/1rem var(--font-sans); }
+
+/* Colour swatches — the tag dots, bigger, as a radio group. */
+.mb-swatches { display: flex; gap: 6px; }
+.mb-swatch {
+  display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0;
+  border: 2px solid var(--surface-card); border-radius: var(--radius-pill); cursor: pointer; color: var(--text-on-accent);
+  box-shadow: 0 0 0 1px rgb(18 18 24 / 0.08);
+}
+.mb-swatch[aria-checked='true'] { box-shadow: 0 0 0 2px var(--text-strong); }
+.mb-swatch svg { stroke-width: 3; }
+.mb-swatch.is-gray { background: var(--tag-gray-dot); } .mb-swatch.is-blue { background: var(--tag-blue-dot); }
+.mb-swatch.is-green { background: var(--tag-green-dot); } .mb-swatch.is-yellow { background: var(--tag-yellow-dot); }
+.mb-swatch.is-orange { background: var(--tag-orange-dot); } .mb-swatch.is-pink { background: var(--tag-pink-dot); }
+.mb-swatch.is-purple { background: var(--tag-purple-dot); }
+
+.mb-tag-pill-dot:focus-visible, .mb-tag-pill-link:focus-visible, .mb-tag-pill-remove:focus-visible, .mb-tags-open:focus-visible, .mb-swatch:focus-visible {
+  outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px; border-radius: var(--radius-pill);
+}
+
+/* Phone: the picker spans the screen's content width. */
+@media (max-width: 767px) {
+  .mb-tags-add-wrap { position: static; }
+  .mb-tags { position: relative; }
+  .mb-tag-picker { left: 0; right: 0; width: auto; }
+}

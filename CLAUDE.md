@@ -70,6 +70,14 @@ interview. The rule is about who drives the learning, not a prohibition.
   deliberate. There are tests for each.
 - **No hex outside `tokens.css`.** `tests/cssLeaks.test.ts` enforces it.
 
+## The refined design (Oct 1 2026)
+
+Built from Figma page **07 · Desktop — Refined** (file Mumble-App). Every
+screen is `<Page title subtitle panel>` (components/Page): main column + the
+docked side panel of `<PanelCard>`s. Tokens added in the "REFINED" block of
+`tokens.css`; type in the `.mb-t-*` classes. **Waveforms are measured from the
+real audio** — never draw made-up bars.
+
 ## Commands
 
 ```
@@ -78,5 +86,6 @@ npm test        # vitest
 npm run lint
 npm run build
 node scripts/make-demo-audio.mjs   # regenerate demo recordings after editing demo lines (needs ffmpeg)
+node scripts/make-demo-peaks.mjs   # then their waveforms (needs ffmpeg)
 npm run audit:a11y -- http://localhost:5173/Mumble/   # real-Chrome WCAG 2.2 AA, desktop + phone (dev server must be running)
 ```

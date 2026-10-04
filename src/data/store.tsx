@@ -3,6 +3,7 @@ import {
 } from 'react';
 import { demoCaptures } from './demo';
 import { withDemoAudio } from './demoAudio';
+import { setChosenTagColors, type TagColor } from './tagColor';
 import { correctSpeaker, isMeeting, type Capture, type Speaker, type Task, type TaskStatus } from './model';
 
 /**
@@ -21,13 +22,20 @@ export const speedLabel = (s: Speed) => `${Number.isInteger(s) ? s.toFixed(1) : 
 export interface Prefs {
   /** Playback speed for recordings. Remembered across captures. */
   speed: Speed;
+  /** Space / ← → on a recording. On by default; off for anyone whose
+      assistive tech or habits already use those keys. */
+  shortcuts: boolean;
+  /** Suggest tasks from phrasing ("we need to…") while recording. */
+  taskHints: boolean;
 }
 
-export const DEFAULT_PREFS: Prefs = { speed: 1 };
+export const DEFAULT_PREFS: Prefs = { speed: 1, shortcuts: true, taskHints: true };
 
 export interface State {
   captures: Capture[];
   prefs: Prefs;
+  /** Tag colours you picked, keyed by lower-case tag name. */
+  tagColors: Record<string, TagColor>;
 }
 
 type Action =
@@ -43,12 +51,13 @@ type Action =
   | { type: 'addCapture'; capture: Capture }
   | { type: 'deleteCapture'; captureId: string }
   | { type: 'setPrefs'; prefs: Partial<Prefs> }
+  | { type: 'setTagColor'; tag: string; color: TagColor }
   | { type: 'resetDemo' };
 
 const STORAGE_KEY = 'mumble.v1';
 
 export function initialState(now = new Date()): State {
-  return { captures: demoCaptures(now).map(withDemoAudio), prefs: DEFAULT_PREFS };
+  return { captures: demoCaptures(now).map(withDemoAudio), prefs: DEFAULT_PREFS, tagColors: {} };
 }
 
 export function reducer(state: State, action: Action): State {
@@ -84,6 +93,8 @@ export function reducer(state: State, action: Action): State {
       return { ...state, captures: state.captures.filter((c) => c.id !== action.captureId) };
     case 'setPrefs':
       return { ...state, prefs: { ...state.prefs, ...action.prefs } };
+    case 'setTagColor':
+      return { ...state, tagColors: { ...state.tagColors, [action.tag.trim().toLowerCase()]: action.color } };
     case 'resetDemo':
       return { ...initialState(), prefs: state.prefs };
   }
@@ -99,10 +110,15 @@ function load(): State {
          without touching any edits made to them. */
       if (Array.isArray(parsed.captures)) {
         return {
-          captures: parsed.captures.map((c) => (c.source === 'demo' && !c.audio ? withDemoAudio(c) : c)),
+          captures: parsed.captures.map((c) => (c.source === 'demo' && (!c.audio || !c.peaks) ? withDemoAudio(c) : c)),
           /* Only known prefs survive — a save from the read-aloud days had
              engine/voice settings that no longer mean anything. */
-          prefs: { speed: SPEEDS.includes((parsed.prefs as Partial<Prefs> | undefined)?.speed as Speed) ? parsed.prefs.speed : DEFAULT_PREFS.speed },
+          tagColors: parsed.tagColors && typeof parsed.tagColors === 'object' ? parsed.tagColors : {},
+          prefs: {
+            speed: SPEEDS.includes((parsed.prefs as Partial<Prefs> | undefined)?.speed as Speed) ? parsed.prefs.speed : DEFAULT_PREFS.speed,
+            shortcuts: typeof parsed.prefs?.shortcuts === 'boolean' ? parsed.prefs.shortcuts : DEFAULT_PREFS.shortcuts,
+            taskHints: typeof parsed.prefs?.taskHints === 'boolean' ? parsed.prefs.taskHints : DEFAULT_PREFS.taskHints,
+          },
         };
       }
     }
@@ -121,7 +137,9 @@ interface Store extends State {
 const Ctx = createContext<Store | null>(null);
 
 export function StoreProvider({ children, initial }: { children: ReactNode; initial?: State }) {
-  const [state, dispatch] = useReducer(reducer, initial, (i) => i ?? load());
+  const [state, dispatch] = useReducer(reducer, initial, (i) => (i ? { ...i, tagColors: i.tagColors ?? {} } : load()));
+  /* Before anything below renders, so every tag is drawn in its chosen colour. */
+  setChosenTagColors(state.tagColors);
 
   useEffect(() => {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* quota / private mode */ }

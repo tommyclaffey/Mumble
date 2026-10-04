@@ -11,3 +11,13 @@ export function matches(c: Capture, filter: RecentFilter, query: string): boolea
   return [c.title, c.summary ?? '', ...c.tags, ...c.lines.map((l) => l.text)]
     .some((s) => s.toLowerCase().includes(q));
 }
+
+/** Home groups recordings by day: "Today" / "Yesterday" / "Earlier this week" / "Earlier". */
+export function dayGroup(iso: string, now: Date = new Date()): string {
+  const start = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const days = Math.round((start(now) - start(new Date(iso))) / 86_400_000);
+  if (days <= 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return 'Earlier this week';
+  return 'Earlier';
+}

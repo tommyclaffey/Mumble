@@ -1,41 +1,24 @@
-/* Settings — the frame: section list x 260–456, rule at 497, body from 537. */
-.mb-settings-split {
-  display: grid; grid-template-columns: 196px 1px minmax(0, 1fr); gap: var(--layout-gap);
-  padding: var(--space-32) var(--layout-gutter); min-height: calc(100vh - var(--layout-header));
+/* Settings — Figma page 07, frame 08: sections of white cards, one setting
+   per row, the control on the right. */
+.mb-set { margin-bottom: var(--space-32); }
+.mb-set-h { margin: 0 0 10px; color: var(--text-muted); }
+.mb-set-card { background: var(--surface-card); border-radius: var(--radius-card); box-shadow: var(--elevation-card); padding: 0 var(--space-24); }
+.mb-set-row { display: flex; align-items: center; gap: var(--space-24); padding: var(--space-16) 0; }
+.mb-set-row + .mb-set-row { border-top: var(--border-width-sm) solid var(--surface-sunken); }
+.mb-set-text { flex: 1 1 200px; min-width: 0; }
+.mb-set-text p { margin: 0; }
+.mb-set-label { color: var(--text-strong); margin-bottom: 2px !important; }
+.mb-set-control { flex-shrink: 0; display: flex; align-items: center; }
+.mb-set-control .mb-t-label-sm { display: inline-flex; align-items: center; gap: 6px; }
+.mb-keys { display: grid; grid-template-columns: auto 1fr; gap: 10px 12px; align-items: center; margin: 0; }
+.mb-keys dt, .mb-keys dd { margin: 0; }
+.mb-keys dd { font: 400 0.875rem/1.25rem var(--font-sans); color: var(--text-body); }
+@media (max-width: 767px) {
+  .mb-set-card { padding: 0 var(--space-16); }
+  .mb-set-row { flex-wrap: wrap; }
+  .mb-set-control { max-width: 100%; }
+  /* The speed choice takes the row and shares it evenly — never past the card. */
+  .mb-set-control:has(.mb-seg) { flex-basis: 100%; }
+  .mb-set .mb-seg { display: flex; width: 100%; }
+  .mb-set .mb-seg-option { flex: 1; min-width: 0; padding: 5px 0; }
 }
-.mb-settings-split .mb-split-rule { margin: calc(var(--space-32) * -1) 0; }
-.mb-settings-nav .mb-page-title { margin: 0 0 var(--space-8); font: 600 1rem/1.5rem var(--font-sans); }
-.mb-settings-nav ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
-/* Section item: 36 tall; chosen = accent-subtle fill, accent text, left bar. */
-.mb-settings-tab {
-  position: relative; width: 100%; min-height: 36px; padding: 0 var(--space-16) 0 19px; text-align: left;
-  border: none; border-radius: var(--radius-sm); background: transparent; cursor: pointer;
-  color: var(--text-muted); font: 400 0.8125rem/1rem var(--font-sans);
-}
-.mb-settings-tab:hover { color: var(--text-body); background: var(--surface-sunken); }
-.mb-settings-tab[aria-current='true'] { color: var(--accent-base); font-weight: 500; background: var(--accent-subtle); }
-.mb-settings-tab[aria-current='true']::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: var(--radius-xs); background: var(--accent-base); }
-.mb-settings-tab:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 1px; }
-.mb-settings-body { max-width: 1152px; }
-.mb-settings-h { margin: 0 0 var(--space-16); padding-bottom: var(--space-4); border-bottom: var(--border-width-sm) solid var(--border-default); color: var(--text-strong); }
-.mb-settings-body p { margin: 0; }
-.mb-field { display: grid; gap: var(--space-8); justify-items: start; }
-.mb-setting-row {
-  display: flex; align-items: center; justify-content: space-between; gap: var(--space-24);
-  padding: var(--space-16); margin-bottom: var(--space-12);
-  border: var(--border-width-sm) solid var(--border-default); border-radius: var(--radius-md); background: var(--surface-card);
-}
-.mb-setting-row > div { display: grid; gap: var(--space-4); max-width: 72ch; }
-.mb-input {
-  height: 36px; padding: 0 var(--space-12); min-width: 280px; max-width: 100%;
-  border: var(--border-width-sm) solid var(--border-control); border-radius: var(--radius-md);
-  background: var(--surface-card); color: var(--text-body); font: 400 0.8125rem/1rem var(--font-sans);
-}
-.mb-input:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 1px; }
-@media (max-width: 1023px) {
-  .mb-settings-split { grid-template-columns: minmax(0, 1fr); padding: var(--space-24); }
-  .mb-settings-split .mb-split-rule { display: none; }
-  .mb-settings-nav ul { display: flex; gap: var(--space-8); overflow-x: auto; }
-  .mb-settings-tab { width: auto; white-space: nowrap; }
-}
-@media (max-width: 767px) { .mb-settings-split { padding: var(--space-16); } }
