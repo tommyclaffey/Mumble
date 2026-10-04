@@ -74,3 +74,18 @@
   .mb-recorder-meter { flex-basis: 100%; }
   .mb-record-interim { padding-left: 14px; }
 }
+
+/* Phone (Figma M02): the panel's count and privacy note, inline. */
+.mb-record-spotted { color: var(--accent-base); text-transform: none; letter-spacing: 0; margin-left: 6px; }
+.mb-record-where { margin: 0; justify-content: center; align-items: center; gap: 6px; }
+@media (max-width: 767px) { .mb-record-where.mb-phone-only { display: flex; } }
+@media (max-width: 767px) {
+  .mb-recorder-live { flex-direction: column; text-align: center; }
+  .mb-recorder-clock { display: flex; flex-direction: column; align-items: center; }
+  .mb-record-timer { font-size: 2.5rem; line-height: 2.75rem; }
+  .mb-rec { width: 112px; height: 112px; }
+  .mb-rec-disc { width: 76px; height: 76px; }
+  .mb-recorder-actions .mb-button { flex: 1; min-height: 48px; }
+  .mb-recorder-actions .mb-button.is-ghost { flex: 0 0 100%; order: 3; }
+  .mb-recorder-mode .mb-seg { display: flex; width: 100%; }
+}

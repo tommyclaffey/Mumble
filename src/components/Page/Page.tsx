@@ -10,16 +10,23 @@ import './Page.css';
  * with their own head (the note) pass `head` instead.
  */
 export function Page(
-  { title, subtitle, actions, head, panel, panelLabel, headingRef, headingId, children }:
+  { title, subtitle, actions, head, panel, panelLabel, headingRef, headingId, children, panelOnPhone = 'below', phoneView }:
   {
     title?: string; subtitle?: ReactNode; actions?: ReactNode; head?: ReactNode;
     panel?: ReactNode; panelLabel?: string;
+    /** On a phone the side panel can't sit beside the content (Figma page 08):
+        'below' stacks it under; 'hide' drops it because the screen shows a
+        phone-shaped version of it instead. */
+    panelOnPhone?: 'below' | 'hide';
+    /** The note's phone switcher (Transcript · Tasks · Summary) — which of the
+        recording's views is showing. Only affects phones. */
+    phoneView?: string;
     headingRef?: Ref<HTMLHeadingElement>; headingId?: string;
     children: ReactNode;
   },
 ) {
   return (
-    <div className={`mb-layout${panel ? ' has-panel' : ''}`}>
+    <div className={`mb-layout${panel ? ' has-panel' : ''}`} data-phone-view={phoneView}>
       <div className="mb-layout-main">
         {head ?? (
           <div className="mb-pagehead">
@@ -32,18 +39,20 @@ export function Page(
         )}
         {children}
       </div>
-      {panel && <aside className="mb-panel" aria-label={panelLabel}>{panel}</aside>}
+      {panel && <aside className={`mb-panel${panelOnPhone === 'hide' ? ' is-desktop-only' : ''}`} aria-label={panelLabel}>{panel}</aside>}
     </div>
   );
 }
 
 /** A card in the side panel. `ai` puts it on the AI surface — model output only. */
 export function PanelCard(
-  { title, icon, meta, ai, children, id }:
-  { title: string; icon?: IconName; meta?: ReactNode; ai?: boolean; children: ReactNode; id: string },
+  { title, icon, meta, ai, children, id, desktopOnly }:
+  { title: string; icon?: IconName; meta?: ReactNode; ai?: boolean; children: ReactNode; id: string;
+    /** Shown on the phone in another form (or not useful there — shortcuts). */
+    desktopOnly?: boolean },
 ) {
   return (
-    <section className={`mb-pcard${ai ? ' is-ai' : ''}`} aria-labelledby={id}>
+    <section className={`mb-pcard${ai ? ' is-ai' : ''}${desktopOnly ? ' is-desktop-only' : ''}`} aria-labelledby={id}>
       <div className="mb-pcard-head">
         {icon && <span className="mb-pcard-icon"><Icon name={icon} size={16} /></span>}
         <h2 id={id} className="mb-t-heading mb-pcard-title">{title}</h2>

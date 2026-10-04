@@ -1,3 +1,4 @@
+import { BRAND } from '../brand';
 import { useEffect, useRef, useState } from 'react';
 import { Avatar } from '../components/Avatar/Avatar';
 import { Button } from '../components/Button/Button';
@@ -142,7 +143,7 @@ export function RecordScreen() {
       source: 'browser',
       audio: stored ? 'stored' : undefined,
       peaks,
-      title: titleFrom(all, 'New Mumble'),
+      title: titleFrom(all, BRAND.newTitle),
       createdAt: now.toISOString(),
       durationSeconds: Math.round(total),
       lines: all,
@@ -212,11 +213,11 @@ export function RecordScreen() {
     <Page
       title="New recording"
       subtitle={status === 'idle' ? 'Ready when you are' : `${active ? 'Recording' : 'Paused'} · saving to this browser as you talk`}
-      headingId="record-h" panel={panel} panelLabel="While you record"
+      headingId="record-h" panel={panel} panelLabel="While you record" panelOnPhone="hide"
     >
       {saving ? (
         <section className="mb-saving" aria-labelledby="saving-h" aria-live="polite">
-          <h2 id="saving-h" className="mb-t-title">Saving your mumble</h2>
+          <h2 id="saving-h" className="mb-t-title">Saving your {BRAND.noun}</h2>
           <p className="mb-t-body-sm mb-muted">A few seconds. Everything stays in this browser.</p>
           <ol className="mb-saving-steps">
             {[
@@ -277,6 +278,7 @@ export function RecordScreen() {
           {prefs.shortcuts && available && <span className="mb-t-meta mb-muted mb-recorder-key"><kbd className="mb-kbd">Space</kbd> to {status === 'recording' ? 'pause' : status === 'idle' ? 'start' : 'resume'}</span>}
         </div>
 
+        <p className="mb-phone-only mb-t-meta mb-muted mb-record-where"><Icon name="lock" size={14} /> Audio saved in this browser only</p>
         {error && <p className="mb-record-error" role="alert">{error}</p>}
         {!micOk && available && (
           <p className="mb-record-error" role="status">
@@ -290,7 +292,9 @@ export function RecordScreen() {
       )}
 
       <section className="mb-record-live" aria-labelledby="live-h">
-        <h2 id="live-h" className="mb-t-over mb-record-live-h">Live transcript <span className="mb-t-meta mb-muted">· updating as you talk</span></h2>
+        <h2 id="live-h" className="mb-t-over mb-record-live-h">Live transcript <span className="mb-t-meta mb-muted">· updating as you talk</span>
+          {spotted.length > 0 && <span className="mb-t-meta mb-phone-only mb-record-spotted">{spotted.length} {spotted.length === 1 ? 'task' : 'tasks'} so far</span>}
+        </h2>
         <div className="mb-record-lines" aria-live="polite" aria-relevant="additions">
           {lines.length === 0 && !interim && (
             <p className="mb-t-body mb-muted">

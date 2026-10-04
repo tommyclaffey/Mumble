@@ -62,3 +62,19 @@ h1.mb-pagehead-title:focus { outline: none; }
   .mb-pagehead { flex-wrap: wrap; }
   .mb-t-page { font-size: 1.75rem; line-height: 2.25rem; }
 }
+
+/* ---- Phone (Figma page 08) ---------------------------------------------
+   Things that exist only on one side of the breakpoint. */
+.mb-phone-only { display: none; }
+@media (max-width: 767px) {
+  .mb-phone-only { display: block; }
+  .is-desktop-only { display: none !important; }
+  .mb-layout { min-height: 0; }
+}
+/* A phone-shaped stand-in for a panel card, placed in the content. */
+.mb-phone-card {
+  margin-bottom: 20px; padding: var(--space-16);
+  background: var(--surface-card); border-radius: var(--radius-card); box-shadow: var(--elevation-card);
+}
+.mb-phone-card-head { display: flex; align-items: center; gap: var(--space-8); margin-bottom: var(--space-8); }
+.mb-phone-card-title { margin: 0; flex: 1; font: 600 1rem/1.5rem var(--font-sans); color: var(--text-strong); }

@@ -66,7 +66,7 @@ export function MeetingsScreen() {
         </ul>
       </PanelCard>
       {unsure.length > 0 && (
-        <PanelCard id="voices-h" title="Voices to confirm" icon="help" meta={unsure.length}>
+        <PanelCard id="voices-h" title="Voices to confirm" icon="help" meta={unsure.length} desktopOnly>
           <ul className="mb-prows">
             {unsure.map(({ m, s, line }) => (
               <li key={`${m.id}-${s.id}`}>
@@ -89,6 +89,19 @@ export function MeetingsScreen() {
 
   return (
     <Page title="Meetings" subtitle={`${all.length} meetings with ${people.size} people`} panel={panel} panelLabel="People">
+      {/* Phone: the voices to confirm, one card under the title (Figma M07). */}
+      {unsure.length > 0 && (
+        <div className="mb-phone-only mb-phone-card">
+          <div className="mb-prow" style={{ padding: 0 }}>
+            <Avatar name={unsure[0].s.name} colorIndex={unsure[0].s.colorIndex} unconfirmed size="md" />
+            <div className="mb-prow-text">
+              <p className="mb-t-label" style={{ margin: 0, color: 'var(--text-strong)' }}>{unsure.length} {unsure.length === 1 ? 'voice' : 'voices'} to confirm</p>
+              <span className="mb-t-meta mb-muted">{unsure[0].s.name} · {unsure[0].m.title}</span>
+            </div>
+            <a className="mb-button is-sm mb-voice-who" style={{ margin: 0 }} href={href({ name: 'capture', id: unsure[0].m.id, line: unsure[0].line })}>Who is this?</a>
+          </div>
+        </div>
+      )}
       <label className="mb-search mb-search-page">
         <Icon name="search" size={16} />
         <span className="mb-sr-only">Search meetings</span>

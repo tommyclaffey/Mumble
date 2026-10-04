@@ -1,3 +1,4 @@
+import { BRAND } from '../brand';
 import { useEffect, type ReactNode } from 'react';
 import { Icon, type IconName } from '../components/Icon/Icon';
 import { formatDuration, openTasks, isMeeting } from '../data/model';
@@ -81,7 +82,7 @@ export function AppShell({ route, children }: { route: Route; children: ReactNod
         <div className="mb-header-brand">
           {/* The logo artwork, exported from the Figma file as-is (92 × 36). */}
           <a className="mb-wordmark" href={href({ name: 'recent', filter: 'all' })}>
-            <img src={`${import.meta.env.BASE_URL}mumble-logo.png`} alt="Mumble — home" width={92} height={36} />
+            <img src={`${import.meta.env.BASE_URL}mumble-logo.png`} alt={BRAND.logoAlt} width={92} height={36} />
           </a>
         </div>
         <div className="mb-header-search">
@@ -101,7 +102,7 @@ export function AppShell({ route, children }: { route: Route; children: ReactNod
             </span>
           ) : !onRecord && (
             <a className="mb-header-record" href={href({ name: 'record' })}>
-              <Icon name="mic" size={16} /> Start Mumble
+              <Icon name="mic" size={16} /> {BRAND.startLabel}
             </a>
           )}
         </div>
@@ -138,7 +139,7 @@ export function AppShell({ route, children }: { route: Route; children: ReactNod
 
       <nav className="mb-tabbar" aria-label="Main tabs">
         {[NAV[0], NAV[1], NAV[2], SETTINGS].map((n, i) => (
-          <TabLink key={n.id} n={n} active={current === n.id} before={i === 2} />
+          <TabLink key={n.id} n={n} active={current === n.id} before={i === 2} recording={onRecord && rec.state !== 'idle'} />
         ))}
       </nav>
     </div>
@@ -157,13 +158,17 @@ function NavItem({ n, active, count }: { n: { id: string; label: string; icon: I
   );
 }
 
-function TabLink({ n, active, before }: { n: { id: string; label: string; icon: IconName; route: Route }; active: boolean; before: boolean }) {
+function TabLink({ n, active, before, recording }: { n: { id: string; label: string; icon: IconName; route: Route }; active: boolean; before: boolean; recording: boolean }) {
   return (
     <>
+      {/* The raised record disc. While a recording runs it becomes a stop
+          square and says "Recording" — the tab bar itself tells you, from
+          anywhere in the app (Figma page 08, Tab bar · Active=Recording). */}
       {before && (
-        <a className="mb-tab mb-tab-record" href={href({ name: 'record' })} aria-label="Start Mumble">
-          <span className="mb-tab-record-disc"><Icon name="mic" size={24} /></span>
-          <span aria-hidden="true">Mumble</span>
+        <a className={`mb-tab mb-tab-record${recording ? ' is-recording' : ''}`} href={href({ name: 'record' })}
+          aria-label={recording ? 'Recording in progress' : BRAND.startLabel} aria-current={recording ? 'page' : undefined}>
+          <span className="mb-tab-record-disc"><Icon name={recording ? 'stop' : 'mic'} size={24} /></span>
+          <span aria-hidden="true">{recording ? 'Recording' : BRAND.name}</span>
         </a>
       )}
       <a className="mb-tab" href={href(n.route)} aria-current={active ? 'page' : undefined}>

@@ -1,3 +1,4 @@
+import { BRAND } from '../brand';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Button } from '../components/Button/Button';
 import { ChipMeta } from '../components/Chip/Chip';
@@ -51,7 +52,7 @@ export function SettingsScreen() {
           <dt>Demo voices</dt><dd>Synthetic, labelled</dd>
         </dl>
       </PanelCard>
-      <PanelCard id="keys-h" title="Shortcuts" icon="keyboard">
+      <PanelCard id="keys-h" title="Shortcuts" icon="keyboard" desktopOnly>
         <dl className="mb-keys">
           <dt><kbd className="mb-kbd">Space</kbd></dt><dd>Play or pause</dd>
           <dt><kbd className="mb-kbd">← →</kbd></dt><dd>Previous or next line</dd>
@@ -59,7 +60,7 @@ export function SettingsScreen() {
         </dl>
       </PanelCard>
       <PanelCard id="about-h" title="About" icon="info">
-        <p className="mb-t-body-sm mb-muted">Mumble is a voice-first notes demo. Capture by speaking; review by listening. Demo recordings use synthetic voices, one per person.</p>
+        <p className="mb-t-body-sm mb-muted">{BRAND.name} is a voice-first notes demo. Capture by speaking; review by listening. Demo recordings use synthetic voices, one per person.</p>
       </PanelCard>
     </>
   );

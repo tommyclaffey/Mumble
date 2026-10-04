@@ -1,3 +1,4 @@
+import { BRAND } from '../brand';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Avatar, colorFor } from '../components/Avatar/Avatar';
 import { Button } from '../components/Button/Button';
@@ -8,6 +9,7 @@ import { Icon } from '../components/Icon/Icon';
 import { PlayerBar } from '../components/PlayerBar/PlayerBar';
 import { SpeakerFix } from '../components/SpeakerFix/SpeakerFix';
 import { Page, PanelCard } from '../components/Page/Page';
+import { Segmented } from '../components/Segmented/Segmented';
 import { Toast, ToastRegion } from '../components/Toast/Toast';
 import {
   correctSpeaker, formatDuration, formatWhen, isLowConfidence, isMeeting, linesBySpeaker,
@@ -57,6 +59,8 @@ function CaptureView({ c, startLine }: { c: Capture; startLine?: number }) {
   const { audioStore } = useServices();
   const player = usePlayer(c, prefs.speed);
   const [toast, setToast] = useState<{ message: string; undo?: () => void } | null>(null);
+  /* Phone only: which view of the recording is showing (Figma page 08). */
+  const [phoneView, setPhoneView] = useState<'transcript' | 'tasks' | 'summary'>('transcript');
   const lineRefs = useRef(new Map<number, HTMLElement>());
   const dismiss = useCallback(() => setToast(null), []);
 
@@ -152,7 +156,7 @@ function CaptureView({ c, startLine }: { c: Capture; startLine?: number }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${c.title.replace(/[^\w\- ]+/g, '').trim() || 'mumble'}.md`;
+    a.download = `${c.title.replace(/[^\w\- ]+/g, '').trim() || BRAND.noun}.md`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -289,11 +293,22 @@ function CaptureView({ c, startLine }: { c: Capture; startLine?: number }) {
         <TagEditor tags={c.tags} allTags={allTags} onChange={(tags) => dispatch({ type: 'updateCapture', captureId: c.id, patch: { tags } })} />
       </div>
       <hr className="mb-rule mb-note-rule" />
+      {/* Phone: the desktop side panel becomes three views of one recording. */}
+      <div className="mb-phone-only mb-note-views">
+        <Segmented
+          label="View" value={phoneView} onChange={setPhoneView}
+          options={[
+            { value: 'transcript', label: 'Transcript' },
+            { value: 'tasks', label: c.tasks.length ? `Tasks ${c.tasks.length}` : 'Tasks' },
+            { value: 'summary', label: 'Summary' },
+          ]}
+        />
+      </div>
     </>
   );
 
   return (
-    <Page head={head} panel={panel} panelLabel="About this capture">
+    <Page head={head} panel={panel} panelLabel="About this capture" phoneView={phoneView}>
       <div className="mb-note">
         <PlayerBar
           compact player={player} title={c.title} peaks={c.peaks}

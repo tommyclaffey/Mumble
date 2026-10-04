@@ -625,7 +625,9 @@ describe('List + detail screens', () => {
 
   it('Meetings: an unsure voice links to the line where you can say who it is', () => {
     mount('#/meetings');
-    expect(screen.getByRole('link', { name: 'Who is this?' }).getAttribute('href')).toBe('#/capture/c2?line=1');
+    /* In the side panel on a laptop, in a card under the title on a phone —
+       both go to the same line. */
+    for (const a of screen.getAllByRole('link', { name: 'Who is this?' })) expect(a.getAttribute('href')).toBe('#/capture/c2?line=1');
   });
 
   it('Tasks: filter by tag, and the panel counts who owns what', () => {

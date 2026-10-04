@@ -1,3 +1,4 @@
+import { BRAND } from '../brand';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CaptureCard } from '../components/CaptureCard/CaptureCard';
 import { ChipFilter } from '../components/Chip/Chip';
@@ -91,7 +92,32 @@ export function RecentScreen({ filter }: { filter: RecentFilter }) {
   );
 
   return (
-    <Page title="Recent" subtitle={`${captures.length} recordings · ${open} open tasks`} panel={panel} panelLabel="Up next">
+    <Page title="Recent" subtitle={`${captures.length} recordings · ${open} open tasks`} panel={panel} panelLabel="Up next" panelOnPhone="hide">
+      {/* Phone: the panel's "Up next", folded into one card above the feed. */}
+      {upNext.length > 0 && (
+        <div className="mb-phone-only mb-phone-card">
+          <div className="mb-phone-card-head">
+            <span className="mb-pcard-icon"><Icon name="check" size={16} /></span>
+            <p className="mb-phone-card-title">Up next</p>
+            <span className="mb-t-meta mb-muted">{open} open</span>
+          </div>
+          <ul className="mb-prows">
+            {upNext.slice(0, 2).map(({ t, from }) => (
+              <li key={t.id}>
+                <div className="mb-prow mb-prow-task">
+                  <Checkbox label={`Done: ${t.text}`} checked={false}
+                    onChange={() => dispatch({ type: 'setTaskStatus', captureId: from.id, taskId: t.id, status: 'done' })} />
+                  <div className="mb-prow-text">
+                    <a className="mb-t-body-sm mb-prow-link" href={href({ name: 'capture', id: from.id, line: from.lines.findIndex((l) => l.id === t.sourceLineId) + 1 || undefined })}>{t.text}</a>
+                    <span className="mb-t-meta mb-muted">{from.title} · {t.assignee ?? 'Unassigned'}</span>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <a className="mb-plink" href={href({ name: 'tasks' })}>View all {open} tasks <Icon name="arrow-right" size={14} /></a>
+        </div>
+      )}
       {(searching || query) && (
         <label className="mb-search mb-search-page">
           <Icon name="search" size={16} />
@@ -129,7 +155,7 @@ export function RecentScreen({ filter }: { filter: RecentFilter }) {
           {captures.length === 0 ? (
             <>
               <p>No recordings yet. Say something.</p>
-              <a className="mb-button is-accent is-md" href={href({ name: 'record' })}><Icon name="mic" size={16} /> Start Mumble</a>
+              <a className="mb-button is-accent is-md" href={href({ name: 'record' })}><Icon name="mic" size={16} /> {BRAND.startLabel}</a>
             </>
           ) : (
             <p>Nothing matches{query ? ` “${query}”` : ''} in this filter.</p>

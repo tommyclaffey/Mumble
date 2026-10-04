@@ -105,9 +105,10 @@
   .mb-sidebar { display: none; }
   .mb-header { grid-template-columns: auto 1fr; padding: 0 var(--space-16); }
   .mb-header-search { justify-content: flex-end; }
-  .mb-searchbar { width: auto; padding: 0 var(--space-12); }
-  .mb-searchbar-hint, .mb-kbd { display: none; }
-  .mb-searchbar-text { flex: none; }
+  /* Search is an icon button on a phone; its name stays for screen readers. */
+  .mb-searchbar { width: 40px; height: 40px; padding: 0; justify-content: center; }
+  .mb-searchbar-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .mb-kbd { display: none; }
   .mb-header-actions { display: none; }
   .mb-main { padding-bottom: 88px; }
   .mb-tabbar {
@@ -128,6 +129,8 @@
     display: flex; align-items: center; justify-content: center;
     background: var(--accent-base); color: var(--text-on-accent); box-shadow: var(--elevation-accent);
   }
+  .mb-tab-record.is-recording .mb-tab-record-disc { box-shadow: 0 0 0 6px var(--accent-tint), var(--elevation-accent); }
+  .mb-tab-record.is-recording .mb-tab-record-disc svg { width: 18px; height: 18px; }
 }
 
 /* Short or heavily zoomed windows: pinned bars would cover the content. */

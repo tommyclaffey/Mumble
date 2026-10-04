@@ -1,3 +1,4 @@
+import { BRAND } from './brand';
 import { useEffect, useRef } from 'react';
 import { AppShell } from './shell/AppShell';
 import { useRoute, type Route } from './data/route';
@@ -29,8 +30,8 @@ export default function App() {
   const title =
     route.name === 'capture' ? capture(route.id)?.title ?? 'Not found'
     : route.name === 'tags' ? (route.tag ? `# ${route.tag}` : 'Tags')
-    : { recent: 'Recent', record: 'New Mumble', tasks: 'Tasks', meetings: 'Meetings', settings: 'Settings' }[route.name];
-  useEffect(() => { document.title = `${title} — Mumble`; }, [title]);
+    : { recent: 'Recent', record: BRAND.newTitle, tasks: 'Tasks', meetings: 'Meetings', settings: 'Settings' }[route.name];
+  useEffect(() => { document.title = `${title} — ${BRAND.name}`; }, [title]);
 
   /* A new page: start at the top, and move focus to its heading so a screen
      reader announces it. Hash navigation does neither on its own — a capture

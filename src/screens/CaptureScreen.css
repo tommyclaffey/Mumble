@@ -80,3 +80,34 @@
   .mb-line.is-task { padding-right: 12px; flex-wrap: wrap; }
   .mb-line.is-task .mb-line-task { position: static; }
 }
+
+/* ---- Phone (Figma page 08, M04 / M04b / M04c) ---------------------------
+   One recording, three views — Transcript · Tasks · Summary — instead of a
+   transcript with the whole side panel stacked under it. The player docks
+   above the tab bar, so pause and "where am I" are in reach in every view. */
+.mb-note-views { margin: calc(var(--space-8) * -1) 0 var(--space-16); }
+.mb-note-views .mb-seg { display: flex; width: 100%; }
+@media (max-width: 767px) {
+  .mb-note-rule { margin: var(--space-16) 0; }
+  .mb-note-top .mb-button { padding: 0; width: 40px; justify-content: center; font-size: 0; gap: 0; }
+  .mb-note-top .mb-button svg { width: 18px; height: 18px; }
+  [data-phone-view] .mb-panel { background: transparent; border-top: none; padding: 0 var(--space-16) var(--space-16); }
+  [data-phone-view='transcript'] .mb-panel { display: none; }
+  [data-phone-view='tasks'] .mb-transcript, [data-phone-view='summary'] .mb-transcript,
+  [data-phone-view='tasks'] .mb-review-foot, [data-phone-view='summary'] .mb-review-foot { display: none; }
+  [data-phone-view='tasks'] .mb-pcard[aria-labelledby='summary-h'],
+  [data-phone-view='tasks'] .mb-pcard[aria-labelledby='details-h'],
+  [data-phone-view='summary'] .mb-pcard[aria-labelledby='tasks-h'] { display: none; }
+  /* The docked mini player. */
+  [data-phone-view] .mb-player {
+    position: fixed; left: 12px; right: 12px; top: auto; bottom: calc(80px + env(safe-area-inset-bottom, 0px)); z-index: 15;
+    box-shadow: var(--elevation-raised);
+  }
+  [data-phone-view] .mb-player-pos { flex: 1; }
+  [data-phone-view] .mb-player-controls { margin-left: auto; }
+  /* Room for the docked player at the end of whatever is showing. */
+  [data-phone-view='transcript'] .mb-layout-main { padding-bottom: 170px; }
+  [data-phone-view='tasks'] .mb-layout-main, [data-phone-view='summary'] .mb-layout-main { padding-bottom: 0; }
+  [data-phone-view] .mb-panel { padding-bottom: 170px; }
+  .mb-line { scroll-margin-bottom: 240px; scroll-margin-top: 80px; }
+}

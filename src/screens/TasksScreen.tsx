@@ -100,7 +100,7 @@ export function TasksScreen() {
 
   const panel = (
     <>
-      <PanelCard id="progress-h" title="Progress" icon="chart" meta={`${done} of ${everything.length} done`}>
+      <PanelCard id="progress-h" title="Progress" icon="chart" meta={`${done} of ${everything.length} done`} desktopOnly>
         <Track percent={everything.length ? (done / everything.length) * 100 : 0} label="Tasks complete" valueText={`${done} of ${everything.length} tasks complete`} />
         <div className="mb-pstats">
           {GROUPS.map((g) => (
@@ -154,6 +154,15 @@ export function TasksScreen() {
 
   return (
     <Page title="Tasks" subtitle={`${everything.length} tasks found in ${recordings} recordings`} headingRef={heading} headingId="tasks-page-h" panel={panel} panelLabel="Task overview">
+      {/* Phone: progress as a small card on top (Figma M05). */}
+      <div className="mb-phone-only mb-phone-card mb-task-progress-phone">
+        <div className="mb-phone-card-head">
+          <p className="mb-t-label" style={{ margin: 0, flex: 1, color: 'var(--text-strong)' }}>{done} of {everything.length} done</p>
+          <Button size="sm" icon="download" onClick={exportAll} disabled={everything.length === 0}>Export</Button>
+        </div>
+        <Track percent={everything.length ? (done / everything.length) * 100 : 0} label="Tasks complete" valueText={`${done} of ${everything.length} tasks complete`} />
+      </div>
+
       <div className="mb-viewbar">
         <div className="mb-filterbar" role="group" aria-label="Filter tasks">
           {FILTERS.map((f) => (

@@ -5,7 +5,7 @@
 .mb-set-card { background: var(--surface-card); border-radius: var(--radius-card); box-shadow: var(--elevation-card); padding: 0 var(--space-24); }
 .mb-set-row { display: flex; align-items: center; gap: var(--space-24); padding: var(--space-16) 0; }
 .mb-set-row + .mb-set-row { border-top: var(--border-width-sm) solid var(--surface-sunken); }
-.mb-set-text { flex: 1; min-width: 0; }
+.mb-set-text { flex: 1 1 200px; min-width: 0; }
 .mb-set-text p { margin: 0; }
 .mb-set-label { color: var(--text-strong); margin-bottom: 2px !important; }
 .mb-set-control { flex-shrink: 0; display: flex; align-items: center; }
