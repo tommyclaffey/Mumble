@@ -302,6 +302,42 @@ describe('Capture — rename and tag', () => {
     expect(screen.getAllByRole('link', { name: 'Product' })).toHaveLength(1);
   });
 
+  it('a new tag gets the colour you pick, and it shows everywhere', async () => {
+    mount('#/capture/c4');
+    fireEvent.click(screen.getByRole('button', { name: 'Add tag' }));
+    fireEvent.change(screen.getByLabelText('Add a tag'), { target: { value: 'Pricing' } });
+    expect(screen.getByRole('option', { name: /Create\s*Pricing/ })).toBeTruthy();
+    fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Colour for Pricing' })).getByRole('radio', { name: 'Green' }));
+    fireEvent.submit(screen.getByLabelText('Add a tag').closest('form')!);
+    expect(screen.getByRole('link', { name: 'Pricing' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Colour of Pricing: green. Change' })).toBeTruthy();
+    await navigate('#/tags');
+    expect(document.querySelector('.mb-tag-swatch.is-green')).toBeTruthy();
+  });
+
+  it('a tag’s dot changes its colour', () => {
+    mount('#/capture/c4');
+    fireEvent.click(screen.getByRole('button', { name: 'Colour of Ideas: yellow. Change' }));
+    fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Colour for Ideas' })).getByRole('radio', { name: 'Purple' }));
+    expect(screen.getByRole('button', { name: 'Colour of Ideas: purple. Change' })).toBeTruthy();
+  });
+
+  it('the picker filters existing tags; arrows and Enter add one; Escape closes', () => {
+    mount('#/capture/c4');
+    fireEvent.click(screen.getByRole('button', { name: 'Add tag' }));
+    const input = screen.getByLabelText('Add a tag');
+    fireEvent.change(input, { target: { value: 'cl' } });
+    const names = screen.getAllByRole('option').map((o) => o.textContent);
+    expect(names.some((n) => n?.startsWith('Client'))).toBe(true);
+    expect(names.some((n) => n?.startsWith('Product'))).toBe(false);
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    fireEvent.keyDown(input, { key: 'ArrowUp' });
+    fireEvent.submit(input.closest('form')!);
+    expect(screen.getAllByRole('link').some((a) => a.getAttribute('href') === '#/tags/Client')).toBe(true);
+    fireEvent.keyDown(input, { key: 'Escape' });
+    expect(screen.queryByLabelText('Add a tag')).toBeNull();
+  });
+
   it('removes a tag', () => {
     mount('#/capture/c4');
     fireEvent.click(screen.getByRole('button', { name: 'Remove tag Ideas' }));
