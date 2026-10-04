@@ -75,7 +75,7 @@
 .mb-icon-btn:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); }
 
 @media (max-width: 767px) {
-  .mb-note-top { margin-top: -8px; flex-wrap: wrap; }
+
   .mb-review-foot { padding-left: 0; }
   .mb-line.is-task { padding-right: 12px; flex-wrap: wrap; }
   .mb-line.is-task .mb-line-task { position: static; }
@@ -89,9 +89,17 @@
 .mb-note-views .mb-seg { display: flex; width: 100%; }
 @media (max-width: 767px) {
   .mb-note-rule { margin: var(--space-16) 0; }
+  /* The note's bar IS the top bar on a phone (Figma M04). */
+  .mb-note-top {
+    position: sticky; top: 0; z-index: 12; flex-wrap: nowrap;
+    margin: -24px -16px 20px; padding: 6px 12px 6px 12px; min-height: 52px;
+    background: var(--surface-card); border-bottom: var(--border-width-sm) solid var(--surface-sunken);
+  }
+  .mb-note-back { color: var(--accent-base); font-size: 0.875rem; }
+  .mb-note-sep { display: none; }
   .mb-note-top .mb-button { padding: 0; width: 40px; justify-content: center; font-size: 0; gap: 0; }
   .mb-note-top .mb-button svg { width: 18px; height: 18px; }
-  [data-phone-view] .mb-panel { background: transparent; border-top: none; padding: 0 var(--space-16) var(--space-16); }
+  :is([data-phone-view='transcript'], [data-phone-view='tasks'], [data-phone-view='summary']) .mb-panel { background: transparent; border-top: none; padding: 0 var(--space-16) var(--space-16); }
   [data-phone-view='transcript'] .mb-panel { display: none; }
   [data-phone-view='tasks'] .mb-transcript, [data-phone-view='summary'] .mb-transcript,
   [data-phone-view='tasks'] .mb-review-foot, [data-phone-view='summary'] .mb-review-foot { display: none; }
@@ -99,15 +107,15 @@
   [data-phone-view='tasks'] .mb-pcard[aria-labelledby='details-h'],
   [data-phone-view='summary'] .mb-pcard[aria-labelledby='tasks-h'] { display: none; }
   /* The docked mini player. */
-  [data-phone-view] .mb-player {
+  :is([data-phone-view='transcript'], [data-phone-view='tasks'], [data-phone-view='summary']) .mb-player {
     position: fixed; left: 12px; right: 12px; top: auto; bottom: calc(80px + env(safe-area-inset-bottom, 0px)); z-index: 15;
     box-shadow: var(--elevation-raised);
   }
-  [data-phone-view] .mb-player-pos { flex: 1; }
-  [data-phone-view] .mb-player-controls { margin-left: auto; }
+  :is([data-phone-view='transcript'], [data-phone-view='tasks'], [data-phone-view='summary']) .mb-player-pos { flex: 1; }
+  :is([data-phone-view='transcript'], [data-phone-view='tasks'], [data-phone-view='summary']) .mb-player-controls { margin-left: auto; }
   /* Room for the docked player at the end of whatever is showing. */
   [data-phone-view='transcript'] .mb-layout-main { padding-bottom: 170px; }
   [data-phone-view='tasks'] .mb-layout-main, [data-phone-view='summary'] .mb-layout-main { padding-bottom: 0; }
-  [data-phone-view] .mb-panel { padding-bottom: 170px; }
+  :is([data-phone-view='transcript'], [data-phone-view='tasks'], [data-phone-view='summary']) .mb-panel { padding-bottom: 170px; }
   .mb-line { scroll-margin-bottom: 240px; scroll-margin-top: 80px; }
 }

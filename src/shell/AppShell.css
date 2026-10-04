@@ -111,6 +111,8 @@
   .mb-kbd { display: none; }
   .mb-header-actions { display: none; }
   .mb-main { padding-bottom: 88px; }
+  .mb-shell.is-note { grid-template-rows: 1fr; grid-template-areas: 'main'; }
+  .mb-shell.is-note .mb-header { display: none; }
   .mb-tabbar {
     display: grid; grid-template-columns: repeat(5, 1fr); align-items: end;
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;

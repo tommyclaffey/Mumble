@@ -73,7 +73,9 @@ export function AppShell({ route, children }: { route: Route; children: ReactNod
   const topTags = [...usage.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 4);
 
   return (
-    <div className="mb-shell">
+    /* is-note: on a phone the note's own bar (‹ Recent · share · export)
+       takes the top, as in Figma M04 — not the logo bar plus another row. */
+    <div className={`mb-shell${route.name === 'capture' ? ' is-note' : ''}`}>
       <a className="mb-skip" href="#main" onClick={(e) => { e.preventDefault(); document.getElementById('main')?.focus(); }}>
         Skip to content
       </a>

@@ -21,3 +21,49 @@
 .mb-tag-swatch.is-pink { background: var(--tag-pink-bg); color: var(--tag-pink-text); }
 .mb-tag-kind { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; flex-shrink: 0; border-radius: var(--radius-lg); background: var(--accent-tint); color: var(--accent-base); }
 .mb-tag-rec { flex: 1; min-width: 0; }
+.mb-tag-card-counts { display: inline-flex; gap: var(--space-16); }
+.mb-tag-card-chev { display: none; }
+.mb-back-link {
+  align-items: center; gap: 6px; padding: 6px 8px 6px 4px; margin: 0 0 4px -4px; width: max-content;
+  color: var(--accent-base); text-decoration: none; border-radius: var(--radius-lg); font: 500 0.875rem/1.25rem var(--font-sans);
+}
+.mb-back-link:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); }
+
+/* ---- Phone (Figma M06) --------------------------------------------------
+   The tags are one list in a card: swatch · name over its counts · last
+   used · ›. Tapping one opens it as its own screen (the panel's cards),
+   with "‹ Tags" to come back. */
+@media (max-width: 767px) {
+  .mb-back-link.mb-phone-only { display: inline-flex; }
+  [data-phone-view='tag-list'] .mb-panel { display: none; }
+  /* The list goes; the page's h1 stays for screen readers (visually the
+     tag's own card is the title). */
+  [data-phone-view='tag-detail'] .mb-layout-main { padding: 0; }
+  [data-phone-view='tag-detail'] .mb-layout-main > :not(.mb-pagehead),
+  [data-phone-view='tag-detail'] .mb-pagehead-sub { display: none; }
+  [data-phone-view='tag-detail'] .mb-pagehead { margin: 0; }
+  [data-phone-view='tag-detail'] .mb-pagehead-title {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+  [data-phone-view^='tag-'] .mb-panel { background: transparent; border-top: none; padding: var(--space-16) var(--space-16) var(--space-32); }
+
+  .mb-tag-grid {
+    grid-template-columns: minmax(0, 1fr); gap: 0;
+    background: var(--surface-card); border-radius: var(--radius-card); box-shadow: var(--elevation-card); overflow: hidden;
+  }
+  .mb-tag-grid > li + li { border-top: var(--border-width-sm) solid var(--surface-sunken); }
+  .mb-tag-card, .mb-tag-card.is-selected {
+    display: grid; grid-template-columns: 36px minmax(0, 1fr) auto 16px;
+    grid-template-areas: 'sw name last chev' 'sw counts last chev';
+    column-gap: 12px; row-gap: 2px; align-items: center;
+    padding: 12px 12px 12px 16px; border-radius: 0; box-shadow: none;
+  }
+  .mb-tag-card.mb-stretch:hover { box-shadow: none; background: var(--neutral-25); }
+  .mb-tag-card-top, .mb-tag-card-stats { display: contents; }
+  .mb-tag-swatch { grid-area: sw; }
+  .mb-tag-card-name { grid-area: name; font-size: 0.9375rem; line-height: 1.25rem; }
+  .mb-tag-card-counts { grid-area: counts; display: block; color: var(--text-muted); font: 500 0.75rem/1rem var(--font-sans); }
+  .mb-tag-card-counts span + span::before { content: ' · '; }
+  .mb-tag-card-last { grid-area: last; margin: 0; }
+  .mb-tag-card-chev { grid-area: chev; display: inline-flex; color: var(--text-tertiary); transform: rotate(-90deg); }
+}

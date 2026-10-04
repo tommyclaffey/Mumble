@@ -33,6 +33,8 @@ export function TagsScreen({ tag }: { tag?: string }) {
 
   const panel = selected && (
     <>
+      {/* Phone: a tag opens as its own screen — this is the way back. */}
+      <a className="mb-phone-only mb-back-link" href={href({ name: 'tags' })}><Icon name="arrow-left" size={16} /> Tags</a>
       <PanelCard id="tag-detail-h" title={selected} icon="hash" meta="Selected">
         <p className="mb-t-body-sm mb-muted">{plural(tagged.length, 'recording')} and {plural(tasks.length, 'open task')} carry this tag.</p>
       </PanelCard>
@@ -75,7 +77,12 @@ export function TagsScreen({ tag }: { tag?: string }) {
   );
 
   return (
-    <Page title="Tags" subtitle={`${plural(names.length, 'tag')} across ${plural(captures.length, 'recording')}`} panel={panel || undefined} panelLabel="Chosen tag">
+    <Page
+      title="Tags" subtitle={`${plural(names.length, 'tag')} across ${plural(captures.length, 'recording')}`}
+      panel={panel || undefined} panelLabel="Chosen tag"
+      /* Phone (Figma M06): the list, OR a chosen tag on its own screen. */
+      phoneView={tag && names.includes(tag) ? 'tag-detail' : 'tag-list'}
+    >
       <div className="mb-viewbar">
         <label className="mb-search mb-tag-search">
           <Icon name="search" size={16} />
@@ -111,9 +118,10 @@ export function TagsScreen({ tag }: { tag?: string }) {
                     </h2>
                   </div>
                   <div className="mb-tag-card-stats mb-t-body-sm">
-                    <span>{plural(k.captures, 'recording')}</span><span>{plural(k.tasks, 'task')}</span>
+                    <span className="mb-tag-card-counts"><span>{plural(k.captures, 'recording')}</span><span>{plural(k.tasks, 'task')}</span></span>
                     {k.last && <span className="mb-t-meta mb-muted mb-tag-card-last">{formatWhen(k.last).split(' · ')[0]}</span>}
                   </div>
+                  <span className="mb-tag-card-chev" aria-hidden="true"><Icon name="chevron-down" size={16} /></span>
                 </div>
               </li>
             );
