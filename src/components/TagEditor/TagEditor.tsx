@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent 
 import { Icon } from '../Icon/Icon';
 import { href } from '../../data/route';
 import { useStore } from '../../data/store';
-import { defaultTagColor, TAG_COLORS, tagColor, type TagColor } from '../../data/tagColor';
+import { TAG_COLORS, tagColor, type TagColor } from '../../data/tagColor';
 import './TagEditor.css';
 
 /**
@@ -26,7 +26,10 @@ export function TagEditor(
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState('');
   const [active, setActive] = useState(0);
-  const [newColor, setNewColor] = useState<TagColor | null>(null);
+  /* The new tag's colour is YOUR choice. It starts on the colour your tags
+     use least (so new tags spread out), is picked once when the picker opens,
+     and never moves while you type — only when you press a swatch. */
+  const [newColor, setNewColor] = useState<TagColor>('blue');
   const [recolor, setRecolor] = useState<string | null>(null);
   const root = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
@@ -41,7 +44,7 @@ export function TagEditor(
   const canCreate = !!q && !exact;
   /* Rows you can move through: the matches, then "Create …". */
   const rows = canCreate ? options.length + 1 : options.length;
-  const createColor = newColor ?? defaultTagColor(q);
+  const createColor = newColor;
 
   useEffect(() => { if (open) input.current?.focus(); }, [open]);
 
@@ -52,6 +55,14 @@ export function TagEditor(
     document.addEventListener('pointerdown', onDown);
     return () => document.removeEventListener('pointerdown', onDown);
   }, [open, recolor]);
+
+  /* The least-used colour across your tags — the starting choice. */
+  function leastUsedColor(): TagColor {
+    const used = new Map<TagColor, number>(TAG_COLORS.map((c) => [c.id, 0]));
+    for (const t of allTags) used.set(tagColor(t), (used.get(tagColor(t)) ?? 0) + 1);
+    return [...used.entries()].sort((a, b) => a[1] - b[1])[0][0];
+  }
+  function openPicker() { setNewColor(leastUsedColor()); setOpen(true); }
 
   function close() { setOpen(false); setValue(''); requestAnimationFrame(() => addBtn.current?.focus()); }
 
@@ -108,7 +119,7 @@ export function TagEditor(
         )}
 
         <div className="mb-tags-add-wrap">
-          <button ref={addBtn} type="button" className="mb-tags-open" aria-expanded={open} aria-haspopup="dialog" onClick={() => (open ? close() : setOpen(true))}>
+          <button ref={addBtn} type="button" className="mb-tags-open" aria-expanded={open} aria-haspopup="dialog" onClick={() => (open ? close() : openPicker())}>
             <Icon name="plus" size={12} /> Add tag
           </button>
 
@@ -118,7 +129,7 @@ export function TagEditor(
                 <Icon name="hash" size={14} />
                 <label htmlFor={`${uid}-in`} className="mb-sr-only">Add a tag</label>
                 <input
-                  ref={input} id={`${uid}-in`} value={value} onChange={(e) => { setValue(e.target.value); setActive(0); setNewColor(null); }}
+                  ref={input} id={`${uid}-in`} value={value} onChange={(e) => { setValue(e.target.value); setActive(0); }}
                   placeholder="Find or create a tag" autoComplete="off" maxLength={32}
                   role="combobox" aria-expanded aria-controls={`${uid}-list`} aria-autocomplete="list"
                   aria-activedescendant={rows ? optId(active) : undefined}

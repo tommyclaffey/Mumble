@@ -315,6 +315,22 @@ describe('Capture — rename and tag', () => {
     expect(document.querySelector('.mb-tag-swatch.is-green')).toBeTruthy();
   });
 
+  it('a new tag’s colour is your choice — typing never changes it', () => {
+    mount('#/capture/c4');
+    fireEvent.click(screen.getByRole('button', { name: 'Add tag' }));
+    const input = screen.getByLabelText('Add a tag');
+    const picked = () => screen.getByRole('radiogroup', { name: /^Colour for/ }).querySelector('[aria-checked="true"]')?.getAttribute('aria-label');
+    fireEvent.change(input, { target: { value: 'P' } });
+    const start = picked();
+    for (const v of ['Pr', 'Pri', 'Pric', 'Prici', 'Pricin', 'Pricing']) {
+      fireEvent.change(input, { target: { value: v } });
+      expect(picked()).toBe(start);
+    }
+    fireEvent.click(within(screen.getByRole('radiogroup', { name: /^Colour for/ })).getByRole('radio', { name: 'Orange' }));
+    fireEvent.change(input, { target: { value: 'Pricing page' } });
+    expect(picked()).toBe('Orange');
+  });
+
   it('a tag’s dot changes its colour', () => {
     mount('#/capture/c4');
     fireEvent.click(screen.getByRole('button', { name: 'Colour of Ideas: yellow. Change' }));
