@@ -78,10 +78,23 @@ docked side panel of `<PanelCard>`s. Tokens added in the "REFINED" block of
 `tokens.css`; type in the `.mb-t-*` classes. **Waveforms are measured from the
 real audio** — never draw made-up bars.
 
+## Hosting (Oct 5 2026)
+
+| | URL | Deploys from |
+|---|---|---|
+| **Railway** | https://web-production-b20ad.up.railway.app | GitHub `redesign` branch, on every push |
+| GitHub Pages | https://tommyclaffey.github.io/Mumble/ | `main`, on every push |
+
+Railway project `mumble`, service `web`. Railpack runs `npm run build`
+then `npm start`; the service variable `BASE_PATH=/` serves it at the
+domain root (Pages needs `/Mumble/`). HTTPS, so the mic works on phones.
+When the redesign ships, switch the service's branch to `main`.
+
 ## Commands
 
 ```
 npm run dev     # localhost:5173/Mumble/
+npm run dev:phone   # https on the local network — test recording on a phone
 npm test        # vitest
 npm run lint
 npm run build
