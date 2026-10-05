@@ -15,7 +15,11 @@ export default defineConfig({
      repo name as their base path — without it the built page asks for
      /assets/... at the domain root and renders blank. (Growth hit exactly
      this.) */
-  base: '/Mumble/',
+  base: process.env.BASE_PATH ?? '/Mumble/',
+  /* Railway serves the built app at the root of its own domain
+     (BASE_PATH=/, see railway.json). `vite preview` checks the Host header,
+     so the Railway domains are allowed explicitly. */
+  preview: { allowedHosts: ['.up.railway.app'] },
   /* parked/ holds shelved features (read-aloud) — kept, not built or tested.
      (If read-aloud comes back, it needs `worker: { format: 'es' }` again.) */
   test: { exclude: [...configDefaults.exclude, 'parked/**'] },
