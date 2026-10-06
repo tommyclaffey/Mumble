@@ -3,7 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- viewport-fit=cover: safe-area insets report real values under the
+         notch and home bar once Mumble is installed full screen. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- Installable (Oct 6): Add to Home Screen opens Mumble full screen with
+         its own icon. Absolute paths here are rewritten to the base path by
+         Vite, so they work at /Mumble/ (Pages) and / (Railway) alike. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Mumble" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="theme-color" content="#FAFAFC" />
     <title>Mumble — voice-first notes</title>
     <meta name="description" content="Capture by speaking. Read it back by listening." />
     <link rel="preconnect" href="https://fonts.googleapis.com">
