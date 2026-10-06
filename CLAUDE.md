@@ -90,6 +90,17 @@ then `npm start`; the service variable `BASE_PATH=/` serves it at the
 domain root (Pages needs `/Mumble/`). HTTPS, so the mic works on phones.
 The redesign shipped to `main` on Oct 4; both hosts now serve the same app.
 
+## 🛑 More than one session may work in this repo at once
+
+Oct 6: a docs commit used `git add -A` while another session had
+uncommitted work on its own branch, and swept that work into the wrong
+commit (caught before push, undone). So:
+
+- **Check `git branch --show-current` and `git status` right before committing.**
+- **Stage only the files you changed** (`git add <paths>`), never `-A`.
+- **To commit to a branch you're not on, use a worktree**
+  (`git worktree add /tmp/wt main`) — never switch someone else's branch.
+
 ## Commands
 
 ```
