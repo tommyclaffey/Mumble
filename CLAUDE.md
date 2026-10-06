@@ -82,13 +82,13 @@ real audio** — never draw made-up bars.
 
 | | URL | Deploys from |
 |---|---|---|
-| **Railway** | https://web-production-b20ad.up.railway.app | GitHub `redesign` branch, on every push |
+| **Railway** | https://web-production-b20ad.up.railway.app | `main`, on every push (switched from `redesign` Oct 6) |
 | GitHub Pages | https://tommyclaffey.github.io/Mumble/ | `main`, on every push |
 
 Railway project `mumble`, service `web`. Railpack runs `npm run build`
 then `npm start`; the service variable `BASE_PATH=/` serves it at the
 domain root (Pages needs `/Mumble/`). HTTPS, so the mic works on phones.
-When the redesign ships, switch the service's branch to `main`.
+The redesign shipped to `main` on Oct 4; both hosts now serve the same app.
 
 ## Commands
 
