@@ -1,0 +1,64 @@
+{
+  "when": "2026-10-07T18:58:41.007Z",
+  "models": [
+    "onnx-community/pyannote-segmentation-3.0",
+    "onnx-community/wespeaker-voxceleb-resnet34-LM"
+  ],
+  "rows": [
+    {
+      "id": "c2",
+      "title": "Product Sync",
+      "lines": 13,
+      "people": 4,
+      "byLineKnown": 13,
+      "byLineBlind": 10,
+      "byLineBlindCount": 3,
+      "fullKnown": 12,
+      "fullBlind": 12,
+      "fullBlindCount": 4
+    },
+    {
+      "id": "c3",
+      "title": "Weekly team standup",
+      "lines": 6,
+      "people": 3,
+      "byLineKnown": 6,
+      "byLineBlind": 6,
+      "byLineBlindCount": 3,
+      "fullKnown": 5,
+      "fullBlind": 5,
+      "fullBlindCount": 3
+    },
+    {
+      "id": "c5",
+      "title": "Client call — Northbank",
+      "lines": 5,
+      "people": 2,
+      "byLineKnown": 5,
+      "byLineBlind": 5,
+      "byLineBlindCount": 2,
+      "fullKnown": 5,
+      "fullBlind": 5,
+      "fullBlindCount": 2
+    },
+    {
+      "id": "t1",
+      "title": "Usability round 2 — readout",
+      "lines": 11,
+      "people": 4,
+      "byLineKnown": 11,
+      "byLineBlind": 9,
+      "byLineBlindCount": 3,
+      "fullKnown": 11,
+      "fullBlind": 9,
+      "fullBlindCount": 3
+    }
+  ],
+  "summary": {
+    "lines": 35,
+    "byLineKnown": 100,
+    "byLineBlind": 86,
+    "fullKnown": 94,
+    "fullBlind": 89
+  }
+}
