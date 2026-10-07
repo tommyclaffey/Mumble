@@ -49,6 +49,9 @@ interview. The rule is about who drives the learning, not a prohibition.
 
 ## Standards (inherited from Growth)
 
+- **Anything you can type, you can say** (Tommy, Oct 6). Every text field
+  gets a `DictateButton` (components/Dictate). Tasks can always be added by
+  hand, and say "Added by you".
 - **Every control does what it says.** No buttons without handlers, no
   settings that change nothing. If it isn't built, it isn't shown.
 - **One rule, one place.** Search = `data/filters.ts`. Speaker correction =
