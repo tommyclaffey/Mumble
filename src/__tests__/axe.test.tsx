@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import App from '../App';
 import { initialState, StoreProvider } from '../data/store';
 import { ServicesProvider } from '../services';
+import { setWorkspace } from '../data/workspace';
 import { fakeAudioFactory, fakeMic, fakeRecognizer, memoryAudioStore } from './fakes';
 
 /**
@@ -43,6 +44,20 @@ async function violations(hash: string) {
 describe('axe — no mechanical accessibility failures', () => {
   for (const hash of SCREENS) {
     it(hash, async () => {
+      expect(await violations(hash)).toEqual([]);
+    });
+  }
+  it('#/team (personal demo: the way to the team demo)', async () => {
+    expect(await violations('#/team')).toEqual([]);
+  });
+});
+
+/* The team demo: faces everywhere, the Team screen, the account. */
+describe('axe — the team demo', () => {
+  afterEach(() => setWorkspace('personal'));
+  for (const hash of ['#/recent', '#/team', '#/capture/t1', '#/capture/t2', '#/tasks', '#/meetings', '#/settings']) {
+    it(hash, async () => {
+      setWorkspace('team');
       expect(await violations(hash)).toEqual([]);
     });
   }

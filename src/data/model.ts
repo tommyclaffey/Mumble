@@ -101,6 +101,9 @@ interface CaptureBase {
   summary?: string;
   /** Where the capture came from. */
   source: 'demo' | 'browser';
+  /** Who pressed record — a teammate's name, in a team workspace. Absent
+      means you: everything recorded in this browser is yours. */
+  recordedBy?: string;
   /**
    * Where its RECORDING lives. A capture is a recording first and a
    * transcript second — play means "play what was said".

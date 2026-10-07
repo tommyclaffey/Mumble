@@ -1,3 +1,4 @@
+import { assignable } from '../data/workspace';
 import { useState } from 'react';
 import { Icon } from '../components/Icon/Icon';
 import { Page, PanelCard } from '../components/Page/Page';
@@ -60,7 +61,7 @@ export function TagsScreen({ tag }: { tag?: string }) {
               return (
                 <li key={t.id}>
                   <TaskCard
-                    task={t} people={isMeeting(from) ? from.attendees : ['You']} from={from.title}
+                    task={t} people={assignable(from)} from={from.title}
                     at={idx >= 0 ? formatDuration(from.lines[idx].startsAt) : undefined}
                     href={href({ name: 'capture', id: from.id, line: idx + 1 || undefined })}
                     onToggle={(done) => dispatch({ type: 'setTaskStatus', captureId: from.id, taskId: t.id, status: done ? 'done' : 'todo' })}

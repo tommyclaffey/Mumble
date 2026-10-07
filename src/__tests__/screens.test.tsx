@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../App';
 import { initialState, StoreProvider } from '../data/store';
 import { ServicesProvider } from '../services';
+import { setWorkspace, workspaceFromSearch } from '../data/workspace';
 import { fakeAudioFactory, fakeMic, fakeRecognizer, memoryAudioStore } from './fakes';
 
 function mount(hash: string, opts: {
@@ -631,7 +632,7 @@ describe('Record', () => {
 describe('Settings', () => {
   it('has only settings that do something — every switch changes a preference', () => {
     mount('#/settings');
-    expect(screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent).slice(0, 3)).toEqual(['Playback', 'Recording', 'Privacy & data']);
+    expect(screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent).slice(0, 4)).toEqual(['Workspace', 'Playback', 'Recording', 'Privacy & data']);
     expect(screen.getByRole('radiogroup', { name: 'Playback speed' })).toBeTruthy();
     const keys = screen.getByRole('switch', { name: 'Keyboard shortcuts' });
     expect(keys.getAttribute('aria-checked')).toBe('true');
@@ -874,5 +875,88 @@ describe('Add tasks yourself, and say anything you could type (Oct 6)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add a task' }));
     expect(screen.queryByRole('button', { name: 'Say the task' })).toBeNull();
     expect(screen.getByLabelText('New task')).toBeTruthy(); // typing still works
+  });
+});
+
+describe('The team demo — a made-up team with its own link (Oct 7)', () => {
+  afterEach(() => setWorkspace('personal'));
+  const team = (hash: string) => { setWorkspace('team'); return mount(hash); };
+  const photoOf = (el: Element | null) => el?.querySelector('.mb-avatar img')?.getAttribute('src') ?? null;
+
+  it('the address chooses the workspace: ?workspace=team (or ?team); anything else is personal', () => {
+    expect(workspaceFromSearch('?workspace=team')).toBe('team');
+    expect(workspaceFromSearch('?team')).toBe('team');
+    expect(workspaceFromSearch('')).toBe('personal');
+    expect(workspaceFromSearch('?workspace=nope')).toBe('personal');
+  });
+
+  it('saves under its own key — playing with the team never touches your recordings', () => {
+    team('#/recent');
+    expect(localStorage.getItem('mumble.team.v1')).toBeTruthy();
+    expect(localStorage.getItem('mumble.v1')).toBeNull();
+  });
+
+  it('Recent shows the team’s recordings too, with the face of whoever made them', () => {
+    team('#/recent');
+    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(7);
+    const crit = screen.getByRole('link', { name: 'Design crit — empty states' }).closest('article')!;
+    expect(within(crit as HTMLElement).getByText(/by Maya Chen/)).toBeTruthy();
+    expect(photoOf(crit.querySelector('.mb-card-by'))).toMatch(/people\/maya\.jpg$/);
+  });
+
+  it('you are Jordan: your face in the header and the sidebar, both going to the team', () => {
+    team('#/recent');
+    const me = screen.getByRole('link', { name: /Jordan Ellis, Harbor Labs/ });
+    expect(me.getAttribute('href')).toBe('#/team');
+    expect(photoOf(me)).toMatch(/people\/jordan\.jpg$/);
+    const nav = within(screen.getByRole('navigation', { name: 'Main' }));
+    expect(nav.getByRole('link', { name: /^Team/ }).getAttribute('href')).toBe('#/team');
+    expect(nav.getByRole('link', { name: /^Jordan Ellis/ }).getAttribute('href')).toBe('#/team');
+  });
+
+  it('Team: six people, and every count is worked out from the recordings', () => {
+    team('#/team');
+    const cards = screen.getAllByRole('article');
+    expect(cards).toHaveLength(6);
+    const stats = (name: string) => {
+      const card = cards.find((c) => within(c).queryByRole('heading', { name: new RegExp(`^${name}`) }))!;
+      return [...card.querySelectorAll('dd')].map((d) => Number(d.textContent));
+    };
+    /* Jordan = "You": made the 5 personal recordings, in 4 meetings, owns 4 open tasks. */
+    expect(stats('Jordan Ellis')).toEqual([5, 4, 4]);
+    /* Maya: her crit notes; Product Sync + the readout; 5 open tasks. */
+    expect(stats('Maya Chen')).toEqual([1, 2, 5]);
+    expect(screen.getByText(/Everyone in Harbor Labs is made up/)).toBeTruthy();
+  });
+
+  it('a task on Maya’s note can go to anyone on the team, not only the person who spoke', () => {
+    team('#/capture/t2');
+    const who = document.getElementById('as-t2-t1') as HTMLSelectElement;
+    const options = [...who.options].map((o) => o.textContent);
+    expect(options).toEqual(expect.arrayContaining(['You', 'Sarah Lee', 'John Park', 'Nadia Haddad']));
+    expect(screen.getByText('Recorded by').nextElementSibling?.textContent).toBe('Maya Chen');
+  });
+
+  it('faces only for people who exist — an unconfirmed voice keeps its dashed ring', () => {
+    team('#/capture/c2');
+    const people = within(screen.getByRole('group', { name: 'Meeting attendees' }));
+    expect(photoOf(people.getByText('Maya Chen').parentElement)).toMatch(/maya\.jpg$/);
+    const unsure = document.querySelector('.mb-avatar.is-unconfirmed');
+    expect(unsure).toBeTruthy();
+    expect(unsure!.querySelector('img')).toBeNull();
+  });
+
+  it('the personal demo has no team, no account — and Team points to the team demo', () => {
+    mount('#/team');
+    expect(screen.queryByRole('link', { name: /Jordan Ellis/ })).toBeNull();
+    expect(document.querySelector('.mb-avatar img')).toBeNull();
+    expect(screen.getByRole('link', { name: 'Open the team demo' }).getAttribute('href')).toMatch(/\?workspace=team#\/recent$/);
+  });
+
+  it('Settings says who you are, that it’s a demo, and links back to the personal demo', () => {
+    team('#/settings');
+    expect(screen.getByText(/A demo account — everyone on this team is made up/)).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Switch' }).getAttribute('href')).toMatch(/#\/recent$/);
+    expect(screen.getByText(/Brings back the 7 demo recordings/)).toBeTruthy();
   });
 });

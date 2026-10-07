@@ -6,6 +6,8 @@ import { go, href, sectionOf, type Route } from '../data/route';
 import { useStore } from '../data/store';
 import { tagColor } from '../data/tagColor';
 import { useRecordingStatus } from '../record/recordingStatus';
+import { Avatar } from '../components/Avatar/Avatar';
+import { isTeam, workspace } from '../data/workspace';
 import '../components/Button/Button.css';
 import './AppShell.css';
 
@@ -22,13 +24,15 @@ import './AppShell.css';
  * they go somewhere, so middle-click, copy-link and the back button all work.
  */
 
-type Section = 'recent' | 'tasks' | 'tags' | 'meetings' | 'settings';
+type Section = 'recent' | 'tasks' | 'tags' | 'meetings' | 'team' | 'settings';
 const NAV: { id: Section; label: string; icon: IconName; route: Route }[] = [
   { id: 'recent', label: 'Recent', icon: 'clock', route: { name: 'recent', filter: 'all' } },
   { id: 'tasks', label: 'Tasks', icon: 'list', route: { name: 'tasks' } },
   { id: 'meetings', label: 'Meetings', icon: 'users', route: { name: 'meetings' } },
   { id: 'tags', label: 'Tags', icon: 'hash', route: { name: 'tags' } },
 ];
+/* Team demo only: the people in the workspace. */
+const TEAM = { id: 'team' as const, label: 'Team', icon: 'user' as IconName, route: { name: 'team' } as Route };
 const SETTINGS = { id: 'settings' as const, label: 'Settings', icon: 'gear' as IconName, route: { name: 'settings' } as Route };
 
 /**
@@ -63,6 +67,7 @@ export function AppShell({ route, children }: { route: Route; children: ReactNod
     tasks: captures.reduce((n, c) => n + openTasks(c), 0),
     meetings: captures.filter(isMeeting).length,
     tags: new Set(captures.flatMap((c) => c.tags)).size,
+    team: workspace().members.length,
     settings: undefined,
   };
   /* The four tags you use most — a shortcut list that keeps itself current
@@ -70,6 +75,9 @@ export function AppShell({ route, children }: { route: Route; children: ReactNod
      what it is). */
   const usage = new Map<string, number>();
   for (const c of captures) for (const t of c.tags) usage.set(t, (usage.get(t) ?? 0) + 1);
+  const ws = workspace();
+  const team = isTeam();
+  const nav = team ? [...NAV, TEAM] : NAV;
   const topTags = [...usage.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 4);
 
   return (
@@ -107,12 +115,17 @@ export function AppShell({ route, children }: { route: Route; children: ReactNod
               <Icon name="mic" size={16} /> {BRAND.startLabel}
             </a>
           )}
+          {team && ws.me && (
+            <a className="mb-header-me" href={href({ name: 'team' })} aria-label={`${ws.me.name}, ${ws.name} — see the team`}>
+              <Avatar name="You" size="lg" />
+            </a>
+          )}
         </div>
       </header>
 
       <nav className="mb-sidebar" aria-label="Main">
         <ul className="mb-nav">
-          {NAV.map((n) => <NavItem key={n.id} n={n} active={current === n.id} count={counts[n.id]} />)}
+          {nav.map((n) => <NavItem key={n.id} n={n} active={current === n.id} count={counts[n.id]} />)}
         </ul>
         {topTags.length > 0 && (
           <div className="mb-nav-section">
@@ -132,6 +145,17 @@ export function AppShell({ route, children }: { route: Route; children: ReactNod
           </div>
         )}
         <div className="mb-nav-foot">
+          {/* Who's signed in, and where — the team demo only. The personal
+              demo has no account, so it doesn't pretend to. */}
+          {team && ws.me && (
+            <a className="mb-nav-account" href={href({ name: 'team' })} title={`${ws.me.name} · ${ws.name}`}>
+              <Avatar name="You" size="lg" />
+              <span className="mb-nav-account-text">
+                <span className="mb-nav-account-name">{ws.me.name}</span>
+                <span className="mb-nav-account-ws">{ws.name}</span>
+              </span>
+            </a>
+          )}
           <ul className="mb-nav"><NavItem n={SETTINGS} active={current === 'settings'} /></ul>
           <p className="mb-nav-privacy"><Icon name="lock" size={14} /> <span>Stays in this browser</span></p>
         </div>

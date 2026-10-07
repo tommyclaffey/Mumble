@@ -16,6 +16,7 @@ export type Route =
   | { name: 'tasks' }
   | { name: 'tags'; tag?: string }
   | { name: 'meetings'; id?: string }
+  | { name: 'team' }
   | { name: 'settings' };
 
 export type RecentFilter = 'all' | 'notes' | 'meetings' | 'tasks';
@@ -36,6 +37,7 @@ export function parseRoute(hash: string): Route {
     case 'tasks': return { name: 'tasks' };
     case 'tags': return { name: 'tags', tag: parts[1] };
     case 'meetings': return { name: 'meetings', id: parts[1] };
+    case 'team': return { name: 'team' };
     case 'settings': return { name: 'settings' };
     default: {
       const f = new URLSearchParams(query).get('filter') as RecentFilter | null;
@@ -70,7 +72,7 @@ export function useRoute(): Route {
 }
 
 /** Which sidebar item a route belongs to. A capture opened from Meetings is still a capture. */
-export function sectionOf(r: Route): 'recent' | 'tasks' | 'tags' | 'meetings' | 'settings' | 'record' {
+export function sectionOf(r: Route): 'recent' | 'tasks' | 'tags' | 'meetings' | 'team' | 'settings' | 'record' {
   if (r.name === 'capture') return 'recent';
   return r.name;
 }

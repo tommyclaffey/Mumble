@@ -1,12 +1,13 @@
 import { useLayoutEffect, useRef, useState, type FormEvent } from 'react';
 import { Avatar, colorFor } from '../components/Avatar/Avatar';
+import { assignable } from '../data/workspace';
 import { Button } from '../components/Button/Button';
 import { ChipFilter } from '../components/Chip/Chip';
 import { Page, PanelCard } from '../components/Page/Page';
 import { Icon } from '../components/Icon/Icon';
 import { TaskCard } from '../components/TaskCard/TaskCard';
 import { Track } from '../components/Track/Track';
-import { formatDuration, isMeeting, type Capture, type Task, type TaskStatus } from '../data/model';
+import { formatDuration, type Capture, type Task, type TaskStatus } from '../data/model';
 import { tagColor } from '../data/tagColor';
 import { href } from '../data/route';
 import { useStore } from '../data/store';
@@ -34,7 +35,7 @@ const FILTERS: { id: Filter; label: string }[] = [
   { id: 'all', label: 'All' }, { id: 'todo', label: 'To do' }, { id: 'in-progress', label: 'In progress' },
   { id: 'done', label: 'Done' }, { id: 'mine', label: 'Mine' },
 ];
-const peopleOf = (c: Capture) => (isMeeting(c) ? c.attendees : ['You']);
+const peopleOf = (c: Capture) => assignable(c);
 
 export function TasksScreen() {
   const { captures, dispatch } = useStore();

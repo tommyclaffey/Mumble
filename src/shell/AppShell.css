@@ -37,7 +37,12 @@
   background: var(--surface-card); border: var(--border-width-sm) solid var(--border-default);
   font: 500 0.75rem/1rem var(--font-sans); color: var(--text-muted);
 }
-.mb-header-actions { display: flex; justify-content: flex-end; }
+.mb-header-actions { display: flex; justify-content: flex-end; align-items: center; gap: var(--space-12); }
+/* Your face, team demo only — goes to the team. */
+.mb-header-me { display: inline-flex; border-radius: var(--radius-pill); }
+.mb-header-me .mb-avatar { width: 36px; height: 36px; box-shadow: 0 0 0 1px var(--border-default); }
+.mb-header-me:hover .mb-avatar { box-shadow: 0 0 0 2px var(--accent-base); }
+.mb-header-me:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px; }
 .mb-header-record {
   display: inline-flex; align-items: center; gap: var(--space-8); height: 40px; padding: 0 18px 0 16px;
   border-radius: var(--radius-pill); text-decoration: none;
@@ -83,6 +88,17 @@
 .mb-nav-section { margin-top: 20px; }
 .mb-nav-section-h { margin: 0 0 4px; padding: 4px 10px; color: var(--neutral-400); }
 .mb-nav-foot { margin-top: auto; padding-top: var(--space-16); display: grid; gap: var(--space-8); }
+/* The signed-in person (team demo): face, name, workspace. */
+.mb-nav-account {
+  display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--radius-lg);
+  text-decoration: none; color: var(--text-on-accent);
+}
+.mb-nav-account:hover { background: rgb(255 255 255 / 0.08); }
+.mb-nav-account:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px; }
+.mb-nav-account .mb-avatar { width: 32px; height: 32px; box-shadow: 0 0 0 2px rgb(255 255 255 / 0.2); }
+.mb-nav-account-text { display: grid; min-width: 0; }
+.mb-nav-account-name { font: 600 0.8125rem/1.125rem var(--font-sans); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mb-nav-account-ws { font: 500 0.75rem/1rem var(--font-sans); color: var(--neutral-400); }
 .mb-nav-privacy {
   display: flex; align-items: center; gap: 10px; margin: 0; padding: 10px 12px; border-radius: var(--radius-lg);
   background: rgb(255 255 255 / 0.06); color: var(--neutral-400); font: 500 0.75rem/1rem var(--font-sans);
@@ -149,7 +165,8 @@
   .mb-header { grid-template-columns: auto 1fr auto; gap: var(--space-16); }
   .mb-sidebar { padding: 20px var(--space-8); }
   .mb-nav-item { justify-content: center; padding: 0; min-height: 40px; }
-  .mb-nav-label, .mb-nav-count, .mb-nav-section, .mb-nav-privacy span {
+  .mb-nav-account { justify-content: center; padding: 6px; }
+  .mb-nav-label, .mb-nav-count, .mb-nav-section, .mb-nav-privacy span, .mb-nav-account-text {
     position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
   }
   .mb-nav-section { display: none; }

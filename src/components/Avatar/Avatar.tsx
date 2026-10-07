@@ -1,10 +1,16 @@
+import { useState } from 'react';
+import { photoFor } from '../../data/workspace';
 import './Avatar.css';
 
 /**
- * Avatar — initials on a speaker colour.
+ * Avatar — a person's photo, or their initials on a speaker colour.
+ *
+ * Photos come from the workspace (the team demo has them; the personal demo
+ * doesn't), so every avatar in the app gets a face without any screen
+ * knowing. A photo that fails to load falls back to the initials.
  *
  * An unconfirmed speaker ("Speaker 3") gets a dashed ring instead of a fill:
- * the model has not earned a face for them yet.
+ * the model has not earned a face for them yet — so never a photo either.
  */
 export function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -15,14 +21,18 @@ export function initials(name: string): string {
 
 export function Avatar(
   { name, colorIndex = 0, unconfirmed, size = 'md' }:
-  { name: string; colorIndex?: number; unconfirmed?: boolean; size?: 'sm' | 'md' },
+  { name: string; colorIndex?: number; unconfirmed?: boolean; size?: 'sm' | 'md' | 'lg' | 'xl' },
 ) {
+  const [failed, setFailed] = useState(false);
+  const photo = unconfirmed || failed ? undefined : photoFor(name);
   return (
     <span
-      className={`mb-avatar is-c${colorIndex % 5} is-${size}${unconfirmed ? ' is-unconfirmed' : ''}`}
+      className={`mb-avatar is-c${colorIndex % 5} is-${size}${unconfirmed ? ' is-unconfirmed' : ''}${photo ? ' has-photo' : ''}`}
       aria-hidden="true"
     >
-      {initials(name)}
+      {/* Decorative: the name is always written beside it, or in the
+          group's label (AvatarStack). */}
+      {photo ? <img src={photo} alt="" loading="lazy" decoding="async" onError={() => setFailed(true)} /> : initials(name)}
     </span>
   );
 }

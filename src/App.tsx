@@ -10,6 +10,7 @@ import { RecordScreen } from './screens/RecordScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { TagsScreen } from './screens/TagsScreen';
 import { TasksScreen } from './screens/TasksScreen';
+import { TeamScreen } from './screens/TeamScreen';
 
 /** Which PAGE this is. A filter change on Recent is the same page. */
 function pageKey(r: Route): string {
@@ -30,7 +31,7 @@ export default function App() {
   const title =
     route.name === 'capture' ? capture(route.id)?.title ?? 'Not found'
     : route.name === 'tags' ? (route.tag ? `# ${route.tag}` : 'Tags')
-    : { recent: 'Recent', record: BRAND.newTitle, tasks: 'Tasks', meetings: 'Meetings', settings: 'Settings' }[route.name];
+    : { recent: 'Recent', record: BRAND.newTitle, tasks: 'Tasks', meetings: 'Meetings', team: 'Team', settings: 'Settings' }[route.name];
   useEffect(() => { document.title = `${title} — ${BRAND.name}`; }, [title]);
 
   /* A new page: start at the top, and move focus to its heading so a screen
@@ -56,6 +57,7 @@ export default function App() {
       {route.name === 'tasks' && <TasksScreen />}
       {route.name === 'tags' && <TagsScreen tag={route.tag} />}
       {route.name === 'meetings' && <MeetingsScreen />}
+      {route.name === 'team' && <TeamScreen />}
       {route.name === 'settings' && <SettingsScreen />}
     </AppShell>
   );

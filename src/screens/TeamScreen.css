@@ -1,0 +1,21 @@
+/* Team (team demo) — a card per person, two across on desktop. */
+.mb-team { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-12); }
+.mb-member { display: grid; gap: var(--space-16); padding: var(--space-16) var(--space-16) var(--space-12); height: 100%; box-sizing: border-box; }
+.mb-member-top { display: flex; align-items: center; gap: var(--space-12); min-width: 0; }
+.mb-member-name { margin: 0; display: flex; align-items: center; gap: var(--space-8); color: var(--text-strong); }
+.mb-member-role { margin: 0; }
+.mb-member-you { font-size: 0.6875rem; }
+
+/* The three counts: label under the number, as in the Tasks progress card. */
+.mb-member-stats { margin: 0; padding: var(--space-12) 0 0; border-top: var(--border-width-sm) solid var(--surface-sunken); }
+.mb-member-stats div { display: flex; flex-direction: column-reverse; }
+.mb-member-stats dt { font: 500 0.75rem/1rem var(--font-sans); color: var(--text-muted); }
+.mb-member-stats dd { margin: 0; font: 600 1.25rem/1.75rem var(--font-sans); color: var(--text-strong); }
+.mb-member-latest { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.mb-team-note { margin: 0 0 var(--space-8); }
+.mb-team-guest { display: flex; align-items: center; gap: var(--space-12); padding: var(--space-8) 0; }
+.mb-team-strong { color: var(--text-strong); }
+.mb-team-switch { margin: var(--space-12) 0 0; }
+
+@media (max-width: 1100px) { .mb-team { grid-template-columns: minmax(0, 1fr); } }

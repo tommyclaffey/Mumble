@@ -17,21 +17,21 @@ import type { Capture, TranscriptLine } from './model';
  */
 
 /** A time N minutes before now — for "today" captures, which must never be in the future. */
-function minutesAgo(now: Date, minutes: number): string {
+export function minutesAgo(now: Date, minutes: number): string {
   return new Date(now.getTime() - minutes * 60_000).toISOString();
 }
 
-function ago(now: Date, days: number, hour: number, minute: number): string {
+export function ago(now: Date, days: number, hour: number, minute: number): string {
   const d = new Date(now);
   d.setDate(d.getDate() - days);
   d.setHours(hour, minute, 0, 0);
   return d.toISOString();
 }
 
-type Raw = [speakerId: string | undefined, text: string, confidence?: number];
+export type Raw = [speakerId: string | undefined, text: string, confidence?: number];
 
 /** Spreads lines across time at a roughly spoken pace (~2.6 words/sec). */
-function lines(prefix: string, raw: Raw[]): TranscriptLine[] {
+export function lines(prefix: string, raw: Raw[]): TranscriptLine[] {
   let t = 0;
   return raw.map(([speakerId, text, confidence = 0.95], i) => {
     const line: TranscriptLine = { id: `${prefix}-l${i + 1}`, speakerId, text, startsAt: Math.round(t), confidence };
@@ -40,7 +40,7 @@ function lines(prefix: string, raw: Raw[]): TranscriptLine[] {
   });
 }
 
-function duration(ls: TranscriptLine[]): number {
+export function duration(ls: TranscriptLine[]): number {
   const last = ls[ls.length - 1];
   return last ? last.startsAt + Math.ceil(last.text.split(/\s+/).length / 2.6) + 2 : 0;
 }

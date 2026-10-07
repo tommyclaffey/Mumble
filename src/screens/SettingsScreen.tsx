@@ -8,13 +8,17 @@ import { Segmented } from '../components/Segmented/Segmented';
 import { Toggle } from '../components/Toggle/Toggle';
 import { SPEEDS, speedLabel, useStore } from '../data/store';
 import { useServices } from '../services';
+import { Avatar } from '../components/Avatar/Avatar';
+import { href } from '../data/route';
+import { isTeam, workspace, workspaceHref } from '../data/workspace';
 import './screens.css';
 import './SettingsScreen.css';
 
 /**
  * Settings (Figma page 07, frame 08) — only settings this demo can honour.
  * Every switch here changes something; nothing is shown that isn't built
- * (accounts, plans and integrations aren't, so they aren't here).
+ * (plans and integrations aren't, so they aren't here). The only "account"
+ * is the team demo's made-up one, and it says it's a demo.
  */
 export function SettingsScreen() {
   const { prefs, dispatch, captures } = useStore();
@@ -41,6 +45,8 @@ export function SettingsScreen() {
   }
   const stored = captures.filter((c) => c.audio === 'stored').length;
   const setPref = (p: Partial<typeof prefs>) => dispatch({ type: 'setPrefs', prefs: p });
+  const ws = workspace();
+  const demoCount = ws.captures().length;
 
   const panel = (
     <>
@@ -67,6 +73,28 @@ export function SettingsScreen() {
 
   return (
     <Page title="Settings" subtitle="Everything here is saved in this browser." panel={panel} panelLabel="Storage and shortcuts">
+      <Section title="Workspace">
+        {isTeam() && ws.me ? (
+          <>
+            <div className="mb-set-row mb-set-me">
+              <Avatar name="You" size="xl" />
+              <div className="mb-set-text">
+                <p className="mb-t-label mb-set-label">{ws.me.name}</p>
+                <p className="mb-t-body-sm mb-muted">{ws.me.role} · {ws.name}. A demo account — everyone on this team is made up.</p>
+              </div>
+              <div className="mb-set-control"><a className="mb-button is-secondary is-sm" href={href({ name: 'team' })}>See the team</a></div>
+            </div>
+            <Row label="Personal demo" hint="Just you, no team. Saved separately, so nothing here changes it.">
+              <a className="mb-button is-secondary is-sm" href={workspaceHref('personal')}>Switch</a>
+            </Row>
+          </>
+        ) : (
+          <Row label="Team demo" hint={`${BRAND.name} with a made-up team: six people with faces and roles, recordings they shared, tasks with owners. Its own link and its own saved data.`}>
+            <a className="mb-button is-secondary is-sm" href={workspaceHref('team')}>Open team demo</a>
+          </Row>
+        )}
+      </Section>
+
       <Section title="Playback">
         <Row label="Default speed" hint="Recordings start at this speed. Voices keep their natural pitch.">
           <Segmented
@@ -99,7 +127,7 @@ export function SettingsScreen() {
         <Row label="Delete my audio" hint={`${stored ? `${stored} recording${stored === 1 ? '' : 's'} saved with audio.` : 'None yet.'} Removes the audio; the transcripts stay.`}>
           <Button size="sm" onClick={deleteRecordings} disabled={!stored}>Delete audio</Button>
         </Row>
-        <Row label="Reset demo" hint="Brings back the 5 demo recordings and removes anything you recorded.">
+        <Row label="Reset demo" hint={`Brings back the ${demoCount} demo recordings and removes anything you recorded.`}>
           <Button size="sm" onClick={reset}>Reset demo</Button>
         </Row>
       </Section>

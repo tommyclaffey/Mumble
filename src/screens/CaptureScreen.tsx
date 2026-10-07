@@ -1,6 +1,7 @@
 import { BRAND } from '../brand';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Avatar, colorFor } from '../components/Avatar/Avatar';
+import { assignable, isTeam, workspace } from '../data/workspace';
 import { Button } from '../components/Button/Button';
 import { TitleBox } from '../components/TitleBox/TitleBox';
 import { TagEditor } from '../components/TagEditor/TagEditor';
@@ -193,7 +194,9 @@ function CaptureView({ c, startLine }: { c: Capture; startLine?: number }) {
   }
 
   const meeting = isMeeting(c) ? c : undefined;
-  const people = meeting ? meeting.attendees : ['You'];
+  /* Who a task can go to — in the team demo, anyone on the team. */
+  const people = assignable(c);
+  const by = c.recordedBy ?? 'You';
   /* Voices the model wasn't sure of — the header says how many, and takes
      you to the first one. */
   const unsure = meeting ? meeting.speakers.filter((s) => !s.confirmed && c.lines.some((l) => l.speakerId === s.id && isLowConfidence(l, s))) : [];
@@ -244,7 +247,8 @@ function CaptureView({ c, startLine }: { c: Capture; startLine?: number }) {
         <dl className="mb-pkv">
           <dt>Length</dt><dd className="mb-tabular">{formatDuration(c.durationSeconds)}</dd>
           <dt>Words</dt><dd className="mb-tabular">{wordCount(c).toLocaleString()}</dd>
-          <dt>Speakers</dt><dd>{meeting ? `${meeting.speakers.length}${unsure.length ? ` · ${unsure.length} unconfirmed` : ''}` : 'You'}</dd>
+          <dt>Speakers</dt><dd>{meeting ? `${meeting.speakers.length}${unsure.length ? ` · ${unsure.length} unconfirmed` : ''}` : by}</dd>
+          {isTeam() && <><dt>Recorded by</dt><dd>{by === 'You' ? `You (${workspace().me?.name})` : by}</dd></>}
           <dt>Source</dt><dd>{c.source === 'demo' ? 'Demo · synthetic voices' : c.audio ? 'Recorded in this browser' : 'Transcript only'}</dd>
           <dt>Stored</dt><dd>This browser only</dd>
         </dl>

@@ -1,9 +1,9 @@
 import {
   createContext, useCallback, useContext, useEffect, useMemo, useReducer, type ReactNode,
 } from 'react';
-import { demoCaptures } from './demo';
 import { withDemoAudio } from './demoAudio';
 import { setChosenTagColors, type TagColor } from './tagColor';
+import { workspace } from './workspace';
 import { correctSpeaker, isMeeting, type Capture, type Speaker, type Task, type TaskStatus } from './model';
 
 /**
@@ -54,10 +54,11 @@ type Action =
   | { type: 'setTagColor'; tag: string; color: TagColor }
   | { type: 'resetDemo' };
 
-const STORAGE_KEY = 'mumble.v1';
+/* One key per workspace: the team demo never touches your recordings. */
+const storageKey = () => workspace().storageKey;
 
 export function initialState(now = new Date()): State {
-  return { captures: demoCaptures(now).map(withDemoAudio), prefs: DEFAULT_PREFS, tagColors: {} };
+  return { captures: workspace().captures(now).map(withDemoAudio), prefs: DEFAULT_PREFS, tagColors: {} };
 }
 
 export function reducer(state: State, action: Action): State {
@@ -102,7 +103,7 @@ export function reducer(state: State, action: Action): State {
 
 function load(): State {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey());
     if (raw) {
       const parsed = JSON.parse(raw) as State;
       /* Merge over defaults: a save from before a pref existed still loads. */
@@ -142,7 +143,7 @@ export function StoreProvider({ children, initial }: { children: ReactNode; init
   setChosenTagColors(state.tagColors);
 
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* quota / private mode */ }
+    try { localStorage.setItem(storageKey(), JSON.stringify(state)); } catch { /* quota / private mode */ }
   }, [state]);
 
   const capture = useCallback((id: string) => state.captures.find((c) => c.id === id), [state.captures]);

@@ -19,7 +19,8 @@ import { join } from 'node:path';
 const BASE = process.argv[2] ?? 'http://localhost:5173/Mumble/';
 const CHROME = process.env.CHROME ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const PORT = 9400 + Math.floor(Math.random() * 400);
-const SCREENS = ['#/recent', '#/capture/c1', '#/capture/c2', '#/record', '#/tasks', '#/tags', '#/tags/Product', '#/meetings', '#/settings'];
+const SCREENS = ['#/recent', '#/capture/c1', '#/capture/c2', '#/record', '#/tasks', '#/tags', '#/tags/Product', '#/meetings', '#/team', '#/settings'];
+/* The team demo: npm run audit:a11y -- 'http://localhost:5173/Mumble/?workspace=team' */
 const WIDTHS = [[1440, 900], [390, 844]];
 const axeSrc = readFileSync(new URL('../node_modules/axe-core/axe.min.js', import.meta.url), 'utf8');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

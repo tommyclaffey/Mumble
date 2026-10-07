@@ -1,4 +1,4 @@
-import { AvatarStack } from '../Avatar/Avatar';
+import { Avatar, AvatarStack, colorFor } from '../Avatar/Avatar';
 import { ChipMeta, ChipTag } from '../Chip/Chip';
 import { Icon } from '../Icon/Icon';
 import { PlayButton } from '../PlayButton/PlayButton';
@@ -65,6 +65,14 @@ export function CaptureCard(
               <span className="mb-t-meta mb-muted">{meeting ? 'Meeting' : 'Note'}</span>
             ) : meeting && (
               <span className="mb-t-body-sm mb-card-people">{meeting.attendees.join(', ')}</span>
+            )}
+            {/* A teammate's recording says whose it is (team demo). Yours don't. */}
+            {variant === 'feed' && capture.recordedBy && (
+              <span className="mb-t-meta mb-muted mb-card-by">
+                <span aria-hidden="true">·</span>
+                <Avatar name={capture.recordedBy} colorIndex={colorFor(capture.recordedBy)} size="sm" />
+                by {capture.recordedBy}
+              </span>
             )}
             {variant === 'feed' && tags.length > 0 && <span className="mb-t-meta mb-card-sep" aria-hidden="true">·</span>}
             {variant === 'feed' && tags.map((t) => <ChipTag key={t} className="mb-raise" href={href({ name: 'tags', tag: t })}>{t}</ChipTag>)}

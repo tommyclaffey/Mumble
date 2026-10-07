@@ -34,8 +34,8 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  /* Hashed assets, icons and the demo audio: cache first, filled as used. */
-  if (/\/assets\/|\/icons\/|\/demo-audio\//.test(url.pathname)) {
+  /* Hashed assets, icons, the demo audio and the team faces: cache first, filled as used. */
+  if (/\/assets\/|\/icons\/|\/demo-audio\/|\/people\//.test(url.pathname)) {
     e.respondWith(caches.match(req).then((hit) => hit || fetch(req).then((res) => {
       if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
       return res;

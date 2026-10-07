@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Team demo</title>
+    <meta name="robots" content="noindex" />
+    <!-- The team demo's own link: /team/ opens the app in the team workspace.
+         Relative, so it works at /Mumble/team/ (Pages) and /team/ (Railway).
+         A hash on the way in (/team/#/tasks) is kept. -->
+    <meta http-equiv="refresh" content="0; url=../?workspace=team#/recent" />
+    <script>location.replace('../?workspace=team' + (location.hash || '#/recent'));</script>
+  </head>
+  <body>
+    <p><a href="../?workspace=team#/recent">Open the team demo</a></p>
+  </body>
+</html>

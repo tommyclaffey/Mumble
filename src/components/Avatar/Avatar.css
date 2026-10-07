@@ -5,6 +5,11 @@
 }
 .mb-avatar.is-sm { width: 20px; height: 20px; font-size: 0.5625rem; }
 .mb-avatar.is-md { width: 24px; height: 24px; }  /* Avatar in speaker headers: 24 × 24 */
+.mb-avatar.is-lg { width: 40px; height: 40px; font-size: 0.875rem; }  /* Team list */
+.mb-avatar.is-xl { width: 56px; height: 56px; font-size: 1.125rem; }  /* Your account */
+/* A photo fills the circle; the sunken fill shows only while it loads. */
+.mb-avatar.has-photo { background: var(--surface-sunken); overflow: hidden; }
+.mb-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; display: block; }
 /* 🔴 Speaker colours are NOT in the Figma file — it defines one accent. These
    are opacity steps of that accent plus the inverse surface, so no new hue is
    invented. Logged in BACKLOG as a gap to push back into Figma. */

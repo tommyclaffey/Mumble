@@ -38,3 +38,6 @@
   .mb-card-foot .mb-wave, .mb-card-foot .mb-track { order: 5; flex-basis: 100%; }
   .mb-card-len { margin-left: auto; }
 }
+
+/* "· [face] by Maya Chen" — a teammate's recording (team demo). */
+.mb-card-by { display: inline-flex; align-items: center; gap: 6px; }

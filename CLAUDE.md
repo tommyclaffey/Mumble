@@ -92,6 +92,28 @@ Railway project `mumble`, service `web`. Railpack runs `npm run build`
 then `npm start`; the service variable `BASE_PATH=/` serves it at the
 domain root (Pages needs `/Mumble/`). HTTPS, so the mic works on phones.
 The redesign shipped to `main` on Oct 4; both hosts now serve the same app.
+⚠️ Oct 7: Railway did NOT pick up a push to `main` on its own — check
+`railway deployment list` after pushing, and `railway up --detach` if the
+newest deploy is older than the push.
+
+## The team demo (Oct 7 2026)
+
+A second workspace with a made-up team, at its own link:
+**/Mumble/team/** (Pages) · **/team/** (Railway). That page just redirects to
+`?workspace=team`, which is what `data/workspace.ts` reads.
+
+- **One workspace per page load, chosen by the address** — never a switch
+  inside the app, so a link always opens the same thing.
+- **Its own storage key** (`mumble.team.v1`): the team demo never touches
+  the personal demo's recordings.
+- **"You" stays "You" in the data.** In the team demo, You is Jordan Ellis;
+  his face and name come from `workspace().me`.
+- **Faces come from the workspace, through `Avatar`** — no screen knows
+  about photos. Unconfirmed voices never get one.
+- **Photos are Unsplash portraits** (credits in `public/people/CREDITS.md`).
+  The Team screen says everyone is made up. Never add a real, named person.
+- Recordings: the 5 personal ones + `t1` (Nadia's readout) and `t2` (Maya's
+  notes) in `data/teamDemo.ts`. Voiced with `ONLY=t1,t2 node scripts/make-demo-audio.mjs`.
 
 ## 🛑 More than one session may work in this repo at once
 
