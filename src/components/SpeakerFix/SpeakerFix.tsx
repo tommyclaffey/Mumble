@@ -4,6 +4,7 @@ import { Button } from '../Button/Button';
 import '../Chip/Chip.css';
 import type { Speaker } from '../../data/model';
 import './SpeakerFix.css';
+import { DictateButton } from '../Dictate/Dictate';
 
 /**
  * The speaker header — and the correction that propagates by voice
@@ -91,6 +92,7 @@ export function SpeakerFix(
               onChange={(e) => setName(e.target.value)}
               placeholder={speaker.name} aria-describedby={hintId} autoComplete="off"
             />
+            <DictateButton label="Say who this is" plain size="sm" onText={(t) => { setName(t); input.current?.focus(); }} />
             <datalist id={listId}>{others.map((s) => <option key={s} value={s} />)}</datalist>
             <Button type="submit" variant="primary" size="sm" disabled={!name.trim()}>Apply</Button>
             <Button size="sm" onClick={close}>Cancel</Button>

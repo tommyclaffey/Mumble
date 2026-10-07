@@ -78,7 +78,7 @@ export function TaskCard(
         <span className="mb-taskcard-col is-owner">{owner}</span>
         <span className="mb-taskcard-col is-status">{status}</span>
         <span className="mb-taskcard-col is-from mb-t-body-sm">{from && <><span className="mb-sr-only">From: </span>{from}</>}</span>
-        <span className="mb-taskcard-col is-at mb-t-meta mb-tabular">{at}</span>
+        <span className="mb-taskcard-col is-at mb-t-meta mb-tabular">{at ?? (task.manual ? <span className="mb-muted">You</span> : null)}</span>
       </div>
     );
   }
@@ -97,6 +97,7 @@ export function TaskCard(
           )}
           <DueChip value={task.due} onChange={onDue} label={`Due date for ${task.text}`} />
           {at && <span className="mb-t-meta mb-tabular mb-taskcard-at">{at}</span>}
+          {task.manual && <span className="mb-t-meta mb-muted">Added by you</span>}
         </div>
         {from && <p className="mb-t-meta mb-muted mb-taskcard-from">From: {from}</p>}
       </div>

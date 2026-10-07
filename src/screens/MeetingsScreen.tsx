@@ -11,6 +11,7 @@ import { useStore } from '../data/store';
 import { useListPlayer } from '../playback/useListPlayer';
 import './screens.css';
 import './MeetingsScreen.css';
+import { DictateButton } from '../components/Dictate/Dictate';
 
 /**
  * Meetings — the list (Figma page 07, frame 07). A meeting opens the same
@@ -106,6 +107,7 @@ export function MeetingsScreen() {
         <Icon name="search" size={16} />
         <span className="mb-sr-only">Search meetings</span>
         <input data-search type="search" placeholder="Search meetings or people" value={query} onChange={(e) => setQuery(e.target.value)} />
+        <DictateButton label="Search meetings by voice" plain size="sm" onText={setQuery} />
       </label>
       <div className="mb-viewbar">
         <div className="mb-filterbar" role="group" aria-label="Filter meetings">

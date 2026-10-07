@@ -809,3 +809,70 @@ describe('Redesign QA (Oct 1)', () => {
     expect(screen.getByLabelText('New task')).toBeTruthy();
   });
 });
+
+describe('Add tasks yourself, and say anything you could type (Oct 6)', () => {
+  it('a task typed on a note is added, says "Added by you", and shows on Tasks', async () => {
+    mount('#/capture/c4');
+    fireEvent.click(screen.getByRole('button', { name: 'Add a task' }));
+    fireEvent.change(screen.getByLabelText('New task'), { target: { value: 'Try the speed idea on a long transcript' } });
+    fireEvent.submit(screen.getByLabelText('New task').closest('form')!);
+    expect(screen.getByText('Try the speed idea on a long transcript')).toBeTruthy();
+    expect(screen.getByText('Added by you')).toBeTruthy();
+    expect((screen.getByLabelText('New task') as HTMLInputElement).value).toBe(''); // ready for the next one
+    await navigate('#/tasks');
+    expect(screen.getByRole('link', { name: 'Try the speed idea on a long transcript' })).toBeTruthy();
+  });
+
+  it('a task can be said instead of typed', () => {
+    const { rec } = mount('#/capture/c4');
+    fireEvent.click(screen.getByRole('button', { name: 'Add a task' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Say the task' }));
+    expect(screen.getByRole('button', { name: 'Stop dictating' }).getAttribute('aria-pressed')).toBe('true');
+    act(() => rec.say('Book the venue.'));
+    expect((screen.getByLabelText('New task') as HTMLInputElement).value).toBe('Book the venue');
+    expect(screen.getByRole('button', { name: 'Say the task' })).toBeTruthy(); // stopped by itself
+    fireEvent.submit(screen.getByLabelText('New task').closest('form')!);
+    expect(screen.getByText('Book the venue')).toBeTruthy();
+  });
+
+  it('a tag can be said: the picker fills and shows the match', () => {
+    const { rec } = mount('#/capture/c4');
+    fireEvent.click(screen.getByRole('button', { name: 'Add tag' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Say a tag' }));
+    act(() => rec.say('Client.'));
+    expect((screen.getByLabelText('Add a tag') as HTMLInputElement).value).toBe('Client');
+    expect(screen.getByRole('option', { name: /^Client/ })).toBeTruthy();
+  });
+
+  it('a title can be said, and it saves', async () => {
+    const { rec } = mount('#/capture/c4');
+    fireEvent.click(screen.getByRole('button', { name: 'Say a new title' }));
+    act(() => rec.say('Reading speed idea.'));
+    expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('Reading speed idea');
+    await navigate('#/recent');
+    expect(screen.getByRole('link', { name: 'Reading speed idea' })).toBeTruthy();
+  });
+
+  it('searches can be said', () => {
+    const { rec } = mount('#/meetings');
+    fireEvent.click(screen.getByRole('button', { name: 'Search meetings by voice' }));
+    act(() => rec.say('Northbank.'));
+    expect(within(screen.getByRole('list', { name: 'Meetings' })).getAllByRole('heading').map((h) => h.textContent)).toEqual(['Client call — Northbank']);
+  });
+
+  it('a speaker’s name can be said', () => {
+    const { rec } = mount('#/capture/c2');
+    fireEvent.click(screen.getAllByRole('button', { name: 'Speaker 3. Correct who this speaker is' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Say who this is' }));
+    act(() => rec.say('Sarah Lee.'));
+    expect((screen.getByLabelText('Who is this?') as HTMLInputElement).value).toBe('Sarah Lee');
+  });
+
+  it('where the browser can’t dictate, no mic is offered that would do nothing', () => {
+    mount('#/capture/c4', { rec: fakeRecognizer(false) });
+    expect(screen.queryByRole('button', { name: 'Say a new title' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Add a task' }));
+    expect(screen.queryByRole('button', { name: 'Say the task' })).toBeNull();
+    expect(screen.getByLabelText('New task')).toBeTruthy(); // typing still works
+  });
+});

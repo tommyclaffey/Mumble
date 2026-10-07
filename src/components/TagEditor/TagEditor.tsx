@@ -4,6 +4,7 @@ import { href } from '../../data/route';
 import { useStore } from '../../data/store';
 import { TAG_COLORS, tagColor, type TagColor } from '../../data/tagColor';
 import './TagEditor.css';
+import { DictateButton } from '../Dictate/Dictate';
 
 /**
  * Tags on a recording — the tag pills, and a picker to add more.
@@ -134,6 +135,7 @@ export function TagEditor(
                   role="combobox" aria-expanded aria-controls={`${uid}-list`} aria-autocomplete="list"
                   aria-activedescendant={rows ? optId(active) : undefined}
                 />
+                <DictateButton label="Say a tag" plain size="sm" onText={(t) => { setValue(t); setActive(0); input.current?.focus(); }} />
               </div>
 
               <ul className="mb-tag-options" id={`${uid}-list`} role="listbox" aria-label="Tags">

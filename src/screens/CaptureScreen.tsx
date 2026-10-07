@@ -5,6 +5,7 @@ import { Button } from '../components/Button/Button';
 import { TitleBox } from '../components/TitleBox/TitleBox';
 import { TagEditor } from '../components/TagEditor/TagEditor';
 import { TaskCard } from '../components/TaskCard/TaskCard';
+import { AddTask } from '../components/TaskCard/AddTask';
 import { Icon } from '../components/Icon/Icon';
 import { PlayerBar } from '../components/PlayerBar/PlayerBar';
 import { SpeakerFix } from '../components/SpeakerFix/SpeakerFix';
@@ -236,6 +237,7 @@ function CaptureView({ c, startLine }: { c: Capture; startLine?: number }) {
             })}
           </ul>
         )}
+        <AddTask onAdd={(text) => dispatch({ type: 'addTask', captureId: c.id, task: { id: `t-${Date.now()}`, text, sourceLineId: '', status: 'todo', manual: true } })} />
       </PanelCard>
 
       <PanelCard id="details-h" title="Details" icon="info">

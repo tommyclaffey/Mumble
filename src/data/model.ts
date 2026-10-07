@@ -80,6 +80,9 @@ export interface Task {
   status: TaskStatus;
   /** "2026-10-03" — a date, no time. The design's "Due date" chip. */
   due?: string;
+  /** Typed or said by you, not found in the recording. Shown as "Added by
+      you", so a task you wrote is never mistaken for one the model found. */
+  manual?: boolean;
 }
 
 interface CaptureBase {

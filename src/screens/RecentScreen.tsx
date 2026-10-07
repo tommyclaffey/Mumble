@@ -11,6 +11,7 @@ import { dayGroup, matches } from '../data/filters';
 import { useStore } from '../data/store';
 import { useListPlayer } from '../playback/useListPlayer';
 import './screens.css';
+import { DictateButton } from '../components/Dictate/Dictate';
 
 /**
  * Recent — every recording, grouped by day (Figma page 07, frame 01).
@@ -127,6 +128,7 @@ export function RecentScreen({ filter }: { filter: RecentFilter }) {
             value={query} onChange={(e) => setQuery(e.target.value)}
             onBlur={() => { if (!query) setSearching(false); }}
           />
+          <DictateButton label="Search by voice" plain size="sm" onText={setQuery} />
         </label>
       )}
 

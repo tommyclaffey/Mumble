@@ -59,3 +59,20 @@
 .mb-taskcard .mb-chip.is-action { min-height: 22px; padding: 0 8px; font: 500 0.75rem/1rem var(--font-sans); }
 .mb-taskcard .mb-chip.is-action.is-empty { border-color: transparent; background: transparent; color: var(--text-muted); padding: 0 4px; }
 .mb-taskcard .mb-chip.is-action.is-empty:hover { background: var(--surface-subtle); }
+
+/* + Add a task (the note's Tasks panel) */
+.mb-addtask-open {
+  display: inline-flex; align-items: center; gap: 8px; width: max-content; padding: 6px 8px 6px 2px; margin-left: -2px;
+  border: none; border-radius: var(--radius-lg); background: transparent; color: var(--text-muted); cursor: pointer;
+  font: 400 0.875rem/1.25rem var(--font-sans);
+}
+.mb-addtask-open:hover { color: var(--accent-base); background: var(--surface-subtle); }
+.mb-addtask-open:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); }
+.mb-addtask { display: grid; gap: 8px; }
+.mb-addtask-field {
+  display: flex; align-items: center; gap: 4px; padding: 0 4px 0 12px; min-height: 40px;
+  border: var(--border-width-sm) solid var(--border-control); border-radius: var(--radius-lg); background: var(--surface-card);
+}
+.mb-addtask-field:focus-within { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 1px; }
+.mb-addtask-field input { flex: 1; min-width: 0; border: none; outline: none; background: transparent; color: var(--text-strong); font: 400 0.875rem/1.25rem var(--font-sans); }
+.mb-addtask-actions { display: flex; gap: 8px; }

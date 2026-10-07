@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import './TitleBox.css';
+import { DictateButton } from '../Dictate/Dictate';
 
 /**
  * The capture's title, in the design's title box (880 × 36, 6px corners) —
@@ -28,6 +29,7 @@ export function TitleBox({ title, onRename }: { title: string; onRename: (t: str
           if (e.key === 'Escape') { e.stopPropagation(); setValue(title); requestAnimationFrame(() => (e.target as HTMLInputElement).blur()); }
         }}
       />
+      <DictateButton label="Say a new title" plain onText={(t) => { setValue(t); if (t.trim() && t.trim() !== title) onRename(t.trim()); }} />
     </div>
   );
 }

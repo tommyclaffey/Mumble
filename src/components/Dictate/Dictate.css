@@ -1,0 +1,23 @@
+/* The dictation mic beside a field — quiet until it's listening. */
+.mb-dictate-wrap { position: relative; display: inline-flex; flex-shrink: 0; }
+.mb-dictate {
+  display: inline-flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0;
+  width: 32px; height: 32px; border: none; border-radius: var(--radius-pill);
+  background: transparent; color: var(--text-muted); cursor: pointer;
+}
+.mb-dictate.is-sm { width: 26px; height: 26px; }
+.mb-dictate:hover { background: var(--surface-sunken); color: var(--accent-base); }
+.mb-dictate.is-listening { background: var(--accent-base); color: var(--text-on-accent); animation: mb-dictate-pulse 1.4s ease-in-out infinite; }
+@keyframes mb-dictate-pulse { 50% { box-shadow: 0 0 0 5px var(--accent-tint); } }
+@media (prefers-reduced-motion: reduce) { .mb-dictate.is-listening { animation: none; box-shadow: 0 0 0 3px var(--accent-tint); } }
+.mb-dictate:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px; }
+.mb-dictate-error {
+  position: absolute; top: calc(100% + 4px); right: 0; z-index: 40; width: max-content; max-width: 240px;
+  padding: 6px 10px; border-radius: var(--radius-lg); background: var(--accent-tint); color: var(--accent-strong);
+  font: 500 0.75rem/1rem var(--font-sans);
+}
+.mb-dictate-heard {
+  display: flex; align-items: center; gap: 6px; margin: 6px 0 0; color: var(--text-muted);
+  font: italic 400 0.8125rem/1.25rem var(--font-sans);
+}
+.mb-dictate-dot { width: 6px; height: 6px; border-radius: var(--radius-pill); background: var(--accent-base); flex-shrink: 0; }

@@ -12,6 +12,7 @@ import { href } from '../data/route';
 import { useStore } from '../data/store';
 import './screens.css';
 import './TasksScreen.css';
+import { DictateButton, Heard } from '../components/Dictate/Dictate';
 
 /**
  * Every task from every recording (Figma page 07, frame 05): a table grouped
@@ -223,22 +224,27 @@ export function TasksScreen() {
 /** "+ New Task": what needs doing, and which capture it belongs to. */
 function NewTask({ captures, onAdd, onCancel }: { captures: Capture[]; onAdd: (captureId: string, t: Task) => void; onCancel: () => void }) {
   const [text, setText] = useState('');
+  const [heard, setHeard] = useState('');
   const [captureId, setCaptureId] = useState(captures[0]?.id ?? '');
   function submit(e: FormEvent) {
     e.preventDefault();
     if (!text.trim() || !captureId) return;
-    onAdd(captureId, { id: `t-new-${Date.now()}`, text: text.trim(), sourceLineId: '', status: 'todo' });
+    onAdd(captureId, { id: `t-new-${Date.now()}`, text: text.trim().replace(/[.]+$/, ''), sourceLineId: '', status: 'todo', manual: true });
   }
   return (
     <form className="mb-new-task-form" onSubmit={submit} onKeyDown={(e) => { if (e.key === 'Escape') onCancel(); }}>
       <label className="mb-sr-only" htmlFor="new-task-text">New task</label>
-      <input id="new-task-text" className="mb-input" autoFocus placeholder="What needs doing?" value={text} onChange={(e) => setText(e.target.value)} />
+      <span className="mb-input-with-mic">
+        <input id="new-task-text" className="mb-input" autoFocus placeholder="What needs doing?" value={text} onChange={(e) => setText(e.target.value)} />
+        <DictateButton label="Say the task" plain size="sm" onInterim={setHeard} onText={(t) => setText((x) => (x.trim() ? `${x.trim()} ${t}` : t))} />
+      </span>
       <label className="mb-sr-only" htmlFor="new-task-from">From capture</label>
       <select id="new-task-from" className="mb-input mb-new-task-from" value={captureId} onChange={(e) => setCaptureId(e.target.value)}>
         {captures.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
       </select>
       <Button type="submit" variant="primary" size="sm" disabled={!text.trim()}><Icon name="plus" size={16} /> Add</Button>
       <Button size="sm" onClick={onCancel}>Cancel</Button>
+      <Heard text={heard} />
     </form>
   );
 }

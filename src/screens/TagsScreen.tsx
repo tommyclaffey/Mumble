@@ -8,6 +8,7 @@ import { useStore } from '../data/store';
 import { tagColor } from '../data/tagColor';
 import './screens.css';
 import './TagsScreen.css';
+import { DictateButton } from '../components/Dictate/Dictate';
 
 /**
  * Tags — a grid of tag cards; the chosen one fills the side panel with its
@@ -88,6 +89,7 @@ export function TagsScreen({ tag }: { tag?: string }) {
           <Icon name="search" size={16} />
           <span className="mb-sr-only">Search tags</span>
           <input data-search type="search" placeholder="Search tags" value={query} onChange={(e) => setQuery(e.target.value)} />
+          <DictateButton label="Search tags by voice" plain size="sm" onText={setQuery} />
         </label>
         <div className="mb-viewbar-end">
           <label className="mb-dropdown-wrap">
