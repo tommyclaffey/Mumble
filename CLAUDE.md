@@ -42,8 +42,16 @@ interview. The rule is about who drives the learning, not a prohibition.
   not produced by a model (the phrase-rule task suggester) says so.
 - **Recordings never leave the browser.** Delete a capture → its audio goes
   too. Reset demo → all stored audio goes.
-- **Honest about the browser.** No diarization in the browser, so Meeting
-  recording is disabled *with the reason on screen*. Where audio goes is
+- **Meeting mode tells voices apart IN the browser** (Oct 7, option A:
+  free now, a paid service later). `record/diarizer.ts` is the service; the
+  models run in `record/diarize.worker.ts`; the maths is `record/diarize.ts`.
+  Tested Oct 7 in real Chrome on the 4 demo meetings: right person on 94% of
+  lines when told how many people (synthetic voices, so the ceiling). Every
+  line carries a confidence; unsure lines are flagged. A paid service would
+  be a second `Diarizer` — nothing else changes. If it fails, the recording
+  is saved as a note and the screen says so.
+- **Honest about the browser.** Meeting mode is disabled *with the reason on
+  screen* where the models can't run or the audio can't be recorded. Where audio goes is
   stated before recording. If the mic can't be recorded, the transcript is
   still saved and says it has no recording.
 

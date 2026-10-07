@@ -121,6 +121,7 @@ function CaptureView({ c, startLine }: { c: Capture; startLine?: number }) {
     if (linesChanged === 0) return;
     /* Remember only what the correction touches. */
     const speakers = c.speakers;
+    const attendees = c.attendees;
     const lineSpeakers = Object.fromEntries(c.lines.map((l) => [l.id, l.speakerId]));
     dispatch({ type: 'correctSpeaker', captureId: c.id, speakerId, name });
     /* Focus follows the fix. If the voice merged into an existing speaker,
@@ -130,7 +131,7 @@ function CaptureView({ c, startLine }: { c: Capture; startLine?: number }) {
     setToast({
       message: `${name.trim()} · ${linesChanged} ${linesChanged === 1 ? 'line' : 'lines'} updated`,
       undo: () => {
-        dispatch({ type: 'restoreSpeakers', captureId: c.id, speakers, lineSpeakers });
+        dispatch({ type: 'restoreSpeakers', captureId: c.id, speakers, lineSpeakers, attendees });
         focusSpeaker(speakerId);
       },
     });
@@ -201,6 +202,11 @@ function CaptureView({ c, startLine }: { c: Capture; startLine?: number }) {
      you to the first one. */
   const unsure = meeting ? meeting.speakers.filter((s) => !s.confirmed && c.lines.some((l) => l.speakerId === s.id && isLowConfidence(l, s))) : [];
   const done = c.tasks.filter((t) => t.status === 'done').length;
+  /* Names offered when you say who a voice is: the real attendees, plus You
+     (and the team, in the team demo) — never the "Speaker 2" placeholders. */
+  const nameSuggestions = meeting
+    ? [...new Set(['You', ...assignable(c)])].filter((n) => !/^Speaker \d+$/.test(n))
+    : [];
 
   const panel = (
     <>
@@ -334,7 +340,7 @@ function CaptureView({ c, startLine }: { c: Capture; startLine?: number }) {
                     lineCount={linesBySpeaker(meeting, speaker.id)}
                     lowConfidence={anyLow}
                     startsAt={formatDuration(turn.lines[0].line.startsAt)}
-                    suggestions={meeting.attendees}
+                    suggestions={nameSuggestions}
                     onCorrect={(name) => onCorrect(speaker.id, name)}
                     onPlay={player.hasAudio ? () => player.play(turn.lines[0].index) : undefined}
                   />

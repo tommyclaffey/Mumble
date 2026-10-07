@@ -189,12 +189,17 @@ export function correctSpeaker(
   const existing = meeting.speakers.find(
     (s) => s.id !== speakerId && s.name.toLowerCase() === name.toLowerCase(),
   );
+  /* The attendee list follows: in a meeting recorded in the browser it starts
+     as "Speaker 1, Speaker 2…", and naming a voice names the attendee. */
+  const oldNames = new Set(meeting.speakers.filter((s) => inVoice.has(s.id)).map((s) => s.name));
+  const attendeesAs = (to: string) => [...new Set(meeting.attendees.map((a) => (oldNames.has(a) ? to : a)))];
 
   if (existing) {
     return {
       linesChanged,
       meeting: {
         ...meeting,
+        attendees: attendeesAs(existing.name),
         speakers: meeting.speakers
           .filter((s) => s.id === existing.id || !inVoice.has(s.id))
           .map((s) => (s.id === existing.id ? { ...s, confirmed: true } : s)),
@@ -208,6 +213,7 @@ export function correctSpeaker(
     linesChanged,
     meeting: {
       ...meeting,
+      attendees: attendeesAs(name),
       speakers: meeting.speakers.map((s) =>
         s.voiceprintId === source.voiceprintId ? { ...s, name, confirmed: true } : s),
     },

@@ -47,7 +47,7 @@ type Action =
   | { type: 'addTask'; captureId: string; task: Task }
   /** Undo a speaker correction — speakers and attributions ONLY, so a task
       ticked while the Undo toast was up survives the undo. */
-  | { type: 'restoreSpeakers'; captureId: string; speakers: Speaker[]; lineSpeakers: Record<string, string | undefined> }
+  | { type: 'restoreSpeakers'; captureId: string; speakers: Speaker[]; lineSpeakers: Record<string, string | undefined>; attendees?: string[] }
   | { type: 'addCapture'; capture: Capture }
   | { type: 'deleteCapture'; captureId: string }
   | { type: 'setPrefs'; prefs: Partial<Prefs> }
@@ -78,6 +78,7 @@ export function reducer(state: State, action: Action): State {
       return mapCapture(action.captureId, (c) => (isMeeting(c) ? {
         ...c,
         speakers: action.speakers,
+        attendees: action.attendees ?? c.attendees,
         lines: c.lines.map((l) => (l.id in action.lineSpeakers ? { ...l, speakerId: action.lineSpeakers[l.id] } : l)),
       } : c));
     case 'addTask':

@@ -20,7 +20,8 @@ export default defineConfig({
      (BASE_PATH=/, see railway.json). `vite preview` checks the Host header,
      so the Railway domains are allowed explicitly. */
   preview: { allowedHosts: ['.up.railway.app'] },
-  /* parked/ holds shelved features (read-aloud) — kept, not built or tested.
-     (If read-aloud comes back, it needs `worker: { format: 'es' }` again.) */
+  /* Meeting mode's models run in a module worker (record/diarize.worker.ts). */
+  worker: { format: 'es' },
+  /* parked/ holds shelved features (read-aloud) — kept, not built or tested. */
   test: { exclude: [...configDefaults.exclude, 'parked/**'] },
 })

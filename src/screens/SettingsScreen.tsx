@@ -115,8 +115,8 @@ export function SettingsScreen() {
         <Row label="Transcription" hint="Your browser’s speech service writes the transcript as you talk. Chrome and Edge send the audio to their vendor to do that; Safari keeps it on-device where it can.">
           <span className="mb-t-label-sm mb-muted">Browser speech service</span>
         </Row>
-        <Row label="Meeting mode" hint="Telling voices apart needs a model that doesn’t run in the browser yet.">
-          <ChipMeta>Not in the browser yet</ChipMeta>
+        <Row label="Meeting mode" hint="After you stop, two small models tell the voices apart and put a speaker on every line, in this browser. The first meeting downloads them (about 33 MB); after that they’re saved. Unsure lines are flagged so you can say who it was.">
+          <ChipMeta>In this browser</ChipMeta>
         </Row>
       </Section>
 

@@ -89,3 +89,11 @@
   .mb-recorder-actions .mb-button.is-ghost { flex: 0 0 100%; order: 3; }
   .mb-recorder-mode .mb-seg { display: flex; width: 100%; }
 }
+
+/* Meeting mode: how many people — asked before you start. */
+.mb-recorder-people { display: grid; gap: var(--space-8); justify-items: start; padding: var(--space-12) var(--space-16); border-radius: var(--radius-control); background: var(--surface-subtle); }
+.mb-recorder-people p { margin: 0; }
+.mb-recorder-people-h { color: var(--text-strong); }
+.mb-record-error p { margin: 0; }
+.mb-record-error p + p { margin-top: var(--space-8); }
+.is-failed > .mb-saving-mark { background: var(--surface-sunken); border-color: transparent; color: var(--text-strong); }

@@ -5,25 +5,26 @@ import App from '../App';
 import { initialState, StoreProvider } from '../data/store';
 import { ServicesProvider } from '../services';
 import { setWorkspace, workspaceFromSearch } from '../data/workspace';
-import { fakeAudioFactory, fakeMic, fakeRecognizer, memoryAudioStore } from './fakes';
+import { fakeAudioFactory, fakeDiarizer, fakeMic, fakeRecognizer, memoryAudioStore } from './fakes';
 
 function mount(hash: string, opts: {
   rec?: ReturnType<typeof fakeRecognizer>; mic?: ReturnType<typeof fakeMic>;
-  store?: ReturnType<typeof memoryAudioStore>;
+  store?: ReturnType<typeof memoryAudioStore>; diar?: ReturnType<typeof fakeDiarizer>;
 } = {}) {
   window.location.hash = hash;
   const audio = fakeAudioFactory();
   const rec = opts.rec ?? fakeRecognizer();
   const mic = opts.mic ?? fakeMic();
   const store = opts.store ?? memoryAudioStore();
+  const diar = opts.diar ?? fakeDiarizer({ available: false });
   render(
     <StoreProvider initial={initialState(new Date())}>
-      <ServicesProvider makeAudio={audio.make} audioStore={store} mic={mic.make} recognizer={rec.make}>
+      <ServicesProvider makeAudio={audio.make} audioStore={store} mic={mic.make} recognizer={rec.make} diarizer={diar.make}>
         <App />
       </ServicesProvider>
     </StoreProvider>,
   );
-  return { audio, rec, mic, store };
+  return { audio, rec, mic, store, diar };
 }
 
 async function navigate(hash: string) {
@@ -579,10 +580,16 @@ describe('Record', () => {
     expect(screen.getByText('Transcript only', { selector: 'dd' })).toBeTruthy();
   });
 
-  it('meeting mode is visibly off, with the reason on screen', () => {
+  it('where the browser can’t tell voices apart, Meeting is off — with the reason on screen', () => {
     mount('#/record');
     expect((screen.getByRole('radio', { name: 'Meeting' }) as HTMLButtonElement).disabled).toBe(true);
-    expect(screen.getByText(/needs a model that can tell voices apart/)).toBeTruthy();
+    expect(screen.getByText(/Telling voices apart needs a newer browser/)).toBeTruthy();
+  });
+
+  it('Meeting needs the audio: where it can’t be recorded, Meeting is off and says why', () => {
+    mount('#/record', { diar: fakeDiarizer(), mic: fakeMic({ available: false }) });
+    expect((screen.getByRole('radio', { name: 'Meeting' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByText(/Meeting needs the audio/)).toBeTruthy();
   });
 
   it('stopping with nothing heard saves nothing and says so', async () => {
@@ -958,5 +965,103 @@ describe('The team demo — a made-up team with its own link (Oct 7)', () => {
     expect(screen.getByText(/A demo account — everyone on this team is made up/)).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Switch' }).getAttribute('href')).toMatch(/#\/recent$/);
     expect(screen.getByText(/Brings back the 7 demo recordings/)).toBeTruthy();
+  });
+});
+
+describe('Meeting mode — voices told apart in the browser (Oct 7)', () => {
+  /** Record a meeting: choose Meeting (and a head count), say the lines, stop. */
+  async function recordMeeting(said: string[], people?: string) {
+    fireEvent.click(screen.getByRole('radio', { name: 'Meeting' }));
+    if (people) fireEvent.click(screen.getByRole('radio', { name: people }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+    for (const line of said) act(() => rec().say(line));
+    fireEvent.click(screen.getByRole('button', { name: 'Stop & save' }));
+    await flush(); await flush();
+    await navigate(window.location.hash);
+  }
+  let rec: () => ReturnType<typeof fakeRecognizer>;
+  const LINES = ['Thanks for coming in today.', 'Happy to be here.', 'So, the budget is approved.', 'Great, we need to book the venue.'];
+
+  it('asks how many people, sorts the voices after Stop, and puts a speaker on every line', async () => {
+    const diar = fakeDiarizer();
+    const m = mount('#/record', { diar });
+    rec = () => m.rec;
+    fireEvent.click(screen.getByRole('radio', { name: 'Meeting' }));
+    expect(screen.getByText(/Voices are sorted after you stop/)).toBeTruthy();
+    await recordMeeting(LINES, '3');
+    expect(diar.calls[0].people).toBe(3);
+    expect(diar.calls[0].starts).toHaveLength(4);
+    expect(window.location.hash).toMatch(/^#\/capture\/b\d+$/);
+    const people = within(screen.getByRole('group', { name: 'Meeting attendees' }));
+    expect(people.getByText('Speaker 1')).toBeTruthy();
+    expect(people.getByText('Speaker 2')).toBeTruthy();
+    /* Alternating voices: four turns, each under its speaker. */
+    expect(screen.getAllByRole('button', { name: /^Speaker [12]\. Correct who this speaker is/ })).toHaveLength(4);
+    expect(screen.getByText('Details').closest('section')!.textContent).toMatch(/Speakers2/);
+  });
+
+  it('“Not sure” lets the models work out how many people there were', async () => {
+    const diar = fakeDiarizer();
+    const m = mount('#/record', { diar });
+    rec = () => m.rec;
+    await recordMeeting(LINES, 'Not sure');
+    expect(diar.calls[0].people).toBeNull();
+  });
+
+  it('an unsure line is flagged; naming the voice fixes every line in it, and the attendee list', async () => {
+    const diar = fakeDiarizer({ answer: (st) => ({ speaker: st.map((_, i) => i % 2), confidence: [0.95, 0.5, 0.95, 0.6], count: 2 }) });
+    const m = mount('#/record', { diar });
+    rec = () => m.rec;
+    await recordMeeting(LINES);
+    expect(screen.getByRole('button', { name: '1 voice to confirm' })).toBeTruthy();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Speaker 2. Correct who this speaker is' })[0]);
+    /* The placeholders aren't offered as names — You is. */
+    expect(screen.queryByRole('button', { name: 'Speaker 1' })).toBeNull();
+    fireEvent.change(screen.getByLabelText('Who is this?'), { target: { value: 'Dana' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(screen.getByText(/Dana · 2 lines updated/)).toBeTruthy();
+    const people = within(screen.getByRole('group', { name: 'Meeting attendees' }));
+    expect(people.getByText('Dana')).toBeTruthy();
+    expect(people.queryByText('Speaker 2')).toBeNull();
+    expect(screen.queryByRole('button', { name: /voice to confirm/ })).toBeNull();
+    /* Undo puts the attendee back too. */
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    expect(within(screen.getByRole('group', { name: 'Meeting attendees' })).getByText('Speaker 2')).toBeTruthy();
+  });
+
+  it('the type can’t change once recording starts', () => {
+    const m = mount('#/record', { diar: fakeDiarizer() });
+    fireEvent.click(screen.getByRole('radio', { name: 'Meeting' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+    act(() => m.rec.say('Hello.'));
+    expect((screen.getByRole('radio', { name: 'Note' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole('radio', { name: '3' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('says where it happens before you start, and what it’s doing while it works', async () => {
+    const diar = fakeDiarizer({ hold: true, progress: [{ stage: 'download', percent: 40 }, { stage: 'listen', done: 2, total: 3 }] });
+    const m = mount('#/record', { diar });
+    expect(screen.getByText(/downloads two voice models \(about 33 MB/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('radio', { name: 'Meeting' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+    act(() => m.rec.say('Hello there.'));
+    fireEvent.click(screen.getByRole('button', { name: 'Stop & save' }));
+    await flush();
+    expect(screen.getByRole('heading', { name: 'Saving your meeting' })).toBeTruthy();
+    expect(screen.getByText('listening · 2 of 3')).toBeTruthy();
+    diar.release();
+    await flush(); await flush();
+    expect(window.location.hash).toMatch(/^#\/capture\/b\d+$/);
+  });
+
+  it('if the voices can’t be told apart, nothing is lost: it’s saved as a note, and the screen says so', async () => {
+    const m = mount('#/record', { diar: fakeDiarizer({ fail: 'Failed to fetch' }) });
+    rec = () => m.rec;
+    await recordMeeting(LINES);
+    expect(screen.getByRole('alert').textContent).toMatch(/saved as a note.*Failed to fetch/);
+    const open = screen.getByRole('link', { name: 'Open it' });
+    await navigate(open.getAttribute('href')!);
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Thanks for coming in today');
+    expect(screen.queryByRole('group', { name: 'Meeting attendees' })).toBeNull();
   });
 });

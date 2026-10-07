@@ -1,6 +1,7 @@
 import { memoryAudioStore } from '../record/audioStore';
 import type { MicRecorder } from '../record/micRecorder';
 import type { Recognizer, RecognizerEvents } from '../record/recognizer';
+import type { DiarizeProgress, DiarizeResult, Diarizer } from '../record/diarizer';
 
 /**
  * An audio element the test drives by hand: `at(12.5)` moves the playhead
@@ -86,6 +87,36 @@ export function fakeMic(opts: { available?: boolean; refuse?: boolean } = {}) {
     };
   };
   return { make, state, blob };
+}
+
+/**
+ * Meeting mode without the models. `answer` decides who said each line
+ * (default: lines alternate between two people, all sure). `calls` records
+ * what the screen asked for — the head count especially.
+ */
+export function fakeDiarizer(opts: {
+  available?: boolean;
+  answer?: (starts: number[], people: number | null) => DiarizeResult;
+  fail?: string;
+  progress?: DiarizeProgress[];
+  /** Hold the answer until `release()` — to see the screen mid-way. */
+  hold?: boolean;
+} = {}) {
+  const calls: { starts: number[]; people: number | null }[] = [];
+  let release = () => {};
+  const held = new Promise<void>((r) => { release = r; });
+  const make = (): Diarizer => ({
+    available: opts.available ?? true,
+    async run(_audio, starts, people, onProgress) {
+      calls.push({ starts, people });
+      for (const p of opts.progress ?? []) onProgress(p);
+      if (opts.hold) await held;
+      if (opts.fail) throw new Error(opts.fail);
+      return opts.answer?.(starts, people)
+        ?? { speaker: starts.map((_, i) => i % 2), confidence: starts.map(() => 0.95), count: Math.min(2, starts.length) };
+    },
+  });
+  return { make, calls, release: () => release() };
 }
 
 export { memoryAudioStore };

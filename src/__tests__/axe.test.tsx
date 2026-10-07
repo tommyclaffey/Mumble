@@ -6,7 +6,8 @@ import App from '../App';
 import { initialState, StoreProvider } from '../data/store';
 import { ServicesProvider } from '../services';
 import { setWorkspace } from '../data/workspace';
-import { fakeAudioFactory, fakeMic, fakeRecognizer, memoryAudioStore } from './fakes';
+import { fakeAudioFactory, fakeDiarizer, fakeMic, fakeRecognizer, memoryAudioStore } from './fakes';
+import { fireEvent, screen } from '@testing-library/react';
 
 /**
  * Automated accessibility check on every screen (axe-core, the engine behind
@@ -49,6 +50,23 @@ describe('axe — no mechanical accessibility failures', () => {
   }
   it('#/team (personal demo: the way to the team demo)', async () => {
     expect(await violations('#/team')).toEqual([]);
+  });
+});
+
+/* Meeting mode's controls: the type, and how many people. */
+describe('axe — recording a meeting', () => {
+  it('#/record with Meeting chosen', async () => {
+    window.location.hash = '#/record';
+    const { container } = render(
+      <StoreProvider initial={initialState(new Date())}>
+        <ServicesProvider makeAudio={fakeAudioFactory().make} audioStore={memoryAudioStore()} mic={fakeMic().make} recognizer={fakeRecognizer().make} diarizer={fakeDiarizer().make}>
+          <App />
+        </ServicesProvider>
+      </StoreProvider>,
+    );
+    fireEvent.click(screen.getByRole('radio', { name: 'Meeting' }));
+    const result = await axe.run(container, { rules: { 'color-contrast': { enabled: false }, region: { enabled: false } } });
+    expect(result.violations.map((v) => v.id)).toEqual([]);
   });
 });
 
