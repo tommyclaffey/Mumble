@@ -953,6 +953,14 @@ describe('The team demo — a made-up team with its own link (Oct 7)', () => {
     expect(unsure!.querySelector('img')).toBeNull();
   });
 
+  it('the demo account says “Demo” beside the logo (as Queue does); the personal demo doesn’t', () => {
+    team('#/recent');
+    expect(document.querySelector('.mb-header-brand')!.textContent).toBe('Demo');
+    cleanup(); setWorkspace('personal');
+    mount('#/recent');
+    expect(document.querySelector('.mb-demo-tag')).toBeNull();
+  });
+
   it('the personal demo has no team, no account — and Team points to the team demo', () => {
     mount('#/team');
     expect(screen.queryByRole('link', { name: /Jordan Ellis/ })).toBeNull();

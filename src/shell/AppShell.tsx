@@ -94,6 +94,8 @@ export function AppShell({ route, children }: { route: Route; children: ReactNod
           <a className="mb-wordmark" href={href({ name: 'recent', filter: 'all' })}>
             <img src={`${import.meta.env.BASE_URL}mumble-logo.png`} alt={BRAND.logoAlt} width={92} height={36} />
           </a>
+          {/* The demo account says so beside the logo, as Queue's does. */}
+          {team && <span className="mb-demo-tag" title="A made-up team. Everyone and everything here is fictional.">Demo</span>}
         </div>
         <div className="mb-header-search">
           {/* Looks like a field, is a button: it takes you to the search box
