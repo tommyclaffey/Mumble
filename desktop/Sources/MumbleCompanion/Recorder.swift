@@ -24,7 +24,9 @@ final class Recorder: @unchecked Sendable {
   private var tap: SystemAudioTap?
 
   static var root: URL {
-    FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("Mumble", isDirectory: true)
+    /* Testing: MUMBLE_ROOT points it at a scratch folder, never your real recordings. */
+    if let test = ProcessInfo.processInfo.environment["MUMBLE_ROOT"] { return URL(fileURLWithPath: test, isDirectory: true) }
+    return FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("Mumble", isDirectory: true)
   }
 
   /// Starts both tracks. Throws if the mic can't be opened; the system track

@@ -112,8 +112,8 @@ struct WidgetView: View {
     case .idle: return "Mumble · click to record"
     case .meeting(let app): return "A \(app.name) meeting started. Click to record it."
     case .recording: return "Recording your mic and the meeting. Click to stop."
-    case .saving: return "Saving the recording…"
-    case .saved: return "Saved in Documents › Mumble. Click to show it."
+    case .saving: return "Saving and transcribing the call, on this Mac…"
+    case .saved: return "Saved as a meeting in Mumble. Click to open it."
     case .problem(let why): return why
     }
   }

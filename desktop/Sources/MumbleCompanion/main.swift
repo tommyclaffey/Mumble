@@ -2,16 +2,43 @@ import AppKit
 import Combine
 import SwiftUI
 
-/// Mumble for Mac — the companion. Lives in the menu bar (no Dock icon) and
-/// as a small floating icon; spots meetings and records them.
+/// Mumble for Mac. One app, three faces:
+///   · the Mumble window (Dock icon) — the same screens as the website
+///   · the floating icon — spots meetings, one click records them
+///   · the menu bar mic — the same controls, out of the way
+/// A recorded call is transcribed on this Mac and arrives in the window as a
+/// meeting. Closing the window keeps the icon watching for meetings.
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
   let companion = Companion()
   var panel: WidgetPanel?
   var status: NSStatusItem?
   var watch: AnyCancellable?
+  var server: LocalServer?
+  var main: MainWindow?
 
   func applicationDidFinishLaunching(_ note: Notification) {
+    let web = Bundle.main.resourceURL!.appendingPathComponent("web")
+    server = LocalServer(web: web)
+    do { try server?.start() } catch { NSLog("Mumble: local server failed: \(error)") }
+    NSApp.mainMenu = mainMenu(reload: #selector(reload), newRecording: #selector(toggle), target: self)
+    let main = MainWindow()
+    main.onMessage = { [weak self] type in
+      guard let self else { return }
+      if type == "record", !self.companion.isRecording { self.companion.tap() }
+      if type == "stop", self.companion.isRecording { self.companion.tap() }
+    }
+    self.main = main
+    /* A call recorded from the window opens when it's ready; one recorded
+       while you were in Zoom waits in Recent until you look. */
+    companion.onFinished = { [weak self] id in
+      guard let main = self?.main else { return }
+      main.callFinished(id: id, open: main.isInFront || ProcessInfo.processInfo.environment["MUMBLE_ROOT"] != nil)
+    }
+    companion.onShow = { [weak self] id in self?.main?.show(); self?.main?.callFinished(id: id, open: true) }
+    main.show()
+    if let dir = ProcessInfo.processInfo.environment["MUMBLE_SNAPSHOTS"] { main.snapshotEvery(3, to: dir) }
+
     panel = WidgetPanel(companion: companion)
     panel?.orderFrontRegardless()
 
@@ -24,6 +51,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     /* The menu bar glyph follows the state too: filled while recording. */
     watch = companion.$phase.sink { [weak self] phase in
+      var state: [String: Any] = ["phase": "idle"]
+      switch phase {
+      case .idle, .saved: break
+      case .meeting(let app): state = ["phase": "meeting", "app": app.name]
+      case .recording(let app, let since): state = ["phase": "recording", "app": app?.name ?? NSNull(), "since": Int(since.timeIntervalSince1970 * 1000)]
+      case .saving: state = ["phase": "saving"]
+      case .problem(let why): state = ["phase": "problem", "message": why]
+      }
+      self?.main?.pushState(state)
       let name: String
       if case .recording = phase { name = "mic.fill" } else if case .meeting = phase { name = "mic.badge.plus" } else { name = "mic" }
       self?.status?.button?.image = NSImage(systemSymbolName: name, accessibilityDescription: "Mumble")
@@ -54,6 +90,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     show.state = panel?.isVisible == true ? .on : .off
     menu.addItem(show)
     menu.addItem(.separator())
+    menu.addItem(item("Open Mumble", #selector(openMain)))
     menu.addItem(item("Open recordings folder", #selector(openFolder)))
     menu.addItem(.separator())
     menu.addItem(item("Quit Mumble", #selector(quit), key: "q"))
@@ -73,6 +110,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     NSWorkspace.shared.open(Recorder.root)
   }
   @objc func quit() { NSApp.terminate(nil) }
+  @objc func openMain() { main?.show() }
+  @objc func reload() { main?.web.reload() }
+
+  /* Dock icon clicked with the window closed: bring it back. */
+  func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
+    if !hasVisibleWindows { main?.show() }
+    return true
+  }
+  /* Closing the window doesn't quit: the icon keeps watching for meetings. */
+  func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
 }
 
 /// `Mumble --snapshots <dir>`: draws the floating icon in every state to PNGs
@@ -82,7 +129,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
   let states: [(String, Phase)] = [
     ("1-idle", .idle), ("2-meeting", .meeting(zoom)),
     ("3-recording", .recording(app: zoom, since: Date().addingTimeInterval(-754))),
-    ("4-saving", .saving), ("5-saved", .saved(Recorder.root)), ("6-problem", .problem("Turn on the mic for Mumble")),
+    ("4-saving", .saving), ("5-saved", .saved("d0")), ("6-problem", .problem("Turn on the mic for Mumble")),
   ]
   try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
   for (name, phase) in states {
@@ -109,6 +156,6 @@ MainActor.assumeIsolated {
   let app = NSApplication.shared
   let delegate = AppDelegate()
   app.delegate = delegate
-  app.setActivationPolicy(.accessory)
+  app.setActivationPolicy(.regular)
   app.run()
 }

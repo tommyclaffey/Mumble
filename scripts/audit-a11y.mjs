@@ -41,6 +41,14 @@ let id = 0; const waits = new Map();
 ws.onmessage = (m) => { const d = JSON.parse(m.data); if (d.id && waits.has(d.id)) { waits.get(d.id)(d); waits.delete(d.id); } };
 const send = (method, params = {}) => new Promise((r) => { const i = ++id; waits.set(i, r); ws.send(JSON.stringify({ id: i, method, params })); });
 await new Promise((r) => (ws.onopen = r));
+/* MAC=1: audit as the Mac app's window sees it (desktop/): the bridge is
+   there, and the recorder is mid-recording, so the Mac-only screen and the
+   header timer are checked too. */
+if (process.env.MAC) {
+  await send('Page.enable');
+  await send('Page.addScriptToEvaluateOnNewDocument', { source: "window.mumbleDesktop = { version: 'audit' }; window.__mumbleMacState = { phase: 'recording', app: 'Zoom', since: Date.now() - 754000 };" });
+  await send('Page.reload');
+}
 await sleep(1500);
 
 let failures = 0;

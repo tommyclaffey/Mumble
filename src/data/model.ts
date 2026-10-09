@@ -99,8 +99,9 @@ interface CaptureBase {
    * behind it, so it has no summary rather than a fake one.
    */
   summary?: string;
-  /** Where the capture came from. */
-  source: 'demo' | 'browser';
+  /** Where the capture came from. 'desktop' = a call recorded by the Mac
+      app, transcribed on the Mac (src/desktop/). */
+  source: 'demo' | 'browser' | 'desktop';
   /** Who pressed record — a teammate's name, in a team workspace. Absent
       means you: everything recorded in this browser is yours. */
   recordedBy?: string;

@@ -63,6 +63,8 @@
   border-radius: var(--radius-pill); background: var(--accent-tint); color: var(--accent-strong);
   font: 500 0.875rem/1.25rem var(--font-sans);
 }
+a.mb-header-live { text-decoration: none; }
+a.mb-header-live:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px; }
 .mb-dot { width: 8px; height: 8px; border-radius: var(--radius-pill); background: var(--accent-base); }
 .mb-dot.is-live { animation: mb-pulse 1.4s ease-in-out infinite; }
 @keyframes mb-pulse { 50% { opacity: 0.35; } }

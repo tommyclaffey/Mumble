@@ -6,6 +6,7 @@ import { go, href, sectionOf, type Route } from '../data/route';
 import { useStore } from '../data/store';
 import { tagColor } from '../data/tagColor';
 import { useRecordingStatus } from '../record/recordingStatus';
+import { desktop } from '../desktop/desktop';
 import { Avatar } from '../components/Avatar/Avatar';
 import { isTeam, workspace } from '../data/workspace';
 import '../components/Button/Button.css';
@@ -51,6 +52,9 @@ export function AppShell({ route, children }: { route: Route; children: ReactNod
   const current = sectionOf(route);
   const { captures } = useStore();
   const rec = useRecordingStatus();
+  /* Inside the Mac app the recorder is the app's, and it runs whatever screen
+     you're on, so the live timer shows everywhere (and opens the recorder). */
+  const inMac = !!desktop();
   const onRecord = route.name === 'record';
 
   /* ⌘K / Ctrl+K — the shortcut the search field advertises. */
@@ -107,7 +111,12 @@ export function AppShell({ route, children }: { route: Route; children: ReactNod
           </button>
         </div>
         <div className="mb-header-actions">
-          {onRecord && rec.state !== 'idle' ? (
+          {inMac && !onRecord && rec.state !== 'idle' ? (
+            <a className="mb-header-live" href={href({ name: 'record' })} aria-label={`Recording, ${formatDuration(rec.elapsed)}. Open the recorder`}>
+              <span className="mb-dot is-live" aria-hidden="true" />
+              Recording · <span className="mb-tabular">{formatDuration(rec.elapsed)}</span>
+            </a>
+          ) : onRecord && rec.state !== 'idle' ? (
             <span className="mb-header-live" role="status">
               <span className={`mb-dot${rec.state === 'recording' ? ' is-live' : ''}`} aria-hidden="true" />
               {rec.state === 'recording' ? 'Recording' : 'Paused'} · <span className="mb-tabular">{formatDuration(rec.elapsed)}</span>
@@ -159,7 +168,7 @@ export function AppShell({ route, children }: { route: Route; children: ReactNod
             </a>
           )}
           <ul className="mb-nav"><NavItem n={SETTINGS} active={current === 'settings'} /></ul>
-          <p className="mb-nav-privacy"><Icon name="lock" size={14} /> <span>Stays in this browser</span></p>
+          <p className="mb-nav-privacy"><Icon name="lock" size={14} /> <span>{inMac ? 'Stays on this Mac' : 'Stays in this browser'}</span></p>
         </div>
       </nav>
 

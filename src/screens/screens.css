@@ -71,3 +71,6 @@
   .mb-filterbar > * { flex-shrink: 0; }
   .mb-viewbar .mb-search { flex: 1 1 100%; max-width: none; }
 }
+
+/* Mac app: the recorder's notes (desktop/MacRecordScreen.tsx). */
+.mb-mac-list { margin: 0; padding-left: 1.1em; display: grid; gap: var(--space-8); }

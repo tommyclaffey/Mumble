@@ -11,6 +11,9 @@ import { SettingsScreen } from './screens/SettingsScreen';
 import { TagsScreen } from './screens/TagsScreen';
 import { TasksScreen } from './screens/TasksScreen';
 import { TeamScreen } from './screens/TeamScreen';
+import { DesktopImporter } from './desktop/DesktopImporter';
+import { desktop } from './desktop/desktop';
+import { MacRecordScreen } from './desktop/MacRecordScreen';
 
 /** Which PAGE this is. A filter change on Recent is the same page. */
 function pageKey(r: Route): string {
@@ -51,9 +54,10 @@ export default function App() {
 
   return (
     <AppShell route={route}>
+      <DesktopImporter />
       {route.name === 'recent' && <RecentScreen filter={route.filter} />}
       {route.name === 'capture' && <CaptureScreen id={route.id} line={route.line} />}
-      {route.name === 'record' && <RecordScreen />}
+      {route.name === 'record' && (desktop() ? <MacRecordScreen /> : <RecordScreen />)}
       {route.name === 'tasks' && <TasksScreen />}
       {route.name === 'tags' && <TagsScreen tag={route.tag} />}
       {route.name === 'meetings' && <MeetingsScreen />}

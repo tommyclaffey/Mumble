@@ -9,7 +9,10 @@ import { ServicesProvider } from './services'
    would cache Vite's live modules and serve stale code on the next reload.
    BASE_URL is /Mumble/ on Pages and / on Railway; the worker's paths are
    relative, so it works under either. */
-if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+/* Not inside the Mac app (desktop/): it serves its own copy of these files,
+   and a cached copy would outlive an app update. */
+const inMacApp = 'mumbleDesktop' in window
+if (import.meta.env.PROD && 'serviceWorker' in navigator && !inMacApp) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`, { scope: import.meta.env.BASE_URL })
       .catch(() => { /* no offline shell -- the app still works online */ })

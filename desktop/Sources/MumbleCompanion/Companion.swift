@@ -11,15 +11,17 @@ import SwiftUI
 ///              if "Record meetings automatically" is on.)
 ///   recording  a live dot and the time. Click = stop. It also stops by
 ///              itself a few seconds after the meeting app lets go of the mic.
-///   saving     turning the two tracks into files (a second or two).
-///   saved      "Saved · Show": click opens the folder. Fades back to idle.
+///   saving     turning the two tracks into files, mixing them and
+///              transcribing both on this Mac (seconds, not minutes).
+///   saved      "Saved · Show": click opens the meeting in the Mumble
+///              window. Fades back to idle.
 ///   problem    something needs you (the mic is off in Settings…). Click fixes it.
 enum Phase: Equatable {
   case idle
   case meeting(MeetingApp)
   case recording(app: MeetingApp?, since: Date)
   case saving
-  case saved(URL)
+  case saved(String)
   case problem(String)
 }
 
@@ -34,6 +36,12 @@ final class Companion: ObservableObject {
   private let detector = MeetingDetector()
   private let recorder = Recorder()
   private var meeting: MeetingApp?
+  /// A call is transcribed and ready for the window to save as a meeting.
+  var onFinished: ((String) -> Void)?
+  /// "Saved · Show" was clicked.
+  var onShow: ((String) -> Void)?
+
+  var isRecording: Bool { if case .recording = phase { return true }; return false }
 
   /// For `--snapshots` only: show a state without it really happening.
   func preview(_ p: Phase) { phase = p }
@@ -41,6 +49,12 @@ final class Companion: ObservableObject {
   func start() {
     detector.onChange = { [weak self] app in self?.meetingChanged(app) }
     detector.start()
+    /* A call whose saving was cut short (the app quit) is finished now. */
+    Task {
+      for dir in Library.unfinished() {
+        if let id = try? await Library.finish(dir) { onFinished?(id) }
+      }
+    }
   }
 
   /// The one action: whatever the icon is showing, clicking does the obvious thing.
@@ -49,8 +63,15 @@ final class Companion: ObservableObject {
     case .idle, .meeting: startRecording()
     case .recording: stopRecording()
     case .saving: break
-    case .saved(let url): NSWorkspace.shared.open(url); phase = meeting.map(Phase.meeting) ?? .idle
-    case .problem: NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone")!)
+    case .saved(let id): onShow?(id); phase = meeting.map(Phase.meeting) ?? .idle
+    case .problem(let why):
+      /* A mic problem opens the mic setting; anything else shows the files. */
+      if why.localizedCaseInsensitiveContains("mic") {
+        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone")!)
+      } else {
+        NSWorkspace.shared.open(Recorder.root)
+      }
+      phase = meeting.map(Phase.meeting) ?? .idle
     }
   }
 
@@ -96,7 +117,12 @@ final class Companion: ObservableObject {
       let folder = recorder.stop(app: app?.name)
       Task { @MainActor in
         guard let folder else { self.phase = .idle; return }
-        self.phase = .saved(folder)
+        guard let id = try? await Library.finish(folder) else {
+          self.phase = .problem("Saved, but not transcribed")
+          return
+        }
+        self.onFinished?(id)
+        self.phase = .saved(id)
         /* "Saved" for a few seconds, then back to whatever is true now. */
         try? await Task.sleep(for: .seconds(6))
         if case .saved = self.phase { self.phase = self.meeting.map(Phase.meeting) ?? .idle }

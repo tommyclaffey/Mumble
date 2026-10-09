@@ -10,6 +10,11 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp .build/release/MumbleCompanion "$APP/Contents/MacOS/Mumble"
 
+# The window's screens: the web app, built for the root of its own address
+# (the app serves it from http://127.0.0.1:47821/ — see LocalServer.swift).
+(cd .. && BASE_PATH=/ npx vite build --outDir desktop/build/web --emptyOutDir >/dev/null)
+mv build/web "$APP/Contents/Resources/web"
+
 # The app icon: the same artwork as the web app's (public/icons/icon-512.png).
 ICONSET=build/Mumble.iconset
 rm -rf "$ICONSET"; mkdir -p "$ICONSET"
@@ -30,11 +35,9 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleExecutable</key><string>Mumble</string>
   <key>CFBundleIconFile</key><string>Mumble</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>0.1</string>
+  <key>CFBundleShortVersionString</key><string>0.2</string>
   <key>CFBundleVersion</key><string>1</string>
-  <key>LSMinimumSystemVersion</key><string>14.2</string>
-  <!-- Menu bar + floating icon only: no Dock icon. -->
-  <key>LSUIElement</key><true/>
+  <key>LSMinimumSystemVersion</key><string>26.0</string>
   <key>NSMicrophoneUsageDescription</key><string>Mumble records your side of the meeting. The recording stays on this Mac.</string>
   <key>NSAudioCaptureUsageDescription</key><string>Mumble records what the other people in your meeting say, from your Mac's sound. The recording stays on this Mac.</string>
 </dict></plist>

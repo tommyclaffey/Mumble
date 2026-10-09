@@ -217,13 +217,13 @@ function CaptureView({ c, startLine }: { c: Capture; startLine?: number }) {
           <p className="mb-t-body-sm">{c.summary}</p>
         ) : (
           <p className="mb-t-body-sm mb-muted">
-            No summary. Summaries come from the model, and captures recorded in the browser demo don’t go to one.
+            {c.source === 'desktop' ? 'No summary. Summaries come from a model, and calls recorded on this Mac don’t go to one yet.' : 'No summary. Summaries come from the model, and captures recorded in the browser demo don’t go to one.'}
           </p>
         )}
       </PanelCard>
 
       <PanelCard id="tasks-h" title="Tasks" icon="check" meta={c.tasks.length ? `${done} of ${c.tasks.length} done` : undefined}>
-        <p className="mb-t-meta mb-muted mb-review-provenance">{c.source === 'demo' ? 'Found by the model' : 'Suggested by phrasing — no model in the browser demo'}</p>
+        <p className="mb-t-meta mb-muted mb-review-provenance">{c.source === 'demo' ? 'Found by the model' : c.source === 'desktop' ? 'Suggested by phrasing — no model reads your calls' : 'Suggested by phrasing — no model in the browser demo'}</p>
         {c.tasks.length === 0 ? (
           <p className="mb-t-body-sm mb-muted">No tasks in this one.</p>
         ) : (
@@ -255,7 +255,7 @@ function CaptureView({ c, startLine }: { c: Capture; startLine?: number }) {
           <dt>Words</dt><dd className="mb-tabular">{wordCount(c).toLocaleString()}</dd>
           <dt>Speakers</dt><dd>{meeting ? `${meeting.speakers.length}${unsure.length ? ` · ${unsure.length} unconfirmed` : ''}` : by}</dd>
           {isTeam() && <><dt>Recorded by</dt><dd>{by === 'You' ? `You (${workspace().me?.name})` : by}</dd></>}
-          <dt>Source</dt><dd>{c.source === 'demo' ? 'Demo · synthetic voices' : c.audio ? 'Recorded in this browser' : 'Transcript only'}</dd>
+          <dt>Source</dt><dd>{c.source === 'demo' ? 'Demo · synthetic voices' : c.source === 'desktop' ? 'Recorded on this Mac' : c.audio ? 'Recorded in this browser' : 'Transcript only'}</dd>
           <dt>Stored</dt><dd>This browser only</dd>
         </dl>
         <Button variant="ghost" size="sm" icon="trash" onClick={remove}>Delete recording</Button>
@@ -388,7 +388,7 @@ function CaptureView({ c, startLine }: { c: Capture; startLine?: number }) {
 
         <div className="mb-review-foot">
           <button type="button" className="mb-icon-btn" onClick={copyTranscript} aria-label="Copy transcript"><Icon name="copy" size={16} /></button>
-          <span className="mb-t-meta mb-muted">{c.source === 'demo' ? 'Demo recording' : 'Recorded in this browser'} · {formatWhen(c.createdAt)}</span>
+          <span className="mb-t-meta mb-muted">{c.source === 'demo' ? 'Demo recording' : c.source === 'desktop' ? 'Recorded on this Mac' : 'Recorded in this browser'} · {formatWhen(c.createdAt)}</span>
         </div>
       </div>
 

@@ -5,7 +5,7 @@ import PackageDescription
    Built with the Command Line Tools alone (no Xcode needed): `swift build`. */
 let package = Package(
   name: "MumbleDesktop",
-  platforms: [.macOS("14.2")],
+  platforms: [.macOS("26.0")],
   targets: [
     .executableTarget(name: "MicWatch", path: "Sources/MicWatch"),
     .executableTarget(name: "SystemTap", path: "Sources/SystemTap"),
