@@ -17,11 +17,21 @@ export interface MacState {
   app?: string | null;
   /** What's wrong, for 'problem'. */
   message?: string;
+  /** 'note' (just you) or 'meeting' (you + the call). */
+  kind?: 'note' | 'meeting';
+  /** While saving: 'tracks' then 'transcribe'. */
+  step?: 'tracks' | 'transcribe';
 }
+
+/** One line of the live transcript: your mic ('you') or the call ('them'). */
+export interface LiveLine { who: 'you' | 'them'; start: number; text: string; final: boolean }
 
 const w = window as unknown as { __mumbleMacState?: MacState };
 let current: MacState = w.__mumbleMacState ?? { phase: 'idle' };
 const listeners = new Set<() => void>();
+let live: LiveLine[] = [];
+/* The window's own part of saving: telling voices apart, after the Mac has transcribed. */
+let importing = false;
 let ticker: ReturnType<typeof setInterval> | undefined;
 
 function syncHeader() {
@@ -47,9 +57,23 @@ export function followMacState() {
     syncHeader();
     listeners.forEach((l) => l());
   });
+  window.addEventListener('mumble:desktop-live', (e) => {
+    live = (e as CustomEvent<LiveLine[]>).detail ?? [];
+    listeners.forEach((l) => l());
+  });
   syncHeader();
 }
 
+export function setImporting(on: boolean) {
+  if (importing === on) return;
+  importing = on;
+  listeners.forEach((l) => l());
+}
+
+const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
+export const useLive = () => useSyncExternalStore(subscribe, () => live);
+export const useImporting = () => useSyncExternalStore(subscribe, () => importing);
+
 export function useMacState(): MacState {
-  return useSyncExternalStore((l) => { listeners.add(l); return () => listeners.delete(l); }, () => current);
+  return useSyncExternalStore(subscribe, () => current);
 }

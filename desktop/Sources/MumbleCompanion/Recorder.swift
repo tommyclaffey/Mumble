@@ -29,6 +29,11 @@ final class Recorder: @unchecked Sendable {
   private var pausedTotal: TimeInterval = 0
   /// Your mic's loudness right now, 0–1 — the widget's level meter.
   private(set) var micLevel: Float = 0
+  /// Live transcription of each track, fed as the audio is written.
+  var liveYou: LiveTranscriber?
+  var liveOthers: LiveTranscriber?
+  /// "note" = just you (mic only); "meeting" = your mic and the call's sound.
+  private var kind = "meeting"
 
   func pause() {
     guard !paused, folder != nil else { return }
@@ -49,7 +54,8 @@ final class Recorder: @unchecked Sendable {
 
   /// Starts both tracks. Throws if the mic can't be opened; the system track
   /// is best-effort (without permission it records silence, and says so).
-  func start(app: String?) throws {
+  func start(app: String?, kind: String = "meeting") throws {
+    self.kind = kind
     let stamp = DateFormatter()
     stamp.dateFormat = "yyyy-MM-dd HHmm"
     let dir = Self.root.appendingPathComponent("\(stamp.string(from: Date())) \(app ?? "Recording")", isDirectory: true)
@@ -62,6 +68,7 @@ final class Recorder: @unchecked Sendable {
     input.installTap(onBus: 0, bufferSize: 4096, format: format) { [weak self] buffer, _ in
       guard let self, !self.paused else { return }
       try? mic.write(from: buffer)
+      self.liveYou?.feed(buffer)
       if let ch = buffer.floatChannelData, buffer.frameLength > 0 {
         var sum: Float = 0
         for i in 0..<Int(buffer.frameLength) { sum += ch[0][i] * ch[0][i] }
@@ -71,8 +78,12 @@ final class Recorder: @unchecked Sendable {
     }
     try engine.start()
 
-    tap = try? SystemAudioTap(writingTo: dir.appendingPathComponent("others.caf"))
-    try? tap?.start()
+    /* A note is just you: no call audio. */
+    if kind == "meeting" {
+      tap = try? SystemAudioTap(writingTo: dir.appendingPathComponent("others.caf"))
+      tap?.onBuffer = { [weak self] b in self?.liveOthers?.feed(b) }
+      try? tap?.start()
+    }
 
     self.engine = engine
     micFile = mic
@@ -105,6 +116,7 @@ final class Recorder: @unchecked Sendable {
       "startedAt": ISO8601DateFormatter().string(from: started),
       /* Time actually recorded: pauses aren't in the files, so not in the length. */
       "durationSeconds": Int(Date().timeIntervalSince(started) - pausedTotal),
+      "kind": kind,
       "tracks": ["you": "you.m4a", "others": "others.m4a"],
       /* false = the system track is silence: no permission, or nobody spoke. */
       "othersHeard": heardOthers,
@@ -113,6 +125,16 @@ final class Recorder: @unchecked Sendable {
       try? data.write(to: dir.appendingPathComponent("meeting.json"))
     }
     return dir
+  }
+
+  /// Throws the recording away: stops both tracks and deletes the folder.
+  func discard() {
+    engine?.inputNode.removeTap(onBus: 0)
+    engine?.stop()
+    tap?.stop()
+    engine = nil; micFile = nil; tap = nil; micLevel = 0
+    if let dir = folder { try? FileManager.default.removeItem(at: dir) }
+    folder = nil; startedAt = nil; paused = false; pausedAt = nil; pausedTotal = 0
   }
 
   /// Raw audio → AAC in an .m4a, mono, 48 kbps (~0.4 MB a minute, as the demo files).
@@ -154,6 +176,8 @@ final class SystemAudioTap: @unchecked Sendable {
   private(set) var heardSound = false
   /// Set by Recorder.pause(): drop what arrives instead of writing it.
   var paused = false
+  /// Every buffer written, for live transcription.
+  var onBuffer: ((AVAudioPCMBuffer) -> Void)?
 
   init(writingTo url: URL) throws {
     let desc = CATapDescription(stereoGlobalTapButExcludeProcesses: [])
@@ -192,6 +216,7 @@ final class SystemAudioTap: @unchecked Sendable {
     let status = AudioDeviceCreateIOProcIDWithBlock(&proc, device, nil) { [self] _, input, _, _, _ in
       guard !paused, let buf = AVAudioPCMBuffer(pcmFormat: format, bufferListNoCopy: input, deallocator: nil) else { return }
       try? file.write(from: buf)
+      onBuffer?(buf)
       if !heardSound, let ch = buf.floatChannelData {
         for i in 0..<Int(buf.frameLength) where abs(ch[0][i]) > 0.001 { heardSound = true; break }
       }

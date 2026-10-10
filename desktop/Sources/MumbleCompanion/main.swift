@@ -17,6 +17,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
   var watch: AnyCancellable?
   var server: LocalServer?
   var main: MainWindow?
+  let dictation = Dictation()
+  var liveWatch: AnyCancellable?
 
   func applicationDidFinishLaunching(_ note: Notification) {
     let web = Bundle.main.resourceURL!.appendingPathComponent("web")
@@ -24,15 +26,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     do { try server?.start() } catch { NSLog("Mumble: local server failed: \(error)") }
     NSApp.mainMenu = mainMenu(reload: #selector(reload), newRecording: #selector(toggle), target: self)
     let main = MainWindow()
-    main.onMessage = { [weak self] type in
+    main.onMessage = { [weak self] type, body in
       guard let self else { return }
       switch type {
-      case "record": self.companion.record()
+      case "record": self.companion.record(kind: body["kind"] as? String ?? "meeting")
       case "pause": self.companion.pause()
       case "resume": self.companion.resume()
       case "stop": self.companion.stop()
+      case "discard": self.companion.discard()
+      case "dictate-start": self.dictation.start()
+      case "dictate-stop": self.dictation.stop()
       default: break
       }
+    }
+    dictation.onEvent = { [weak self] e in self?.main?.send("mumble:desktop-dictate", e) }
+    /* The live transcript, to the New recording screen. */
+    liveWatch = companion.$live.sink { [weak self] lines in
+      self?.main?.send("mumble:desktop-live", lines.map { ["who": $0.who, "start": $0.start, "text": $0.text, "final": $0.final] })
     }
     self.main = main
     /* A call recorded from the window opens when it's ready; one recorded
@@ -56,7 +66,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     status = item
 
     /* The menu bar glyph follows the state too: filled while recording. */
-    watch = companion.$phase.sink { [weak self] phase in
+    watch = companion.$phase.combineLatest(companion.$kind, companion.$savingStep).sink { [weak self] phase, kind, step in
       var state: [String: Any] = ["phase": "idle"]
       switch phase {
       case .idle, .saved: break
@@ -66,6 +76,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
       case .saving: state = ["phase": "saving"]
       case .problem(let why): state = ["phase": "problem", "message": why]
       }
+      state["kind"] = kind
+      state["step"] = step
       self?.main?.pushState(state)
       let name: String
       switch phase {
@@ -184,6 +196,12 @@ MainActor.assumeIsolated {
   /* `--to-m4a <in> <out>` (testing): the conversion every recording ends with. */
   if let i = CommandLine.arguments.firstIndex(of: "--to-m4a"), CommandLine.arguments.count > i + 2 {
     do { try Recorder.toM4A(URL(fileURLWithPath: CommandLine.arguments[i + 1]), URL(fileURLWithPath: CommandLine.arguments[i + 2])); exit(0) } catch { print(error); exit(1) }
+  }
+  /* `--live-test <audio>` (testing): live transcription of a file, fed as if it were the mic. */
+  if let i = CommandLine.arguments.firstIndex(of: "--live-test"), CommandLine.arguments.count > i + 1 {
+    let path = CommandLine.arguments[i + 1]
+    Task { await LiveTranscriber.selfTest(path); exit(0) }
+    RunLoop.main.run()
   }
   if let i = CommandLine.arguments.firstIndex(of: "--snapshots") {
     snapshots(to: CommandLine.arguments.dropFirst(i + 1).first ?? "/tmp/mumble-widget")

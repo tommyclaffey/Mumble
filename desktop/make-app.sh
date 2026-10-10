@@ -37,8 +37,8 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleExecutable</key><string>Mumble</string>
   <key>CFBundleIconFile</key><string>Mumble</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>0.3</string>
-  <key>CFBundleVersion</key><string>3</string>
+  <key>CFBundleShortVersionString</key><string>0.4</string>
+  <key>CFBundleVersion</key><string>4</string>
   <key>LSMinimumSystemVersion</key><string>26.0</string>
   <key>NSMicrophoneUsageDescription</key><string>Mumble records your side of the meeting. The recording stays on this Mac.</string>
   <key>NSAudioCaptureUsageDescription</key><string>Mumble records what the other people in your meeting say, from your Mac's sound. The recording stays on this Mac.</string>

@@ -16,7 +16,7 @@ import WebKit
 final class MainWindow: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler, NSWindowDelegate {
   let window: NSWindow
   let web: WKWebView
-  var onMessage: ((String) -> Void)?
+  var onMessage: ((String, [String: Any]) -> Void)?
   private var loaded = false
   private var queued: [String] = []
 
@@ -85,6 +85,12 @@ final class MainWindow: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptMe
     "window.__mumbleMacState = \(lastState); window.dispatchEvent(new CustomEvent('mumble:desktop-state', { detail: window.__mumbleMacState }))"
   }
 
+  /// Any event to the page: the live transcript, dictation.
+  func send(_ event: String, _ detail: Any) {
+    guard loaded, let data = try? JSONSerialization.data(withJSONObject: detail), let json = String(data: data, encoding: .utf8) else { return }
+    web.evaluateJavaScript("window.dispatchEvent(new CustomEvent('\(event)', { detail: \(json) }))")
+  }
+
   /// Is the window in front, so a finished call should open in it?
   var isInFront: Bool { NSApp.isActive && window.isVisible && window.isKeyWindow }
 
@@ -97,7 +103,7 @@ final class MainWindow: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptMe
   // MARK: page → app
   nonisolated func userContentController(_ c: WKUserContentController, didReceive message: WKScriptMessage) {
     MainActor.assumeIsolated {
-      if let body = message.body as? [String: Any], let type = body["type"] as? String { onMessage?(type) }
+      if let body = message.body as? [String: Any], let type = body["type"] as? String { onMessage?(type, body) }
     }
   }
 

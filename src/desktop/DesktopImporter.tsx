@@ -3,8 +3,8 @@ import { go } from '../data/route';
 import { useStore } from '../data/store';
 import { peaksFromBlob } from '../record/waveform';
 import { useServices } from '../services';
-import { audioUrl, desktop, meetingFromCall, type DesktopCall } from './desktop';
-import { followMacState } from './macState';
+import { audioUrl, desktop, meetingFromCall, noteFromCall, type DesktopCall } from './desktop';
+import { followMacState, setImporting } from './macState';
 
 /**
  * Inside the Mac app: saves each finished call as a meeting. Renders nothing.
@@ -36,14 +36,16 @@ export function DesktopImporter() {
           stored = true;
           peaks = await peaksFromBlob(mix);
         } catch { /* the words still arrive, without a player */ }
+        const note = call.kind === 'note';
         let voices = null;
-        if (call.others.length > 0) {
+        if (!note && call.others.length > 0) {
           try {
             const theirs = await (await fetch(audioUrl(call, 'others.m4a'))).blob();
             voices = await services.diarizer().run(theirs, call.others.map((l) => l.start), null, () => {});
           } catch { /* everyone else stays one "Speaker 1", flagged for "Who is this?" */ }
         }
-        dispatch({ type: 'addCapture', capture: meetingFromCall(call, voices, { stored, peaks, taskHints: latest.current.prefs.taskHints }) });
+        const opts = { stored, peaks, taskHints: latest.current.prefs.taskHints };
+        dispatch({ type: 'addCapture', capture: note ? noteFromCall(call, opts) : meetingFromCall(call, voices, opts) });
       }
       await fetch(`/desktop/imported/${encodeURIComponent(call.id)}`, { method: 'POST' });
     }
@@ -52,8 +54,10 @@ export function DesktopImporter() {
       busy.current = busy.current.then(async () => {
         try {
           const calls = (await (await fetch('/desktop/pending', { cache: 'no-store' })).json()) as DesktopCall[];
+          if (calls.length) setImporting(true);
           for (const call of calls) await importOne(call);
         } catch { /* the app isn't answering: try again next time */ }
+        setImporting(false);
         if (open) go({ name: 'capture', id: open });
       });
     }

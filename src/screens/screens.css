@@ -74,3 +74,9 @@
 
 /* Mac app: the recorder's notes (desktop/MacRecordScreen.tsx). */
 .mb-mac-list { margin: 0; padding-left: 1.1em; display: grid; gap: var(--space-8); }
+/* Mac app recorder: a turn per track, and the "On the call" mark. */
+.mb-mac-turn { display: grid; gap: var(--space-8); }
+.mb-mac-call {
+  display: grid; place-items: center; width: 28px; height: 28px; border-radius: var(--radius-pill);
+  background: var(--surface-subtle); color: var(--text-muted);
+}

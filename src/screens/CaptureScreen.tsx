@@ -256,7 +256,7 @@ function CaptureView({ c, startLine }: { c: Capture; startLine?: number }) {
           <dt>Speakers</dt><dd>{meeting ? `${meeting.speakers.length}${unsure.length ? ` · ${unsure.length} unconfirmed` : ''}` : by}</dd>
           {isTeam() && <><dt>Recorded by</dt><dd>{by === 'You' ? `You (${workspace().me?.name})` : by}</dd></>}
           <dt>Source</dt><dd>{c.source === 'demo' ? 'Demo · synthetic voices' : c.source === 'desktop' ? 'Recorded on this Mac' : c.audio ? 'Recorded in this browser' : 'Transcript only'}</dd>
-          <dt>Stored</dt><dd>This browser only</dd>
+          <dt>Stored</dt><dd>{c.source === 'desktop' ? 'This Mac only' : 'This browser only'}</dd>
         </dl>
         <Button variant="ghost" size="sm" icon="trash" onClick={remove}>Delete recording</Button>
       </PanelCard>

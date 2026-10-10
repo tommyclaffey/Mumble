@@ -32,7 +32,8 @@ same size as every other app in the Dock.
 | **Transcribes it** | `Transcriber.swift`, `Library.swift` | After Stop: both tracks mixed into `mix.m4a`, then each transcribed by Apple's `SpeechAnalyzer` (macOS 26, on-device, no permission prompt; the English model downloads once). Written to `transcript.json`. |
 | **The window** | `MainWindow.swift`, `LocalServer.swift` | A WKWebView on `http://127.0.0.1:47821/`, served by the app itself from `Contents/Resources/web`, loopback only. 127.0.0.1 is a secure address, so IndexedDB, Meeting mode's worker and its model cache all work. The port never changes: saved data belongs to the address. |
 | **Into Mumble** | `src/desktop/` (web side) | The page asks `/desktop/pending`, saves each call as a meeting (`meetingFromCall`), then `POST /desktop/imported/<id>`. A call recorded with the window closed arrives next time it opens. "Saved · Show" opens it. |
-| **Recording from the window** | `src/desktop/MacRecordScreen.tsx` | Inside the app, New recording drives the Mac recorder (both tracks), not the browser's. The header timer follows it on every screen. |
+| **Recording from the window** | `src/desktop/MacRecordScreen.tsx` | The website's New recording screen, with the Mac recording: **Note** (just your mic) or **Meeting** (mic + the Mac's sound), a **live transcript** of both tracks as you talk (`LiveTranscriber.swift`, Apple's on-device SpeechAnalyzer), tasks spotted, Pause/Resume, Stop & save, Discard, Space, and the saving steps. The saved transcript is made again from the files after Stop. |
+| **🎤 dictation** | `Dictation.swift`, `macRecognizer` in `src/desktop/desktop.ts` | Every 🎤 in the window is done by the Mac's on-device speech, not the web view's (which needs a speech permission the app doesn't ask for). Stops after the first settled phrase, or 30 s. |
 
 Two tracks is deliberate: your voice and theirs never share a file, so "who
 said what" starts half-solved. (On speakers instead of headphones, their
@@ -61,6 +62,7 @@ rebuild has a new signature, so macOS may ask for permissions again.
   audit as the window sees it, mid-recording.
 
 - `Mumble --detect-any`: any app using the mic counts as a meeting, and state changes print.
+- `Mumble --live-test <audio>`: live transcription of a file, fed as if it were the mic (4× speed).
 - `Mumble --snapshots <dir>`: draws the icon in every state to PNGs.
 - `Mumble --to-m4a <in> <out>`: the conversion each recording ends with.
 

@@ -13,6 +13,8 @@ import Foundation
 enum Library {
   struct Transcript: Codable {
     let id: String
+    /// "note" (just you) or "meeting". Older calls have none: meeting.
+    var kind: String? = "meeting"
     let app: String?
     let startedAt: String
     let durationSeconds: Int
@@ -26,6 +28,7 @@ enum Library {
     let startedAt: String
     let durationSeconds: Int
     let othersHeard: Bool?
+    let kind: String?
   }
 
   static var root: URL { Recorder.root }
@@ -76,7 +79,7 @@ enum Library {
     let yourLines = (try? await Transcriber.transcribe(you)) ?? []
     let theirLines = heard ? ((try? await Transcriber.transcribe(others)) ?? []) : []
 
-    let t = Transcript(id: id, app: info.app, startedAt: info.startedAt, durationSeconds: info.durationSeconds,
+    let t = Transcript(id: id, kind: info.kind ?? "meeting", app: info.app, startedAt: info.startedAt, durationSeconds: info.durationSeconds,
                        othersHeard: heard, you: yourLines, others: theirLines)
     let enc = JSONEncoder()
     enc.outputFormatting = [.prettyPrinted, .sortedKeys]

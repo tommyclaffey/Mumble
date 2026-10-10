@@ -1,4 +1,5 @@
-import { suggestTasks, titleFrom, type Meeting, type Speaker, type TranscriptLine } from '../data/model';
+import { suggestTasks, titleFrom, type Meeting, type Note, type Speaker, type TranscriptLine } from '../data/model';
+import { sentence, type Recognizer } from '../record/recognizer';
 import type { DiarizeResult } from '../record/diarizer';
 
 /**
@@ -21,6 +22,8 @@ export interface HeardLine { start: number; end: number; text: string }
 /** A finished call, as GET /desktop/pending returns it. */
 export interface DesktopCall {
   id: string;
+  /** 'note' = just you (mic only). Absent on calls from before notes: a meeting. */
+  kind?: 'note' | 'meeting';
   app: string | null;
   startedAt: string;
   durationSeconds: number;
@@ -29,13 +32,52 @@ export interface DesktopCall {
   others: HeardLine[];
 }
 
-interface Bridge { postMessage(m: { type: string }): void }
+interface Bridge { postMessage(m: { type: string; [k: string]: unknown }): void }
 
 /** The Mac app, or null on the website. */
-export function desktop(): { send(type: 'record' | 'pause' | 'resume' | 'stop'): void } | null {
+export type MacMessage = 'record' | 'pause' | 'resume' | 'stop' | 'discard' | 'dictate-start' | 'dictate-stop';
+export function desktop(): { send(type: MacMessage, extra?: Record<string, unknown>): void } | null {
+  if (typeof window === 'undefined') return null;
   const w = window as unknown as { mumbleDesktop?: unknown; webkit?: { messageHandlers?: { mumble?: Bridge } } };
   if (!w.mumbleDesktop) return null;
-  return { send: (type) => w.webkit?.messageHandlers?.mumble?.postMessage({ type }) };
+  return { send: (type, extra) => w.webkit?.messageHandlers?.mumble?.postMessage({ type, ...extra }) };
+}
+
+/**
+ * The 🎤 buttons, inside the Mac app: the Mac listens and transcribes
+ * (Dictation.swift, Apple's on-device speech) instead of the web view's
+ * speech engine, which needs a permission the app doesn't ask for. Same
+ * interface as the browser's, so every 🎤 works unchanged.
+ */
+export function macRecognizer(): Recognizer {
+  const app = desktop();
+  if (!app) return { available: false, start() {}, stop() {} };
+  let listener: ((e: Event) => void) | null = null;
+  const off = () => { if (listener) window.removeEventListener('mumble:desktop-dictate', listener); listener = null; };
+  return {
+    available: true,
+    start(events) {
+      off();
+      listener = (e) => {
+        const d = (e as CustomEvent<{ text?: string; final?: boolean; error?: string }>).detail ?? {};
+        if (d.error) { off(); events.onError(d.error); return; }
+        if (d.final) {
+          off();
+          if (d.text?.trim()) events.onFinal({ text: sentence(d.text), confidence: 1 });
+          else events.onError('Nothing was heard. Try again, a little closer to the mic.');
+          return;
+        }
+        events.onInterim(d.text ?? '');
+      };
+      window.addEventListener('mumble:desktop-dictate', listener);
+      app.send('dictate-start');
+    },
+    stop() {
+      if (!listener) return;
+      off();
+      app.send('dictate-stop');
+    },
+  };
 }
 
 export const captureIdFor = (call: DesktopCall) => call.id;
@@ -64,6 +106,26 @@ export function dropEchoes(you: HeardLine[], others: HeardLine[]): HeardLine[] {
 }
 
 const YOU: Speaker = { id: 'you', name: 'You', voiceprintId: 'mic', colorIndex: 0, confirmed: true };
+
+/** A note recorded on the Mac: just you, so no speakers and nothing to tell apart. */
+export function noteFromCall(call: DesktopCall, opts: { stored: boolean; peaks?: number[]; taskHints: boolean }): Note {
+  const lines: TranscriptLine[] = call.you.map((l, i) => ({
+    id: `l${i + 1}`, text: l.text, startsAt: Math.round(l.start * 10) / 10, confidence: 1,
+  }));
+  return {
+    kind: 'note',
+    id: captureIdFor(call),
+    source: 'desktop',
+    audio: opts.stored ? 'stored' : undefined,
+    peaks: opts.peaks,
+    title: titleFrom(lines, 'Note'),
+    createdAt: call.startedAt,
+    durationSeconds: call.durationSeconds,
+    lines,
+    tasks: opts.taskHints ? suggestTasks(lines) : [],
+    tags: [],
+  };
+}
 
 /**
  * The meeting. `voices` is Meeting mode's answer for the OTHER track's lines

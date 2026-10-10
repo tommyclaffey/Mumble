@@ -1,3 +1,4 @@
+import { desktop } from '../desktop/desktop';
 import { showWelcome } from '../components/Welcome/welcomeState';
 import { BRAND } from '../brand';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -22,6 +23,8 @@ import './SettingsScreen.css';
  * is the team demo's made-up one, and it says it's a demo.
  */
 export function SettingsScreen() {
+  /* Inside the Mac app the same screen describes the Mac, not a browser. */
+  const inMac = !!desktop();
   const { prefs, dispatch, captures } = useStore();
   const { audioStore } = useServices();
   const [used, setUsed] = useState<string | null>(null);
@@ -73,7 +76,7 @@ export function SettingsScreen() {
   );
 
   return (
-    <Page title="Settings" subtitle="Everything here is saved in this browser." panel={panel} panelLabel="Storage and shortcuts">
+    <Page title="Settings" subtitle={inMac ? 'Everything here is saved on this Mac.' : 'Everything here is saved in this browser.'} panel={panel} panelLabel="Storage and shortcuts">
       <Section title="Workspace">
         {isTeam() && ws.me ? (
           <>
@@ -116,17 +119,23 @@ export function SettingsScreen() {
         <Row label="Find tasks while I talk" hint="Lines like “We need to…” are suggested as tasks. It’s phrasing, not a model, and it says so.">
           <Toggle label="Find tasks while I talk" on={prefs.taskHints} onChange={(taskHints) => setPref({ taskHints })} />
         </Row>
-        <Row label="Transcription" hint="Your browser’s speech service writes the transcript as you talk. Chrome and Edge send the audio to their vendor to do that; Safari keeps it on-device where it can.">
-          <span className="mb-t-label-sm mb-muted">Browser speech service</span>
-        </Row>
-        <Row label="Meeting mode" hint="After you stop, two small models tell the voices apart and put a speaker on every line, in this browser. The first meeting downloads them (about 33 MB); after that they’re saved. Unsure lines are flagged so you can say who it was.">
-          <ChipMeta>In this browser</ChipMeta>
+        {inMac ? (
+          <Row label="Transcription" hint="Apple’s on-device speech recognition writes the transcript as you talk, and again from the recording when you stop. Nothing is uploaded.">
+            <span className="mb-t-label-sm mb-muted">On this Mac</span>
+          </Row>
+        ) : (
+          <Row label="Transcription" hint="Your browser’s speech service writes the transcript as you talk. Chrome and Edge send the audio to their vendor to do that; Safari keeps it on-device where it can.">
+            <span className="mb-t-label-sm mb-muted">Browser speech service</span>
+          </Row>
+        )}
+        <Row label="Meeting mode" hint={`After you stop, two small models tell the voices apart and put a speaker on every line, ${inMac ? 'on this Mac' : 'in this browser'}. The first meeting downloads them (about 33 MB); after that they’re saved. Unsure lines are flagged so you can say who it was.`}>
+          <ChipMeta>{inMac ? 'On this Mac' : 'In this browser'}</ChipMeta>
         </Row>
       </Section>
 
       <Section title="Privacy & data">
-        <Row label="Where recordings live" hint={`Audio, transcripts and edits never leave this browser.${used ? ` Using ${used} here.` : ''}`}>
-          <span className="mb-t-label-sm"><Icon name="lock" size={14} /> This browser only</span>
+        <Row label="Where recordings live" hint={`Audio, transcripts and edits never leave this ${inMac ? 'Mac' : 'browser'}.${used ? ` Using ${used} here.` : ''}`}>
+          <span className="mb-t-label-sm"><Icon name="lock" size={14} /> {inMac ? 'This Mac only' : 'This browser only'}</span>
         </Row>
         <Row label="Delete my audio" hint={`${stored ? `${stored} recording${stored === 1 ? '' : 's'} saved with audio.` : 'None yet.'} Removes the audio; the transcripts stay.`}>
           <Button size="sm" onClick={deleteRecordings} disabled={!stored}>Delete audio</Button>

@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.tsx'
 import { StoreProvider } from './data/store'
 import { ServicesProvider } from './services'
+import { macRecognizer } from './desktop/desktop'
 import { enableWelcome } from './components/Welcome/welcomeState'
 
 /* The demo's welcome card shows once per browser (components/Welcome). */
@@ -26,7 +27,8 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator && !inMacApp) {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <StoreProvider>
-      <ServicesProvider>
+      {/* Inside the Mac app, 🎤 dictation is done by the Mac (desktop/Dictation.swift). */}
+      <ServicesProvider recognizer={inMacApp ? macRecognizer : undefined}>
         <App />
       </ServicesProvider>
     </StoreProvider>

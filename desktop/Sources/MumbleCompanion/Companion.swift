@@ -51,6 +51,17 @@ final class Companion: ObservableObject {
   /// For `--snapshots`: a fixed mic level instead of the real one.
   var previewLevel: Float?
 
+  /// One line of the live transcript: who (your mic, or the call), when, what.
+  struct LiveLine: Equatable { let who: String; let start: Double; let text: String; let final: Bool }
+  /// What's being said, as it's said — both tracks, in time order.
+  @Published private(set) var live: [LiveLine] = []
+  /// "note" (just you) or "meeting" (you + the call) — for the recording in progress.
+  @Published private(set) var kind = "meeting"
+  /// While saving: "tracks" → "transcribe". The window shows these as steps.
+  @Published private(set) var savingStep = "tracks"
+  private var liveYou: [LiveLine] = [], liveThem: [LiveLine] = []
+  private var transcribers: [LiveTranscriber] = []
+
   var isRecording: Bool { if case .recording = phase { return true }; return false }
   var isActive: Bool {
     switch phase { case .recording, .paused: return true; default: return false }
@@ -74,11 +85,52 @@ final class Companion: ObservableObject {
 
   // MARK: the actions — one per button, so nothing has to guess
 
-  func record() {
+  /// Record. From the widget it's always a meeting (it's for calls); the
+  /// window can ask for a note — just you, no call audio.
+  func record(kind: String = "meeting") {
     switch phase {
-    case .idle, .meeting, .saved, .problem: startRecording()
+    case .idle, .meeting, .saved, .problem: self.kind = kind == "note" ? "note" : "meeting"; startRecording()
     default: break
     }
+  }
+
+  /// Throw the recording away. Nothing is saved.
+  func discard() {
+    switch phase {
+    case .recording, .paused: break
+    default: return
+    }
+    stopLive()
+    recorder.discard()
+    live = []
+    settle()
+  }
+
+  private func startLive() {
+    liveYou = []; liveThem = []; live = []
+    let you = LiveTranscriber()
+    you.onUpdate = { [weak self] segs in self?.liveYou = segs.map { LiveLine(who: "you", start: $0.start, text: $0.text, final: $0.final) }; self?.mergeLive() }
+    recorder.liveYou = you
+    transcribers = [you]
+    if kind == "meeting" {
+      let them = LiveTranscriber()
+      them.onUpdate = { [weak self] segs in self?.liveThem = segs.map { LiveLine(who: "them", start: $0.start, text: $0.text, final: $0.final) }; self?.mergeLive() }
+      recorder.liveOthers = them
+      transcribers.append(them)
+    }
+    /* If the live engine can't start, the recording still works: the full
+       transcript is made from the files after Stop either way. */
+    for t in transcribers { Task { try? await t.start() } }
+  }
+
+  private func stopLive() {
+    recorder.liveYou = nil; recorder.liveOthers = nil
+    let ts = transcribers; transcribers = []
+    Task { for t in ts { await t.cancel() } }
+  }
+
+  private func mergeLive() {
+    live = (liveYou + liveThem).sorted { $0.start < $1.start }
   }
 
   func pause() {
@@ -100,11 +152,14 @@ final class Companion: ObservableObject {
     default: return
     }
     let recorder = self.recorder
+    stopLive()
+    savingStep = "tracks"
     phase = .saving
     DispatchQueue.global(qos: .userInitiated).async {
       let folder = recorder.stop(app: app?.name)
       Task { @MainActor in
         guard let folder else { self.phase = .idle; return }
+        self.savingStep = "transcribe"
         guard let id = try? await Library.finish(folder) else {
           self.phase = .problem("Saved, but not transcribed")
           return
@@ -172,7 +227,8 @@ final class Companion: ObservableObject {
       Task { @MainActor in
         guard ok else { self.phase = .problem("Turn on the mic for Mumble"); return }
         do {
-          try self.recorder.start(app: self.meeting?.name)
+          try self.recorder.start(app: self.meeting?.name, kind: self.kind)
+          self.startLive()
           self.phase = .recording(app: self.meeting, since: Date())
         } catch {
           self.phase = .problem("Couldn’t open the mic")
