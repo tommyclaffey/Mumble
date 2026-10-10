@@ -16,7 +16,10 @@ export function MacRecordScreen() {
   const rec = useRecordingStatus();
   const app = desktop();
   const recording = mac.phase === 'recording';
+  const paused = mac.phase === 'paused';
+  const active = recording || paused;
   const saving = mac.phase === 'saving';
+  const elapsed = active ? rec.elapsed : 0;
 
   const panel = (
     <>
@@ -36,7 +39,7 @@ export function MacRecordScreen() {
   return (
     <Page
       title="New recording"
-      subtitle={recording ? `Recording${mac.app ? ` your ${mac.app} call` : ''} · on this Mac` : saving ? 'Saving' : 'Ready when you are'}
+      subtitle={recording ? `Recording${mac.app ? ` your ${mac.app} call` : ''} · on this Mac` : paused ? 'Paused · nothing is being recorded' : saving ? 'Saving' : 'Ready when you are'}
       headingId="record-h" panel={panel} panelLabel="While you record" panelOnPhone="hide"
     >
       <section className="mb-recorder" aria-labelledby="record-h">
@@ -44,17 +47,18 @@ export function MacRecordScreen() {
           <button
             type="button"
             className={`mb-rec${recording ? ' is-live' : ''}`}
-            onClick={() => app?.send(recording ? 'stop' : 'record')}
+            onClick={() => app?.send(recording ? 'pause' : paused ? 'resume' : 'record')}
             disabled={saving}
-            aria-label={recording ? 'Stop and save' : 'Start recording'}
+            aria-label={recording ? 'Pause recording' : paused ? 'Resume recording' : 'Start recording'}
           >
-            <span className="mb-rec-disc"><Icon name={recording ? 'stop' : saving ? 'loader' : 'mic'} size={28} /></span>
+            <span className="mb-rec-disc"><Icon name={recording ? 'pause' : saving ? 'loader' : 'mic'} size={28} /></span>
           </button>
           <div className="mb-recorder-clock">
-            <p className="mb-t-page mb-tabular mb-record-timer" aria-label={`Elapsed ${formatTimer(recording ? rec.elapsed : 0)}`}>{formatDuration(recording ? rec.elapsed : 0)}</p>
+            <p className="mb-t-page mb-tabular mb-record-timer" aria-label={`Elapsed ${formatTimer(elapsed)}`}>{formatDuration(elapsed)}</p>
             <p className="mb-t-label-sm mb-record-status" aria-live="polite">
               <span className={`mb-dot${recording ? ' is-live' : ''}`} aria-hidden="true" />
               {recording ? 'Recording your mic and your Mac’s sound'
+                : paused ? 'Paused'
                 : saving ? 'Saving and transcribing on this Mac'
                 : mac.phase === 'problem' ? mac.message
                 : mac.phase === 'meeting' ? `${mac.app ?? 'A'} meeting is on`
@@ -63,9 +67,12 @@ export function MacRecordScreen() {
           </div>
         </div>
         <div className="mb-recorder-actions">
-          {recording
-            ? <Button variant="primary" icon="stop" onClick={() => app?.send('stop')}>Stop &amp; save</Button>
-            : <Button variant="primary" disabled={saving} onClick={() => app?.send('record')}>{saving ? 'Saving…' : 'Start'}</Button>}
+          {active ? (
+            <>
+              <Button onClick={() => app?.send(recording ? 'pause' : 'resume')} icon={recording ? 'pause' : 'mic'}>{recording ? 'Pause' : 'Resume'}</Button>
+              <Button variant="primary" icon="stop" onClick={() => app?.send('stop')}>Stop &amp; save</Button>
+            </>
+          ) : <Button variant="primary" disabled={saving} onClick={() => app?.send('record')}>{saving ? 'Saving…' : 'Start'}</Button>}
           <span className="mb-t-meta mb-muted">{saving ? 'It opens here when it’s ready.' : 'Your side and the call’s side are recorded as separate tracks.'}</span>
         </div>
       </section>

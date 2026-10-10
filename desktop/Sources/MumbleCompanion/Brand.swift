@@ -8,6 +8,8 @@ enum Brand {
   static let accentTint = Color(hex: 0xE3E8F4)  // --blue-100
   static let ink = Color(hex: 0x1E1E26)         // --neutral-900, surface-inverse
   static let muted = Color(hex: 0xA6A6AD)       // --neutral-400
+  /// The live-recording dot. Red is the one colour everyone reads as "recording".
+  static let live = Color(hex: 0xFF5F57)
 }
 
 extension Color {

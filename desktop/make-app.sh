@@ -15,12 +15,14 @@ cp .build/release/MumbleCompanion "$APP/Contents/MacOS/Mumble"
 (cd .. && BASE_PATH=/ npx vite build --outDir desktop/build/web --emptyOutDir >/dev/null)
 mv build/web "$APP/Contents/Resources/web"
 
-# The app icon: the same artwork as the web app's (public/icons/icon-512.png).
+# The app icon: the web app's artwork (public/icons/icon-512.png) placed on
+# Apple's icon grid by make-icon.swift, so it's the same size as the rest of the Dock.
 ICONSET=build/Mumble.iconset
 rm -rf "$ICONSET"; mkdir -p "$ICONSET"
+swift make-icon.swift ../public/icons/icon-512.png build/icon-1024.png
 for s in 16 32 128 256 512; do
-  sips -z $s $s ../public/icons/icon-512.png --out "$ICONSET/icon_${s}x${s}.png" >/dev/null
-  sips -z $((s*2)) $((s*2)) ../public/icons/icon-512.png --out "$ICONSET/icon_${s}x${s}@2x.png" >/dev/null
+  sips -z $s $s build/icon-1024.png --out "$ICONSET/icon_${s}x${s}.png" >/dev/null
+  sips -z $((s*2)) $((s*2)) build/icon-1024.png --out "$ICONSET/icon_${s}x${s}@2x.png" >/dev/null
 done
 iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/Mumble.icns"
 rm -rf "$ICONSET"
@@ -35,8 +37,8 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleExecutable</key><string>Mumble</string>
   <key>CFBundleIconFile</key><string>Mumble</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>0.2</string>
-  <key>CFBundleVersion</key><string>1</string>
+  <key>CFBundleShortVersionString</key><string>0.3</string>
+  <key>CFBundleVersion</key><string>3</string>
   <key>LSMinimumSystemVersion</key><string>26.0</string>
   <key>NSMicrophoneUsageDescription</key><string>Mumble records your side of the meeting. The recording stays on this Mac.</string>
   <key>NSAudioCaptureUsageDescription</key><string>Mumble records what the other people in your meeting say, from your Mac's sound. The recording stays on this Mac.</string>

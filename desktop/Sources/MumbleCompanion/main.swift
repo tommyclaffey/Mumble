@@ -1,5 +1,6 @@
 import AppKit
 import Combine
+import ServiceManagement
 import SwiftUI
 
 /// Mumble for Mac. One app, three faces:
@@ -25,8 +26,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     let main = MainWindow()
     main.onMessage = { [weak self] type in
       guard let self else { return }
-      if type == "record", !self.companion.isRecording { self.companion.tap() }
-      if type == "stop", self.companion.isRecording { self.companion.tap() }
+      switch type {
+      case "record": self.companion.record()
+      case "pause": self.companion.pause()
+      case "resume": self.companion.resume()
+      case "stop": self.companion.stop()
+      default: break
+      }
     }
     self.main = main
     /* A call recorded from the window opens when it's ready; one recorded
@@ -56,12 +62,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
       case .idle, .saved: break
       case .meeting(let app): state = ["phase": "meeting", "app": app.name]
       case .recording(let app, let since): state = ["phase": "recording", "app": app?.name ?? NSNull(), "since": Int(since.timeIntervalSince1970 * 1000)]
+      case .paused(let app, let elapsed): state = ["phase": "paused", "app": app?.name ?? NSNull(), "elapsed": elapsed]
       case .saving: state = ["phase": "saving"]
       case .problem(let why): state = ["phase": "problem", "message": why]
       }
       self?.main?.pushState(state)
       let name: String
-      if case .recording = phase { name = "mic.fill" } else if case .meeting = phase { name = "mic.badge.plus" } else { name = "mic" }
+      switch phase {
+      case .recording: name = "mic.fill"
+      case .paused: name = "pause.circle"
+      case .meeting: name = "mic.badge.plus"
+      default: name = "mic"
+      }
       self?.status?.button?.image = NSImage(systemSymbolName: name, accessibilityDescription: "Mumble")
     }
     companion.start()
@@ -75,14 +87,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     case .idle: line = "No meeting right now"
     case .meeting(let app): line = "\(app.name) meeting in progress"
     case .recording(_, let since): line = "Recording · \(WidgetView.clock(Date().timeIntervalSince(since)))"
+    case .paused(_, let elapsed): line = "Paused · \(WidgetView.clock(elapsed))"
     case .saving: line = "Saving…"
     case .saved: line = "Saved"
     case .problem(let why): line = why
     }
     menu.addItem(withTitle: line, action: nil, keyEquivalent: "").isEnabled = false
     menu.addItem(.separator())
-    let recording: Bool = { if case .recording = companion.phase { return true }; return false }()
-    menu.addItem(item(recording ? "Stop recording" : "Start recording", #selector(toggle)))
+    switch companion.phase {
+    case .recording:
+      menu.addItem(item("Pause", #selector(pauseRec)))
+      menu.addItem(item("Stop and save", #selector(toggle)))
+    case .paused:
+      menu.addItem(item("Resume", #selector(resumeRec)))
+      menu.addItem(item("Stop and save", #selector(toggle)))
+    case .saving:
+      menu.addItem(withTitle: "Start recording", action: nil, keyEquivalent: "").isEnabled = false
+    default:
+      menu.addItem(item("Start recording", #selector(toggle)))
+    }
     let auto = item("Record meetings automatically", #selector(toggleAuto))
     auto.state = companion.autoRecord ? .on : .off
     menu.addItem(auto)
@@ -92,6 +115,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     menu.addItem(.separator())
     menu.addItem(item("Open Mumble", #selector(openMain)))
     menu.addItem(item("Open recordings folder", #selector(openFolder)))
+    let login = item("Open at login", #selector(toggleLogin))
+    login.state = SMAppService.mainApp.status == .enabled ? .on : .off
+    menu.addItem(login)
     menu.addItem(.separator())
     menu.addItem(item("Quit Mumble", #selector(quit), key: "q"))
   }
@@ -111,6 +137,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
   }
   @objc func quit() { NSApp.terminate(nil) }
   @objc func openMain() { main?.show() }
+  @objc func pauseRec() { companion.pause() }
+  @objc func resumeRec() { companion.resume() }
+  /* Starts with your Mac, so the icon is there when a meeting starts. */
+  @objc func toggleLogin() {
+    do {
+      if SMAppService.mainApp.status == .enabled { try SMAppService.mainApp.unregister() } else { try SMAppService.mainApp.register() }
+    } catch { NSLog("Mumble: open at login: \(error)") }
+  }
   @objc func reload() { main?.web.reload() }
 
   /* Dock icon clicked with the window closed: bring it back. */
@@ -129,13 +163,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
   let states: [(String, Phase)] = [
     ("1-idle", .idle), ("2-meeting", .meeting(zoom)),
     ("3-recording", .recording(app: zoom, since: Date().addingTimeInterval(-754))),
-    ("4-saving", .saving), ("5-saved", .saved("d0")), ("6-problem", .problem("Turn on the mic for Mumble")),
+    ("4-paused", .paused(app: zoom, elapsed: 754)),
+    ("5-saving", .saving), ("6-saved", .saved("d0")), ("7-problem", .problem("Turn on the mic for Mumble")),
   ]
   try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
   for (name, phase) in states {
     let c = Companion()
     c.preview(phase)
-    let view = ZStack { Color(white: 0.93); WidgetView(companion: c, panel: nil) }.frame(width: 300, height: 76)
+    c.previewLevel = 0.6
+    let view = ZStack { Color(white: 0.93); WidgetView(companion: c, panel: nil) }.frame(width: 400, height: 76)
     let r = ImageRenderer(content: view)
     r.scale = 2
     if let img = r.nsImage, let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff), let png = rep.representation(using: .png, properties: [:]) {

@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
 import { dropEchoes, meetingFromCall, type DesktopCall } from '../desktop/desktop';
 
@@ -65,5 +66,23 @@ describe('their voices leaking into your mic', () => {
       { start: 5, end: 6, text: 'Good question.' },
     ];
     expect(dropEchoes(you, them).map((l) => l.text)).toEqual(['Where are we on pricing, you asked?', 'Good question.']);
+  });
+});
+
+describe('the header follows the Mac recorder', () => {
+  it('shows recording, then paused at the time it stopped, then nothing', async () => {
+    const { renderHook, act } = await import('@testing-library/react');
+    const { followMacState } = await import('../desktop/macState');
+    const { useRecordingStatus } = await import('../record/recordingStatus');
+    followMacState();
+    const { result } = renderHook(() => useRecordingStatus());
+    const say = (detail: object) => act(() => { window.dispatchEvent(new CustomEvent('mumble:desktop-state', { detail })); });
+    say({ phase: 'recording', since: Date.now() - 65_000 });
+    expect(result.current.state).toBe('recording');
+    expect(Math.floor(result.current.elapsed)).toBe(65);
+    say({ phase: 'paused', elapsed: 65 });
+    expect(result.current).toEqual({ state: 'paused', elapsed: 65 });
+    say({ phase: 'idle' });
+    expect(result.current.state).toBe('idle');
   });
 });

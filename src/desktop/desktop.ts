@@ -32,7 +32,7 @@ export interface DesktopCall {
 interface Bridge { postMessage(m: { type: string }): void }
 
 /** The Mac app, or null on the website. */
-export function desktop(): { send(type: 'record' | 'stop'): void } | null {
+export function desktop(): { send(type: 'record' | 'pause' | 'resume' | 'stop'): void } | null {
   const w = window as unknown as { mumbleDesktop?: unknown; webkit?: { messageHandlers?: { mumble?: Bridge } } };
   if (!w.mumbleDesktop) return null;
   return { send: (type) => w.webkit?.messageHandlers?.mumble?.postMessage({ type }) };

@@ -7,9 +7,12 @@ import { setRecordingStatus } from '../record/recordingStatus';
  * follows it on every screen, as it follows a browser recording.
  */
 export interface MacState {
-  phase: 'idle' | 'meeting' | 'recording' | 'saving' | 'problem';
-  /** When the recording started, ms since 1970. */
+  phase: 'idle' | 'meeting' | 'recording' | 'paused' | 'saving' | 'problem';
+  /** Recording: when it would have started had it never paused, ms since
+      1970, so the time is always now − since. */
   since?: number;
+  /** Paused: seconds recorded so far. */
+  elapsed?: number;
   /** The meeting app it spotted ("Zoom"), if any. */
   app?: string | null;
   /** What's wrong, for 'problem'. */
@@ -27,6 +30,8 @@ function syncHeader() {
     const tick = () => setRecordingStatus({ state: 'recording', elapsed: (Date.now() - current.since!) / 1000 });
     tick();
     ticker = setInterval(tick, 1000);
+  } else if (current.phase === 'paused') {
+    setRecordingStatus({ state: 'paused', elapsed: current.elapsed ?? 0 });
   } else {
     setRecordingStatus({ state: 'idle', elapsed: 0 });
   }

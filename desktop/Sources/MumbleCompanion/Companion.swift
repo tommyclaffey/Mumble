@@ -7,10 +7,13 @@ import SwiftUI
 ///
 ///   idle       a quiet mic in the corner. Click = record anyway.
 ///   meeting    a meeting app turned the mic on → the icon lights up and
-///              says which app. Click = record it. (Or it starts by itself,
+///              says which app, with a Record button and a × for "not this
+///              one". (Or it starts by itself,
 ///              if "Record meetings automatically" is on.)
-///   recording  a live dot and the time. Click = stop. It also stops by
-///              itself a few seconds after the meeting app lets go of the mic.
+///   recording  a live dot, the time and your mic level, with Pause and
+///              Stop buttons. It also stops by itself a few seconds after the
+///              meeting app lets go of the mic.
+///   paused     nothing is being recorded; Resume or Stop.
 ///   saving     turning the two tracks into files, mixing them and
 ///              transcribing both on this Mac (seconds, not minutes).
 ///   saved      "Saved · Show": click opens the meeting in the Mumble
@@ -19,7 +22,10 @@ import SwiftUI
 enum Phase: Equatable {
   case idle
   case meeting(MeetingApp)
+  /// `since` is when it would have started had it never paused, so the
+  /// time shown is always now − since.
   case recording(app: MeetingApp?, since: Date)
+  case paused(app: MeetingApp?, elapsed: TimeInterval)
   case saving
   case saved(String)
   case problem(String)
@@ -36,12 +42,21 @@ final class Companion: ObservableObject {
   private let detector = MeetingDetector()
   private let recorder = Recorder()
   private var meeting: MeetingApp?
+  /// The meeting you said "not this one" to — quiet until it ends.
+  private var dismissed: MeetingApp?
   /// A call is transcribed and ready for the window to save as a meeting.
   var onFinished: ((String) -> Void)?
-  /// "Saved · Show" was clicked.
+  /// "Open" was clicked on a saved call.
   var onShow: ((String) -> Void)?
+  /// For `--snapshots`: a fixed mic level instead of the real one.
+  var previewLevel: Float?
 
   var isRecording: Bool { if case .recording = phase { return true }; return false }
+  var isActive: Bool {
+    switch phase { case .recording, .paused: return true; default: return false }
+  }
+  /// Your mic's loudness now, 0–1, for the level meter.
+  var micLevel: Float { previewLevel ?? recorder.micLevel }
 
   /// For `--snapshots` only: show a state without it really happening.
   func preview(_ p: Phase) { phase = p }
@@ -57,41 +72,98 @@ final class Companion: ObservableObject {
     }
   }
 
-  /// The one action: whatever the icon is showing, clicking does the obvious thing.
-  func tap() {
+  // MARK: the actions — one per button, so nothing has to guess
+
+  func record() {
     switch phase {
-    case .idle, .meeting: startRecording()
-    case .recording: stopRecording()
-    case .saving: break
-    case .saved(let id): onShow?(id); phase = meeting.map(Phase.meeting) ?? .idle
-    case .problem(let why):
-      /* A mic problem opens the mic setting; anything else shows the files. */
-      if why.localizedCaseInsensitiveContains("mic") {
-        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone")!)
-      } else {
-        NSWorkspace.shared.open(Recorder.root)
-      }
-      phase = meeting.map(Phase.meeting) ?? .idle
+    case .idle, .meeting, .saved, .problem: startRecording()
+    default: break
     }
+  }
+
+  func pause() {
+    guard case .recording(let app, let since) = phase else { return }
+    recorder.pause()
+    phase = .paused(app: app, elapsed: Date().timeIntervalSince(since))
+  }
+
+  func resume() {
+    guard case .paused(let app, let elapsed) = phase else { return }
+    recorder.resume()
+    phase = .recording(app: app, since: Date().addingTimeInterval(-elapsed))
+  }
+
+  func stop() {
+    let app: MeetingApp?
+    switch phase {
+    case .recording(let a, _), .paused(let a, _): app = a
+    default: return
+    }
+    let recorder = self.recorder
+    phase = .saving
+    DispatchQueue.global(qos: .userInitiated).async {
+      let folder = recorder.stop(app: app?.name)
+      Task { @MainActor in
+        guard let folder else { self.phase = .idle; return }
+        guard let id = try? await Library.finish(folder) else {
+          self.phase = .problem("Saved, but not transcribed")
+          return
+        }
+        self.onFinished?(id)
+        self.phase = .saved(id)
+        /* "Saved" for a little while, then back to whatever is true now. */
+        try? await Task.sleep(for: .seconds(10))
+        if case .saved = self.phase { self.settle() }
+      }
+    }
+  }
+
+  func open(_ id: String) { onShow?(id); settle() }
+
+  /// "Not this one": the meeting prompt goes away until that meeting ends.
+  func dismissMeeting() {
+    guard case .meeting(let app) = phase else { return }
+    dismissed = app
+    phase = .idle
+  }
+
+  func dismissSaved() { if case .saved = phase { settle() } }
+
+  /// A mic problem opens the mic setting; anything else shows the files.
+  func fixProblem() {
+    guard case .problem(let why) = phase else { return }
+    if why.localizedCaseInsensitiveContains("mic") {
+      NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone")!)
+    } else {
+      NSWorkspace.shared.open(Recorder.root)
+    }
+    settle()
+  }
+
+  /// The menu bar's single item: start, or stop and save.
+  func tap() { isActive ? stop() : record() }
+
+  /// Back to whatever is true now.
+  private func settle() {
+    if let m = meeting, m != dismissed { phase = .meeting(m) } else { phase = .idle }
   }
 
   private func meetingChanged(_ app: MeetingApp?) {
     meeting = app
+    if app == nil { dismissed = nil }
     switch phase {
-    case .recording(let recording, _):
+    case .recording(let recording, _), .paused(let recording, _):
       /* The meeting we're recording ended → stop and save by itself. */
-      if app == nil, recording != nil { stopRecording() }
-    case .saving:
+      if app == nil, recording != nil { stop() }
+    case .saving, .problem, .saved:
       break
-    case .idle, .meeting, .saved:
-      if let app {
+    case .idle, .meeting:
+      if let app, app != dismissed {
         phase = .meeting(app)
         if autoRecord { startRecording() }
       } else if case .meeting = phase {
         phase = .idle
       }
-    case .problem:
-      break
     }
   }
 
@@ -105,27 +177,6 @@ final class Companion: ObservableObject {
         } catch {
           self.phase = .problem("Couldn’t open the mic")
         }
-      }
-    }
-  }
-
-  private func stopRecording() {
-    guard case .recording(let app, _) = phase else { return }
-    let recorder = self.recorder
-    phase = .saving
-    DispatchQueue.global(qos: .userInitiated).async {
-      let folder = recorder.stop(app: app?.name)
-      Task { @MainActor in
-        guard let folder else { self.phase = .idle; return }
-        guard let id = try? await Library.finish(folder) else {
-          self.phase = .problem("Saved, but not transcribed")
-          return
-        }
-        self.onFinished?(id)
-        self.phase = .saved(id)
-        /* "Saved" for a few seconds, then back to whatever is true now. */
-        try? await Task.sleep(for: .seconds(6))
-        if case .saved = self.phase { self.phase = self.meeting.map(Phase.meeting) ?? .idle }
       }
     }
   }

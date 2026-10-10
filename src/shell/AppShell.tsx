@@ -112,9 +112,9 @@ export function AppShell({ route, children }: { route: Route; children: ReactNod
         </div>
         <div className="mb-header-actions">
           {inMac && !onRecord && rec.state !== 'idle' ? (
-            <a className="mb-header-live" href={href({ name: 'record' })} aria-label={`Recording, ${formatDuration(rec.elapsed)}. Open the recorder`}>
-              <span className="mb-dot is-live" aria-hidden="true" />
-              Recording · <span className="mb-tabular">{formatDuration(rec.elapsed)}</span>
+            <a className="mb-header-live" href={href({ name: 'record' })} aria-label={`${rec.state === 'paused' ? 'Paused' : 'Recording'}, ${formatDuration(rec.elapsed)}. Open the recorder`}>
+              <span className={`mb-dot${rec.state === 'recording' ? ' is-live' : ''}`} aria-hidden="true" />
+              {rec.state === 'paused' ? 'Paused' : 'Recording'} · <span className="mb-tabular">{formatDuration(rec.elapsed)}</span>
             </a>
           ) : onRecord && rec.state !== 'idle' ? (
             <span className="mb-header-live" role="status">

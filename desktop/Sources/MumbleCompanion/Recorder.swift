@@ -22,6 +22,24 @@ final class Recorder: @unchecked Sendable {
   private var engine: AVAudioEngine?
   private var micFile: AVAudioFile?
   private var tap: SystemAudioTap?
+  /// Paused: both tracks stop being written, together, so they stay in step
+  /// and the transcript's times still line up. Read on the audio threads.
+  private(set) var paused = false
+  private var pausedAt: Date?
+  private var pausedTotal: TimeInterval = 0
+  /// Your mic's loudness right now, 0–1 — the widget's level meter.
+  private(set) var micLevel: Float = 0
+
+  func pause() {
+    guard !paused, folder != nil else { return }
+    paused = true; tap?.paused = true; pausedAt = Date(); micLevel = 0
+  }
+
+  func resume() {
+    guard paused else { return }
+    if let at = pausedAt { pausedTotal += Date().timeIntervalSince(at) }
+    pausedAt = nil; paused = false; tap?.paused = false
+  }
 
   static var root: URL {
     /* Testing: MUMBLE_ROOT points it at a scratch folder, never your real recordings. */
@@ -41,7 +59,16 @@ final class Recorder: @unchecked Sendable {
     let input = engine.inputNode
     let format = input.outputFormat(forBus: 0)
     let mic = try AVAudioFile(forWriting: dir.appendingPathComponent("you.caf"), settings: format.settings)
-    input.installTap(onBus: 0, bufferSize: 4096, format: format) { buffer, _ in try? mic.write(from: buffer) }
+    input.installTap(onBus: 0, bufferSize: 4096, format: format) { [weak self] buffer, _ in
+      guard let self, !self.paused else { return }
+      try? mic.write(from: buffer)
+      if let ch = buffer.floatChannelData, buffer.frameLength > 0 {
+        var sum: Float = 0
+        for i in 0..<Int(buffer.frameLength) { sum += ch[0][i] * ch[0][i] }
+        let rms = (sum / Float(buffer.frameLength)).squareRoot()
+        self.micLevel = min(1, rms * 9)
+      }
+    }
     try engine.start()
 
     tap = try? SystemAudioTap(writingTo: dir.appendingPathComponent("others.caf"))
@@ -51,6 +78,7 @@ final class Recorder: @unchecked Sendable {
     micFile = mic
     folder = dir
     startedAt = Date()
+    paused = false; pausedAt = nil; pausedTotal = 0
   }
 
   /// Stops, turns both tracks into .m4a, writes meeting.json. Returns the folder.
@@ -62,6 +90,8 @@ final class Recorder: @unchecked Sendable {
     engine = nil
     micFile = nil
     tap = nil
+    resume() // a pause running when Stop is pressed ends here, and isn't counted
+    micLevel = 0
     guard let dir = folder, let started = startedAt else { return nil }
     folder = nil
     startedAt = nil
@@ -73,7 +103,8 @@ final class Recorder: @unchecked Sendable {
     let info: [String: Any] = [
       "app": app ?? NSNull(),
       "startedAt": ISO8601DateFormatter().string(from: started),
-      "durationSeconds": Int(Date().timeIntervalSince(started)),
+      /* Time actually recorded: pauses aren't in the files, so not in the length. */
+      "durationSeconds": Int(Date().timeIntervalSince(started) - pausedTotal),
       "tracks": ["you": "you.m4a", "others": "others.m4a"],
       /* false = the system track is silence: no permission, or nobody spoke. */
       "othersHeard": heardOthers,
@@ -121,6 +152,8 @@ final class SystemAudioTap: @unchecked Sendable {
   private let file: AVAudioFile
   private let format: AVAudioFormat
   private(set) var heardSound = false
+  /// Set by Recorder.pause(): drop what arrives instead of writing it.
+  var paused = false
 
   init(writingTo url: URL) throws {
     let desc = CATapDescription(stereoGlobalTapButExcludeProcesses: [])
@@ -157,7 +190,7 @@ final class SystemAudioTap: @unchecked Sendable {
 
   func start() throws {
     let status = AudioDeviceCreateIOProcIDWithBlock(&proc, device, nil) { [self] _, input, _, _, _ in
-      guard let buf = AVAudioPCMBuffer(pcmFormat: format, bufferListNoCopy: input, deallocator: nil) else { return }
+      guard !paused, let buf = AVAudioPCMBuffer(pcmFormat: format, bufferListNoCopy: input, deallocator: nil) else { return }
       try? file.write(from: buf)
       if !heardSound, let ch = buf.floatChannelData {
         for i in 0..<Int(buf.frameLength) where abs(ch[0][i]) > 0.001 { heardSound = true; break }
