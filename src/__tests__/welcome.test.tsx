@@ -47,6 +47,7 @@ describe('the welcome card', () => {
     ]);
     expect(steps.map((a) => a.getAttribute('href'))).toEqual(['#/capture/c2', '#/capture/c2?line=9', '#/record', '#/tasks']);
     expect(within(c).getByRole('link', { name: 'Tommy Claffey' }).getAttribute('href')).toBe('https://www.tommyclaffey.com');
+    expect(c.textContent).toContain('Designed and engineered by Tommy Claffey');
   });
 
   it('shows once: closed, it stays closed on the next visit', () => {

@@ -111,7 +111,7 @@ export function WelcomeTour() {
         </ol>
         <div className="mb-welcome-foot">
           <p className="mb-t-body-sm mb-muted">
-            Designed by <a className="mb-welcome-link" href="https://www.tommyclaffey.com" target="_blank" rel="noopener">Tommy Claffey</a>
+            Designed and engineered by <a className="mb-welcome-link" href="https://www.tommyclaffey.com" target="_blank" rel="noopener">Tommy Claffey</a>
           </p>
           <Button variant="primary" onClick={close}>Start exploring</Button>
         </div>
