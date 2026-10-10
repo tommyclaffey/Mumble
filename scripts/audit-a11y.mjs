@@ -65,8 +65,17 @@ let failures = 0;
     });
     const v = r.result.result.value ?? ['axe did not run'];
     if (v.length) { failures += v.length; console.log('✗ welcome card'); v.forEach((x) => console.log('    ' + x)); } else console.log('✓ welcome card');
-    await send('Runtime.evaluate', { expression: "document.querySelector('[role=dialog]').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))" });
-    await sleep(300);
+    /* Then the tour, from the card's "Take the tour": its first stop, audited, then ended. */
+    await send('Runtime.evaluate', { expression: "[...document.querySelectorAll('[role=dialog] button')].find(b => b.textContent.trim() === 'Take the tour')?.click()" });
+    await sleep(1500);
+    const t = await send('Runtime.evaluate', {
+      awaitPromise: true, returnByValue: true,
+      expression: `(() => { const c = document.querySelector('.mb-tour-card'); if (!c) return ['tour did not open']; return axe.run(c, { runOnly: ['wcag2a','wcag2aa','wcag21aa','wcag22aa','best-practice'], rules: { region: { enabled: false } } }).then(r => r.violations.map(v => v.id + ' (' + v.impact + '): ' + v.nodes.map(n => n.target.join(' ')).slice(0,3).join(' | '))); })()`,
+    });
+    const tv = t.result.result.value ?? ['axe did not run'];
+    if (tv.length) { failures += tv.length; console.log('✗ tour'); tv.forEach((x) => console.log('    ' + x)); } else console.log('✓ tour');
+    await send('Runtime.evaluate', { expression: "document.querySelector('.mb-tour-card')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))" });
+    await sleep(400);
   }
 }
 for (const [w, h] of WIDTHS) {

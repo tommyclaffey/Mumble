@@ -1,3 +1,4 @@
+import { showWelcome } from '../components/Welcome/welcomeState';
 import { BRAND } from '../brand';
 import { useEffect, type ReactNode } from 'react';
 import { Icon, type IconName } from '../components/Icon/Icon';
@@ -49,6 +50,7 @@ function focusSearch() {
 }
 
 export function AppShell({ route, children }: { route: Route; children: ReactNode }) {
+  const demo = typeof window === 'undefined' || !('mumbleDesktop' in window);
   const current = sectionOf(route);
   const { captures } = useStore();
   const rec = useRecordingStatus();
@@ -99,7 +101,15 @@ export function AppShell({ route, children }: { route: Route; children: ReactNod
             <img src={`${import.meta.env.BASE_URL}mumble-logo.png`} alt={BRAND.logoAlt} width={92} height={36} />
           </a>
           {/* The demo account says so beside the logo, as Queue's does. */}
-          {team && <span className="mb-demo-tag" title="A made-up team. Everyone and everything here is fictional.">Demo</span>}
+          {/* Both demos (not the Mac app, which is your own): the tag brings
+              back the welcome card, and the tour from there. */}
+          {demo && (
+            <button type="button" className="mb-demo-btn" onClick={showWelcome}
+              title={team ? 'A made-up team. Everyone and everything here is fictional.' : 'This is a demo. Click for the welcome card and the tour.'}
+              aria-label="Demo: show the welcome card and tour">
+              <span className="mb-demo-tag">Demo</span>
+            </button>
+          )}
         </div>
         <div className="mb-header-search">
           {/* Looks like a field, is a button: it takes you to the search box

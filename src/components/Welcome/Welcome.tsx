@@ -6,6 +6,7 @@ import { workspace } from '../../data/workspace';
 import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { onShowWelcome, welcomeEnabled } from './welcomeState';
+import { startTour } from '../Tour/tourState';
 import './Welcome.css';
 
 /**
@@ -113,7 +114,10 @@ export function WelcomeTour() {
           <p className="mb-t-body-sm mb-muted">
             Designed and engineered by <a className="mb-welcome-link" href="https://www.tommyclaffey.com" target="_blank" rel="noopener">Tommy Claffey</a>
           </p>
-          <Button variant="primary" onClick={close}>Start exploring</Button>
+          <div className="mb-welcome-actions">
+            <Button onClick={close}>Start exploring</Button>
+            <Button variant="primary" onClick={() => { close(); startTour(); }}>Take the tour</Button>
+          </div>
         </div>
       </div>
     </div>,

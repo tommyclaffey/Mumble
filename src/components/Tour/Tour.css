@@ -1,0 +1,40 @@
+/* The tour (Tour.tsx). Mumble's motif, not Growth's: the spotlight is the
+   reading bar, the navy edge that follows the line being spoken. */
+.mb-tour-block { position: fixed; inset: 0; z-index: 110; }
+.mb-tour-block.is-dim { background: rgb(14 22 40 / 0.55); }
+.mb-tour-spot {
+  position: fixed; z-index: 111; pointer-events: none;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 0 0 9999px rgb(14 22 40 / 0.55);
+  outline: var(--border-width-md) solid var(--accent-base); outline-offset: 0;
+  transition: top 200ms ease, left 200ms ease, width 200ms ease, height 200ms ease;
+}
+/* The reading bar, down the left edge of whatever is being explained. */
+.mb-tour-spot::before {
+  content: ''; position: absolute; left: -2px; top: 10px; bottom: 10px; width: 4px;
+  border-radius: var(--radius-pill); background: var(--accent-base);
+}
+.mb-tour-card {
+  position: fixed; z-index: 112; width: 340px;
+  display: flex; flex-direction: column; gap: var(--space-8);
+  padding: var(--space-16) 20px;
+  border-radius: var(--radius-xl); background: var(--surface-card);
+  box-shadow: var(--elevation-raised); color: var(--text-body);
+  transition: top 200ms ease, left 200ms ease;
+}
+.mb-tour-card p, .mb-tour-card h2 { margin: 0; }
+.mb-tour-count { color: var(--accent-strong); }
+.mb-tour-title { color: var(--text-strong); font-weight: 600; }
+.mb-tour-body { color: var(--text-muted); }
+.mb-tour-foot { display: flex; align-items: center; gap: var(--space-8); margin-top: var(--space-4); }
+.mb-tour-dots { display: flex; align-items: center; gap: 4px; margin-right: auto; }
+.mb-tour-dots span { width: 6px; height: 6px; border-radius: var(--radius-pill); background: var(--border-control); transition: width 200ms ease; }
+.mb-tour-dots span.is-on { width: 18px; background: var(--accent-base); }
+
+/* A phone: the card docks along the bottom, the target sits above it. */
+.mb-tour-card.is-docked { left: var(--space-12); right: var(--space-12); bottom: var(--space-12); width: auto; }
+.mb-tour-card.is-docked.is-top { bottom: auto; top: var(--space-12); }
+
+@media (prefers-reduced-motion: reduce) {
+  .mb-tour-spot, .mb-tour-card, .mb-tour-dots span { transition: none; }
+}

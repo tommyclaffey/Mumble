@@ -15,6 +15,7 @@ import { DesktopImporter } from './desktop/DesktopImporter';
 import { desktop } from './desktop/desktop';
 import { MacRecordScreen } from './desktop/MacRecordScreen';
 import { WelcomeTour } from './components/Welcome/Welcome';
+import { Tour } from './components/Tour/Tour';
 
 /** Which PAGE this is. A filter change on Recent is the same page. */
 function pageKey(r: Route): string {
@@ -57,6 +58,7 @@ export default function App() {
     <AppShell route={route}>
       <DesktopImporter />
       <WelcomeTour />
+      <Tour />
       {route.name === 'recent' && <RecentScreen filter={route.filter} />}
       {route.name === 'capture' && <CaptureScreen id={route.id} line={route.line} />}
       {route.name === 'record' && (desktop() ? <MacRecordScreen /> : <RecordScreen />)}

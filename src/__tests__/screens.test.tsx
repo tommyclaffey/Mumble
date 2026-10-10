@@ -953,12 +953,12 @@ describe('The team demo — a made-up team with its own link (Oct 7)', () => {
     expect(unsure!.querySelector('img')).toBeNull();
   });
 
-  it('the demo account says “Demo” beside the logo (as Queue does); the personal demo doesn’t', () => {
+  it('both demos say “Demo” beside the logo (as Queue does), and it brings back the welcome card', () => {
     team('#/recent');
     expect(document.querySelector('.mb-header-brand')!.textContent).toBe('Demo');
     cleanup(); setWorkspace('personal');
     mount('#/recent');
-    expect(document.querySelector('.mb-demo-tag')).toBeNull();
+    expect(screen.getByRole('button', { name: /demo: show the welcome card/i })).toBeTruthy();
   });
 
   it('the personal demo has no team, no account — and Team points to the team demo', () => {

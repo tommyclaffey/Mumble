@@ -1,13 +1,18 @@
 // @vitest-environment jsdom
 import { act, cleanup, render } from '@testing-library/react';
 import axe from 'axe-core';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
 import App from '../App';
 import { initialState, StoreProvider } from '../data/store';
 import { ServicesProvider } from '../services';
 import { setWorkspace } from '../data/workspace';
 import { fakeAudioFactory, fakeDiarizer, fakeMic, fakeRecognizer, memoryAudioStore } from './fakes';
 import { fireEvent, screen } from '@testing-library/react';
+
+/* A whole screen through axe is slow when every test file runs at once:
+   5 s (the default) timed out under load twice. The checks are unchanged. */
+vi.setConfig({ testTimeout: 20_000 });
 
 /**
  * Automated accessibility check on every screen (axe-core, the engine behind
