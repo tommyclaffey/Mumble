@@ -1,9 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { go, href } from '../../data/route';
+import { isLowConfidence, isMeeting, speakerFor } from '../../data/model';
+import { useStore } from '../../data/store';
+import { useServices } from '../../services';
 import { isTeam } from '../../data/workspace';
 import { Button } from '../Button/Button';
-import { endTour, setTourStep, tourSteps, useTourStep } from './tourState';
+import { endTour, setTourStep, tourSteps, useTourStep, type TourStep } from './tourState';
 import './Tour.css';
 
 /**
@@ -34,7 +37,9 @@ function visible(selector: string): HTMLElement | null {
 
 export function Tour() {
   const step = useTourStep();
-  const steps = tourSteps(isTeam());
+  const { capture } = useStore();
+  const { recognizer } = useServices();
+  const [steps, setSteps] = useState<TourStep[]>([]);
   const [box, setBox] = useState<Box | null>(null);
   const [shown, setShown] = useState<number | null>(null);
   const dir = useRef<1 | -1>(1);
@@ -45,6 +50,18 @@ export function Tour() {
 
   /* While it runs, the app behind is out of reach — as with the welcome card. */
   const running = step !== null;
+  /* Which stops this visitor gets — decided once, when the tour starts. */
+  if (running && steps.length === 0) {
+    const sync = capture('c2');
+    setSteps(tourSteps({
+      team: isTeam(),
+      phone: phone(),
+      /* The same test the 🎤 buttons use to decide whether to show. */
+      canDictate: recognizer().available && window.isSecureContext !== false,
+      voiceToName: !!sync && isMeeting(sync) && sync.lines.some((l) => isLowConfidence(l, speakerFor(sync, l))),
+    }));
+  }
+  if (!running && steps.length > 0) setSteps([]);
   useEffect(() => {
     if (!running) return;
     returnTo.current = document.activeElement as HTMLElement | null;
@@ -59,6 +76,7 @@ export function Tour() {
   /* Go to the stop's screen, wait for its target, bring it into view. */
   useEffect(() => {
     if (step === null) { setShown(null); target.current = null; return; }
+    if (steps.length === 0) return;
     const s = steps[step];
     if (!s) { endTour(); return; }
     const want = href(s.route);
@@ -80,8 +98,8 @@ export function Tour() {
     };
     find();
     return () => cancelAnimationFrame(raf);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- steps is rebuilt each render; the step index is what changes
-  }, [step]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- steps is fixed for the whole tour; the index is what changes
+  }, [step, steps.length]);
 
   /* Keep the spotlight on its target as the page scrolls or resizes. */
   useLayoutEffect(() => {

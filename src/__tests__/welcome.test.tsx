@@ -170,6 +170,19 @@ describe('the tour', () => {
     expect(tourCard()).toBeNull();
   });
 
+  it('counts only the stops you’ll get: with Speaker 3 already named, it’s 7', async () => {
+    mount('#/capture/c2');
+    fireEvent.click(within(card()!).getByRole('button', { name: 'Start exploring' }));
+    fireEvent.click(screen.getAllByRole('button', { name: /^Who is this\?/ })[0]);
+    fireEvent.change(screen.getByLabelText('Who is this?'), { target: { value: 'Sarah Lee' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(screen.queryAllByRole('button', { name: /^Who is this\?/ })).toHaveLength(0);
+    const { startTour } = await import('../components/Tour/tourState');
+    act(() => startTour());
+    await flushFrames();
+    expect(tourCard()!.textContent).toContain('Step 1 of 7');
+  });
+
   it('the team demo’s tour shows the team', async () => {
     setWorkspace('team');
     mount();
