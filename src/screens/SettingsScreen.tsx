@@ -1,3 +1,4 @@
+import { showWelcome } from '../components/Welcome/welcomeState';
 import { BRAND } from '../brand';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Button } from '../components/Button/Button';
@@ -93,6 +94,9 @@ export function SettingsScreen() {
             <a className="mb-button is-secondary is-sm" href={workspaceHref('team')}>Open team demo</a>
           </Row>
         )}
+        <Row label="Welcome tour" hint="What this demo is, and four things to try.">
+          <Button size="sm" onClick={showWelcome}>Show the welcome tour</Button>
+        </Row>
       </Section>
 
       <Section title="Playback">

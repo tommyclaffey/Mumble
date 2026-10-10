@@ -14,7 +14,7 @@
 export type IconName =
   | 'clock' | 'list' | 'hash' | 'users' | 'gear' | 'search' | 'mic' | 'play' | 'pause'
   | 'x' | 'check' | 'pencil' | 'prev' | 'next' | 'download' | 'copy' | 'arrow-left' | 'plus' | 'stop' | 'speaker'
-  | 'sparkle' | 'lock' | 'chevron-down' | 'info' | 'help' | 'keyboard' | 'database' | 'arrow-right' | 'share'
+  | 'sparkle' | 'lock' | 'chevron-down' | 'chevron-right' | 'info' | 'help' | 'keyboard' | 'database' | 'arrow-right' | 'share'
   | 'quote' | 'user' | 'chart' | 'trash' | 'loader';
 
 const PATHS: Record<IconName, string> = {
@@ -47,6 +47,7 @@ const PATHS: Record<IconName, string> = {
   sparkle: 'M12 3l1.9 5.4L19 10l-5.1 1.6L12 17l-1.9-5.4L5 10l5.1-1.6L12 3Z',
   lock: 'M6 11h12v9H6z M8.5 11V8a3.5 3.5 0 0 1 7 0v3',
   'chevron-down': 'M6 9l6 6 6-6',
+  'chevron-right': 'M9 6l6 6-6 6',
   info: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z M12 16v-4 M12 8h.01',
   help: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3 M12 17h.01',
   keyboard: 'M3 6h18v12H3z M7 10h.01 M11 10h.01 M15 10h.01 M7 14h10',
