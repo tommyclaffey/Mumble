@@ -52,6 +52,23 @@ if (process.env.MAC) {
 await sleep(1500);
 
 let failures = 0;
+/* A fresh browser gets the demo's welcome card first: audit it, then close
+   it (Esc) so the screens behind it are audited too. */
+{
+  await sleep(800);
+  const open = await send('Runtime.evaluate', { expression: "!!document.querySelector('[role=dialog]')", returnByValue: true });
+  if (open.result.result.value) {
+    await send('Runtime.evaluate', { expression: axeSrc });
+    const r = await send('Runtime.evaluate', {
+      awaitPromise: true, returnByValue: true,
+      expression: `axe.run(document.querySelector('[role=dialog]'), { runOnly: ['wcag2a','wcag2aa','wcag21aa','wcag22aa','best-practice'], rules: { region: { enabled: false } } }).then(r => r.violations.map(v => v.id + ' (' + v.impact + '): ' + v.nodes.map(n => n.target.join(' ')).slice(0,3).join(' | ')))`,
+    });
+    const v = r.result.result.value ?? ['axe did not run'];
+    if (v.length) { failures += v.length; console.log('✗ welcome card'); v.forEach((x) => console.log('    ' + x)); } else console.log('✓ welcome card');
+    await send('Runtime.evaluate', { expression: "document.querySelector('[role=dialog]').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))" });
+    await sleep(300);
+  }
+}
 for (const [w, h] of WIDTHS) {
   await send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: w < 500 });
   for (const hash of SCREENS) {

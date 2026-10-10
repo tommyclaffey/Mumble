@@ -4,6 +4,10 @@ import './index.css'
 import App from './App.tsx'
 import { StoreProvider } from './data/store'
 import { ServicesProvider } from './services'
+import { enableWelcome } from './components/Welcome/welcomeState'
+
+/* The demo's welcome card shows once per browser (components/Welcome). */
+enableWelcome()
 
 /* Installable: the service worker runs in the BUILT app only -- in dev it
    would cache Vite's live modules and serve stale code on the next reload.

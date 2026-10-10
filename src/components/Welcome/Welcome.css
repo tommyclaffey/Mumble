@@ -1,0 +1,67 @@
+/* The demo's welcome card (Welcome.tsx). Mumble's surfaces, not Queue's:
+   a white card on a navy-tinted scrim, navy step numbers, the light-blue
+   Demo tag from the header. */
+.mb-welcome-scrim {
+  position: fixed; inset: 0; z-index: 100;
+  /* Flex + auto margins, not place-items: a card taller than the screen
+     then starts at the top and scrolls, instead of losing its top edge. */
+  display: flex; padding: var(--space-24);
+  background: rgb(14 22 40 / 0.55);
+  overflow-y: auto;
+  animation: mb-welcome-fade 160ms ease-out;
+}
+.mb-welcome {
+  width: min(600px, 100%);
+  margin: auto;
+  display: flex; flex-direction: column; gap: var(--space-12);
+  padding: var(--space-32);
+  border-radius: var(--radius-xl);
+  background: var(--surface-card);
+  box-shadow: var(--elevation-raised);
+  color: var(--text-body);
+  animation: mb-welcome-rise 200ms ease-out;
+}
+.mb-welcome:focus { outline: none; }
+.mb-welcome-tag { align-self: flex-start; }
+.mb-welcome-title { margin: 0; font: 600 1.625rem/2rem var(--font-sans); letter-spacing: -0.015em; color: var(--text-strong); }
+.mb-welcome-lede { margin: 0; font: 400 1.0625rem/1.625rem var(--font-sans); color: var(--text-strong); }
+.mb-welcome p { margin: 0; }
+.mb-welcome-over { margin-top: var(--space-8) !important; color: var(--text-muted); }
+
+.mb-welcome-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-8); }
+.mb-welcome-step {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: var(--space-16);
+  padding: 14px var(--space-16);
+  border: var(--border-width-sm) solid var(--border-control); border-radius: var(--radius-card);
+  background: var(--surface-card); color: var(--text-secondary);
+  text-decoration: none;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.mb-welcome-step:hover { background: var(--accent-tint); border-color: var(--accent-soft); }
+.mb-welcome-step:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px; }
+.mb-welcome-n {
+  display: grid; place-items: center; width: 32px; height: 32px; border-radius: var(--radius-pill);
+  background: var(--accent-base); color: var(--text-on-accent);
+  font: 600 0.875rem/1 var(--font-sans);
+}
+.mb-welcome-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.mb-welcome-step-title { color: var(--text-strong); font-weight: 600; }
+
+.mb-welcome-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-16); margin-top: var(--space-8); }
+.mb-welcome-link { color: var(--accent-strong); font-weight: 500; }
+.mb-welcome-link:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px; border-radius: 2px; }
+
+@keyframes mb-welcome-fade { from { opacity: 0; } }
+@keyframes mb-welcome-rise { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
+@media (prefers-reduced-motion: reduce) { .mb-welcome-scrim, .mb-welcome { animation: none; } }
+
+/* A phone: the card fills the width, and the button the foot. */
+@media (max-width: 600px) {
+  .mb-welcome-scrim { padding: var(--space-12); }
+  .mb-welcome { margin: auto 0 0; padding: var(--space-24) 20px; } /* a sheet from the bottom */
+  .mb-welcome-title { font: 600 1.375rem/1.75rem var(--font-sans); }
+  .mb-welcome-lede { font: 400 1rem/1.5rem var(--font-sans); }
+  .mb-welcome-step { gap: var(--space-12); padding: var(--space-12); }
+  .mb-welcome-foot { flex-direction: column-reverse; align-items: stretch; }
+  .mb-welcome-foot .mb-button { width: 100%; justify-content: center; }
+}
