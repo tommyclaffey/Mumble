@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import axe from 'axe-core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import App from '../App';
@@ -27,7 +27,9 @@ beforeEach(() => {
   window.scrollTo = () => {};
   enableWelcome(true);
 });
-afterEach(() => {
+afterEach(async () => {
+  const { endTour } = await import('../components/Tour/tourState');
+  act(() => endTour());
   cleanup();
   enableWelcome(false);
   setWorkspace('personal');
@@ -72,7 +74,7 @@ describe('the welcome card', () => {
   it('keeps Tab inside the card', () => {
     mount();
     const c = card()!;
-    const start = within(c).getByRole('button', { name: 'Start exploring' });
+    const start = within(c).getByRole('button', { name: 'Take the tour' });
     start.focus();
     fireEvent.keyDown(c, { key: 'Tab' });
     expect(document.activeElement?.textContent).toContain('Listen to a meeting');
@@ -106,6 +108,91 @@ describe('the welcome card', () => {
     mount();
     await act(async () => { await Promise.resolve(); });
     const r = await axe.run(card()!, { rules: { 'color-contrast': { enabled: false }, region: { enabled: false } } });
+    expect(r.violations.map((v) => v.id)).toEqual([]);
+  });
+});
+
+describe('the tour', () => {
+  const tourCard = () => screen.queryByRole('dialog', { name: /./ });
+  const flushFrames = () => act(async () => { for (let i = 0; i < 3; i++) await new Promise((r) => setTimeout(r, 20)); });
+
+  it('starts from the welcome card and walks the real screens, Back and Next', async () => {
+    mount();
+    fireEvent.click(within(card()!).getByRole('button', { name: 'Take the tour' }));
+    await flushFrames();
+    expect(card()).toBeNull();
+    let t = tourCard()!;
+    expect(t.textContent).toContain('Step 1 of 8');
+    expect(t.textContent).toContain('Every recording, ready to play');
+    fireEvent.click(within(t).getByRole('button', { name: 'Next' }));
+    await flushFrames();
+    t = tourCard()!;
+    expect(t.textContent).toContain('Tasks from what people said');
+    fireEvent.click(within(t).getByRole('button', { name: 'Next' }));
+    await flushFrames();
+    expect(window.location.hash).toBe('#/capture/c2');
+    expect(tourCard()!.textContent).toContain('Listen and read');
+    fireEvent.click(within(tourCard()!).getByRole('button', { name: 'Back' }));
+    await flushFrames();
+    expect(window.location.hash).toBe('#/recent');
+    expect(tourCard()!.textContent).toContain('Step 2 of 8');
+  });
+
+  it('arrow keys move, Esc ends it', async () => {
+    mount();
+    fireEvent.click(within(card()!).getByRole('button', { name: 'Take the tour' }));
+    await flushFrames();
+    fireEvent.keyDown(tourCard()!, { key: 'ArrowRight' });
+    await flushFrames();
+    expect(tourCard()!.textContent).toContain('Step 2 of 8');
+    fireEvent.keyDown(tourCard()!, { key: 'Escape' });
+    await flushFrames();
+    expect(tourCard()).toBeNull();
+  });
+
+  it('skips a stop whose thing isn’t on screen, and ends on Finish', async () => {
+    const { setTourStep } = await import('../components/Tour/tourState');
+    mount();
+    fireEvent.click(within(card()!).getByRole('button', { name: 'Start exploring' }));
+    /* Name Speaker 3 first: the "Name a voice" stop then has nothing to show. */
+    act(() => setTourStep(2));
+    await flushFrames();
+    expect(tourCard()!.textContent).toContain('Listen and read');
+    document.querySelectorAll('.mb-speaker-who').forEach((el) => el.classList.remove('mb-speaker-who'));
+    fireEvent.click(within(tourCard()!).getByRole('button', { name: 'Next' }));
+    /* It looks for the missing thing for ~40 frames before moving on. */
+    await waitFor(() => expect(tourCard()?.textContent).toContain('Every task shows its source'), { timeout: 3000 });
+    act(() => setTourStep(7));
+    await flushFrames();
+    expect(tourCard()!.textContent).toContain('That’s the tour');
+    fireEvent.click(within(tourCard()!).getByRole('button', { name: 'Finish' }));
+    await flushFrames();
+    expect(tourCard()).toBeNull();
+  });
+
+  it('the team demo’s tour shows the team', async () => {
+    setWorkspace('team');
+    mount();
+    fireEvent.click(within(card()!).getByRole('button', { name: 'Take the tour' }));
+    await flushFrames();
+    fireEvent.click(within(tourCard()!).getByRole('button', { name: 'Next' }));
+    await flushFrames();
+    expect(tourCard()!.textContent).toContain('Your team');
+  });
+
+  it('the Demo tag brings back the welcome card', () => {
+    localStorage.setItem('mumble.welcome.v1.personal', '1');
+    mount();
+    expect(card()).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /demo: show the welcome card/i }));
+    expect(card()).toBeTruthy();
+  });
+
+  it('has no mechanical accessibility failures', async () => {
+    mount();
+    fireEvent.click(within(card()!).getByRole('button', { name: 'Take the tour' }));
+    await flushFrames();
+    const r = await axe.run(tourCard()!, { rules: { 'color-contrast': { enabled: false }, region: { enabled: false } } });
     expect(r.violations.map((v) => v.id)).toEqual([]);
   });
 });

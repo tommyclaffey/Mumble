@@ -48,6 +48,7 @@
 .mb-welcome-step-title { color: var(--text-strong); font-weight: 600; }
 
 .mb-welcome-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-16); margin-top: var(--space-8); }
+.mb-welcome-actions { display: flex; gap: var(--space-8); flex-shrink: 0; }
 .mb-welcome-link { color: var(--accent-strong); font-weight: 500; }
 .mb-welcome-link:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px; border-radius: 2px; }
 
@@ -63,5 +64,6 @@
   .mb-welcome-lede { font: 400 1rem/1.5rem var(--font-sans); }
   .mb-welcome-step { gap: var(--space-12); padding: var(--space-12); }
   .mb-welcome-foot { flex-direction: column-reverse; align-items: stretch; }
+  .mb-welcome-actions { flex-direction: column-reverse; }
   .mb-welcome-foot .mb-button { width: 100%; justify-content: center; }
 }

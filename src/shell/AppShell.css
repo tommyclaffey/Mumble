@@ -25,6 +25,12 @@
 .mb-wordmark img { display: block; width: 92px; height: 36px; }
 /* "DEMO" beside the logo on the demo team account (the Queue pattern). */
 .mb-header-brand { display: flex; align-items: center; gap: var(--space-8); }
+.mb-demo-btn {
+  display: inline-grid; place-items: center; min-width: 24px; min-height: 24px; padding: 0;
+  border: none; background: none; cursor: pointer; border-radius: var(--radius-pill);
+}
+.mb-demo-btn:hover .mb-demo-tag { background: var(--accent-soft); }
+.mb-demo-btn:focus-visible { outline: var(--border-width-md) solid var(--focus-ring); outline-offset: 2px; }
 .mb-demo-tag {
   padding: 1px 7px; border-radius: var(--radius-pill); background: var(--accent-tint); color: var(--accent-strong);
   font: 600 0.65625rem/1rem var(--font-sans); letter-spacing: 0.04em; text-transform: uppercase;
