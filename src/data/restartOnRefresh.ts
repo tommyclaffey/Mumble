@@ -9,7 +9,8 @@
 const DEMO_HOSTS = ['tommyclaffey.github.io', 'web-production-b20ad.up.railway.app'];
 
 const nav = performance.getEntriesByType?.('navigation')[0] as PerformanceNavigationTiming | undefined;
-if (nav?.type === 'reload' && DEMO_HOSTS.includes(location.hostname) && !('mumbleDesktop' in window)) {
+// Inside another page's frame (the portfolio's viewer) a refresh of that page reports "navigate", so every load there counts.
+if ((nav?.type === 'reload' || window.self !== window.top) && DEMO_HOSTS.includes(location.hostname) && !('mumbleDesktop' in window)) {
   try {
     for (const k of Object.keys(localStorage)) if (k.startsWith('mumble')) localStorage.removeItem(k);
     indexedDB.deleteDatabase('mumble');
